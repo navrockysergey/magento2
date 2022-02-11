@@ -29,6 +29,8 @@ class Edit extends \Magento\Backend\Block\Widget\Form implements \Magento\Backen
     protected $_rootResource;
 
     /**
+     * Rules collection factory
+     *
      * @var \Magento\Authorization\Model\ResourceModel\Rules\CollectionFactory
      */
     protected $_rulesCollectionFactory;
@@ -41,6 +43,8 @@ class Edit extends \Magento\Backend\Block\Widget\Form implements \Magento\Backen
     protected $_aclRetriever;
 
     /**
+     * Acl resource provider
+     *
      * @var \Magento\Framework\Acl\AclResource\ProviderInterface
      */
     protected $_aclResourceProvider;
@@ -51,18 +55,18 @@ class Edit extends \Magento\Backend\Block\Widget\Form implements \Magento\Backen
     protected $_integrationData;
 
     /**
+     * Core registry
+     *
      * @var \Magento\Framework\Registry
      * @since 100.1.0
      */
     protected $coreRegistry = null;
 
     /**
-     * Constructor
-     *
      * @param \Magento\Backend\Block\Template\Context $context
-     * @param \Magento\Authorization\Model\Acl\AclRetriever $aclRetriever
      * @param \Magento\Framework\Acl\RootResource $rootResource
      * @param \Magento\Authorization\Model\ResourceModel\Rules\CollectionFactory $rulesCollectionFactory
+     * @param \Magento\Authorization\Model\Acl\AclRetriever $aclRetriever
      * @param \Magento\Framework\Acl\AclResource\ProviderInterface $aclResourceProvider
      * @param \Magento\Integration\Helper\Data $integrationData
      * @param array $data
@@ -199,7 +203,7 @@ class Edit extends \Magento\Backend\Block\Widget\Form implements \Magento\Backen
      */
     public function getTree()
     {
-        return $this->_integrationData->mapResources($this->getAclResources(), $this->getSelectedResources());
+        return $this->_integrationData->mapResources($this->getAclResources());
     }
 
     /**
@@ -218,6 +222,6 @@ class Edit extends \Magento\Backend\Block\Widget\Form implements \Magento\Backen
             }
         );
         $configResource = reset($configResource);
-        return $configResource['children'] ?? [];
+        return isset($configResource['children']) ? $configResource['children'] : [];
     }
 }

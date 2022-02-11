@@ -25,32 +25,27 @@ class Merge implements \Magento\Framework\View\Layout\ProcessorInterface
     /**
      * Layout abstraction based on designer prerogative.
      */
-    public const DESIGN_ABSTRACTION_CUSTOM = 'custom';
+    const DESIGN_ABSTRACTION_CUSTOM = 'custom';
 
     /**
      * Layout generalization guaranteed to load into View
      */
-    public const DESIGN_ABSTRACTION_PAGE_LAYOUT = 'page_layout';
+    const DESIGN_ABSTRACTION_PAGE_LAYOUT = 'page_layout';
 
     /**
      * XPath of handles originally declared in layout updates
      */
-    public const XPATH_HANDLE_DECLARATION = '/layout[@design_abstraction]';
+    const XPATH_HANDLE_DECLARATION = '/layout[@design_abstraction]';
 
     /**
      * Name of an attribute that stands for data type of node values
      */
-    public const TYPE_ATTRIBUTE = 'xsi:type';
+    const TYPE_ATTRIBUTE = 'xsi:type';
 
     /**
      * Cache id suffix for page layout
      */
-    public const PAGE_LAYOUT_CACHE_SUFFIX = 'page_layout_merged';
-
-    /**
-     * Default cache life time
-     */
-    private const DEFAULT_CACHE_LIFETIME = 31536000;
+    const PAGE_LAYOUT_CACHE_SUFFIX = 'page_layout_merged';
 
     /**
      * @var \Magento\Framework\View\Design\ThemeInterface
@@ -174,10 +169,6 @@ class Merge implements \Magento\Framework\View\Layout\ProcessorInterface
      * @var ReadFactory
      */
     private $readFactory;
-    /**
-     * @var int
-     */
-    private $cacheLifetime;
 
     /**
      * Init merge model
@@ -191,11 +182,10 @@ class Merge implements \Magento\Framework\View\Layout\ProcessorInterface
      * @param \Magento\Framework\View\Model\Layout\Update\Validator $validator
      * @param \Psr\Log\LoggerInterface $logger
      * @param ReadFactory $readFactory
-     * @param \Magento\Framework\View\Design\ThemeInterface|null $theme Non-injectable theme instance
+     * @param \Magento\Framework\View\Design\ThemeInterface $theme Non-injectable theme instance
      * @param string $cacheSuffix
-     * @param LayoutCacheKeyInterface|null $layoutCacheKey
+     * @param LayoutCacheKeyInterface $layoutCacheKey
      * @param SerializerInterface|null $serializer
-     * @param int|null $cacheLifetime
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
@@ -211,8 +201,7 @@ class Merge implements \Magento\Framework\View\Layout\ProcessorInterface
         \Magento\Framework\View\Design\ThemeInterface $theme = null,
         $cacheSuffix = '',
         LayoutCacheKeyInterface $layoutCacheKey = null,
-        SerializerInterface $serializer = null,
-        ?int $cacheLifetime = null
+        SerializerInterface $serializer = null
     ) {
         $this->theme = $theme ?: $design->getDesignTheme();
         $this->scope = $scopeResolver->getScope();
@@ -227,7 +216,6 @@ class Merge implements \Magento\Framework\View\Layout\ProcessorInterface
         $this->layoutCacheKey = $layoutCacheKey
             ?: \Magento\Framework\App\ObjectManager::getInstance()->get(LayoutCacheKeyInterface::class);
         $this->serializer = $serializer ?: ObjectManager::getInstance()->get(SerializerInterface::class);
-        $this->cacheLifetime = $cacheLifetime ?? self::DEFAULT_CACHE_LIFETIME;
     }
 
     /**
@@ -761,7 +749,7 @@ class Merge implements \Magento\Framework\View\Layout\ProcessorInterface
      */
     protected function _saveCache($data, $cacheId, array $cacheTags = [])
     {
-        $this->cache->save($data, $cacheId, $cacheTags, $this->cacheLifetime);
+        $this->cache->save($data, $cacheId, $cacheTags, null);
     }
 
     /**
@@ -991,7 +979,7 @@ class Merge implements \Magento\Framework\View\Layout\ProcessorInterface
             $updateXml = null;
 
             try {
-                $updateXml = is_string($update) ? $this->_loadXmlString($update) : false;
+                $updateXml = $this->_loadXmlString($update);
                 // phpcs:ignore Magento2.CodeAnalysis.EmptyBlock
             } catch (\Exception $exception) {
                 // ignore invalid

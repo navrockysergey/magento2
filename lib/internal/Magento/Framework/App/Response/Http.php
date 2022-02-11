@@ -23,13 +23,13 @@ use Magento\Framework\Session\Config\ConfigInterface;
 class Http extends \Magento\Framework\HTTP\PhpEnvironment\Response
 {
     /** Cookie to store page vary string */
-    public const COOKIE_VARY_STRING = 'X-Magento-Vary';
+    const COOKIE_VARY_STRING = 'X-Magento-Vary';
 
     /** Format for expiration timestamp headers */
-    public const EXPIRATION_TIMESTAMP_FORMAT = 'D, d M Y H:i:s T';
+    const EXPIRATION_TIMESTAMP_FORMAT = 'D, d M Y H:i:s T';
 
     /** X-FRAME-OPTIONS Header name */
-    public const HEADER_X_FRAME_OPT = 'X-Frame-Options';
+    const HEADER_X_FRAME_OPT = 'X-Frame-Options';
 
     /**
      * @var \Magento\Framework\App\Request\Http
@@ -131,7 +131,7 @@ class Http extends \Magento\Framework\HTTP\PhpEnvironment\Response
      */
     public function setPublicHeaders($ttl)
     {
-        if ($ttl === null || $ttl < 0 || !preg_match('/^[0-9]+$/', $ttl)) {
+        if ($ttl < 0 || !preg_match('/^[0-9]+$/', $ttl)) {
             throw new \InvalidArgumentException('Time to live is a mandatory parameter for set public headers');
         }
         $this->setHeader('pragma', 'cache', true);

@@ -5,8 +5,6 @@
  */
 namespace Magento\Sales\Model\Order\Email\Sender;
 
-use Magento\Framework\App\Area;
-use Magento\Framework\App\ObjectManager;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Email\Container\OrderCommentIdentity;
 use Magento\Sales\Model\Order\Email\Container\Template;
@@ -14,8 +12,10 @@ use Magento\Sales\Model\Order\Email\NotifySender;
 use Magento\Sales\Model\Order\Address\Renderer;
 use Magento\Framework\Event\ManagerInterface;
 use Magento\Framework\DataObject;
-use Magento\Store\Model\App\Emulation;
 
+/**
+ * Class OrderCommentSender
+ */
 class OrderCommentSender extends NotifySender
 {
     /**
@@ -31,18 +31,12 @@ class OrderCommentSender extends NotifySender
     protected $eventManager;
 
     /**
-     * @var Emulation
-     */
-    private $appEmulation;
-
-    /**
      * @param Template $templateContainer
      * @param OrderCommentIdentity $identityContainer
      * @param Order\Email\SenderBuilderFactory $senderBuilderFactory
      * @param \Psr\Log\LoggerInterface $logger
      * @param Renderer $addressRenderer
      * @param ManagerInterface $eventManager
-     * @param Emulation|null $appEmulation
      */
     public function __construct(
         Template $templateContainer,
@@ -50,13 +44,11 @@ class OrderCommentSender extends NotifySender
         \Magento\Sales\Model\Order\Email\SenderBuilderFactory $senderBuilderFactory,
         \Psr\Log\LoggerInterface $logger,
         Renderer $addressRenderer,
-        ManagerInterface $eventManager,
-        Emulation $appEmulation = null
+        ManagerInterface $eventManager
     ) {
         parent::__construct($templateContainer, $identityContainer, $senderBuilderFactory, $logger, $addressRenderer);
         $this->addressRenderer = $addressRenderer;
         $this->eventManager = $eventManager;
-        $this->appEmulation = $appEmulation ?: ObjectManager::getInstance()->get(Emulation::class);
     }
 
     /**
@@ -71,7 +63,6 @@ class OrderCommentSender extends NotifySender
     {
         $this->identityContainer->setStore($order->getStore());
 
-        $this->appEmulation->startEnvironmentEmulation($order->getStoreId(), Area::AREA_FRONTEND, true);
         $transport = [
             'order' => $order,
             'comment' => $comment,
@@ -85,7 +76,6 @@ class OrderCommentSender extends NotifySender
             ]
         ];
         $transportObject = new DataObject($transport);
-        $this->appEmulation->stopEnvironmentEmulation();
 
         /**
          * Event argument `transport` is @deprecated. Use `transportObject` instead.

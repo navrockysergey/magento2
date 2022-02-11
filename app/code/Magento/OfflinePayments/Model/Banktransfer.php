@@ -15,7 +15,7 @@ namespace Magento\OfflinePayments\Model;
  */
 class Banktransfer extends \Magento\Payment\Model\Method\AbstractMethod
 {
-    public const PAYMENT_METHOD_BANKTRANSFER_CODE = 'banktransfer';
+    const PAYMENT_METHOD_BANKTRANSFER_CODE = 'banktransfer';
 
     /**
      * Payment method code
@@ -52,7 +52,6 @@ class Banktransfer extends \Magento\Payment\Model\Method\AbstractMethod
      */
     public function getInstructions()
     {
-        $instructions = $this->getConfigData('instructions');
-        return $instructions !== null ? trim($instructions) : '';
+        return trim($this->getConfigData('instructions'));
     }
 }

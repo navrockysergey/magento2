@@ -10,8 +10,6 @@ use Magento\Framework\Exception\LocalizedException;
 
 /**
  * Catalog product option text type
- *
- * @SuppressWarnings(PHPMD.CookieAndSessionMisuse)
  */
 class Text extends \Magento\Catalog\Model\Product\Option\Type\DefaultType
 {
@@ -58,7 +56,7 @@ class Text extends \Magento\Catalog\Model\Product\Option\Type\DefaultType
         parent::validateUserValue($values);
 
         $option = $this->getOption();
-        $value = $this->getUserValue() !== null ? trim($this->getUserValue()) : '';
+        $value = trim($this->getUserValue());
 
         // Check requires option to have some value
         if (strlen($value) == 0 && $option->getIsRequire() && !$this->getSkipCheckRequiredOption()) {
@@ -70,7 +68,6 @@ class Text extends \Magento\Catalog\Model\Product\Option\Type\DefaultType
 
         // Check maximal length limit
         $maxCharacters = $option->getMaxCharacters();
-        $value = $this->normalizeNewLineSymbols($value);
         if ($maxCharacters > 0 && $this->string->strlen($value) > $maxCharacters) {
             $this->setIsValid(false);
             throw new LocalizedException(__('The text is too long. Shorten the text and try again.'));
@@ -103,16 +100,5 @@ class Text extends \Magento\Catalog\Model\Product\Option\Type\DefaultType
     public function getFormattedOptionValue($value)
     {
         return $this->_escaper->escapeHtml($value);
-    }
-
-    /**
-     * Normalize newline symbols
-     *
-     * @param string $value
-     * @return string
-     */
-    private function normalizeNewLineSymbols(string $value)
-    {
-        return str_replace(["\r\n", "\n\r", "\r"], "\n", $value);
     }
 }

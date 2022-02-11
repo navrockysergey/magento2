@@ -5,10 +5,8 @@
  */
 namespace Magento\Config\Model\Config\Backend;
 
-use Exception;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem;
 use Magento\MediaStorage\Model\File\Uploader;
 
@@ -84,13 +82,12 @@ class File extends \Magento\Framework\App\Config\Value
      * Save uploaded file before saving config value
      *
      * @return $this
-     * @throws LocalizedException
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function beforeSave()
     {
         $value = $this->getValue();
         $file = $this->getFileData();
-
         if (!empty($file)) {
             $uploadDir = $this->_getUploadDir();
             try {
@@ -100,11 +97,12 @@ class File extends \Magento\Framework\App\Config\Value
                 $uploader->setAllowRenameFiles(true);
                 $uploader->addValidateCallback('size', $this, 'validateMaxSize');
                 $result = $uploader->save($uploadDir);
-            } catch (Exception $e) {
-                throw new LocalizedException(__('%1', $e->getMessage()));
+            } catch (\Exception $e) {
+                throw new \Magento\Framework\Exception\LocalizedException(__('%1', $e->getMessage()));
             }
-            if ($result !== false) {
-                $filename = $result['file'];
+
+            $filename = $result['file'];
+            if ($filename) {
                 if ($this->_addWhetherScopeInfo()) {
                     $filename = $this->_prependScopeInfo($filename);
                 }
@@ -150,7 +148,7 @@ class File extends \Magento\Framework\App\Config\Value
      *
      * @param  string $filePath Path to temporary uploaded file
      * @return void
-     * @throws LocalizedException
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function validateMaxSize($filePath)
     {
@@ -159,7 +157,7 @@ class File extends \Magento\Framework\App\Config\Value
             $directory->getRelativePath($filePath)
         )['size'] > $this->_maxFileSize * 1024
         ) {
-            throw new LocalizedException(
+            throw new \Magento\Framework\Exception\LocalizedException(
                 __('The file you\'re uploading exceeds the server size limit of %1 kilobytes.', $this->_maxFileSize)
             );
         }
@@ -181,14 +179,14 @@ class File extends \Magento\Framework\App\Config\Value
      * Return path to directory for upload file
      *
      * @return string
-     * @throws LocalizedException
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     protected function _getUploadDir()
     {
         $fieldConfig = $this->getFieldConfig();
 
         if (!array_key_exists('upload_dir', $fieldConfig)) {
-            throw new LocalizedException(
+            throw new \Magento\Framework\Exception\LocalizedException(
                 __('The base directory to upload file is not specified.')
             );
         }

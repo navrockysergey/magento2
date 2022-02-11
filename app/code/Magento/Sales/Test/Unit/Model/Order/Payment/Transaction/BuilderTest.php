@@ -3,62 +3,54 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
 
 namespace Magento\Sales\Test\Unit\Model\Order\Payment\Transaction;
 
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use Magento\Sales\Model\Order;
-use Magento\Sales\Model\Order\Payment;
 use Magento\Sales\Model\Order\Payment\Transaction;
-use Magento\Sales\Model\Order\Payment\Transaction\Builder;
-use Magento\Sales\Model\Order\Payment\Transaction\Repository;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class BuilderTest extends TestCase
+class BuilderTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var Repository|MockObject
+     * @var \Magento\Sales\Model\Order\Payment\Transaction\Repository | \PHPUnit\Framework\MockObject\MockObject
      */
     protected $repositoryMock;
 
     /**
-     * @var Order|MockObject
+     * @var \Magento\Sales\Model\Order | \PHPUnit\Framework\MockObject\MockObject
      */
     protected $orderMock;
 
     /**
-     * @var Payment|MockObject
+     * @var \Magento\Sales\Model\Order\Payment | \PHPUnit\Framework\MockObject\MockObject
      */
     protected $paymentMock;
 
     /**
-     * @var Builder
+     * @var \Magento\Sales\Model\Order\Payment\Transaction\Builder
      */
     protected $builder;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
-        $objectManager = new ObjectManager($this);
-        $this->repositoryMock = $this->createMock(Repository::class);
-        $this->paymentMock = $this->getMockBuilder(Payment::class)
-            ->addMethods(['hasIsTransactionClosed', 'getIsTransactionClosed'])
-            ->onlyMethods(['getId', 'getParentTransactionId', 'getShouldCloseParentTransaction'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->orderMock = $this->createMock(Order::class);
+        $objectManager = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
+        $this->repositoryMock = $this->createMock(\Magento\Sales\Model\Order\Payment\Transaction\Repository::class);
+        $this->paymentMock = $this->createPartialMock(\Magento\Sales\Model\Order\Payment::class, [
+                'hasIsTransactionClosed',
+                'getIsTransactionClosed',
+                'getId',
+                'getParentTransactionId',
+                'getShouldCloseParentTransaction'
+            ]);
+        $this->orderMock = $this->createMock(\Magento\Sales\Model\Order::class);
         $this->builder = $objectManager->getObject(
-            Builder::class,
+            \Magento\Sales\Model\Order\Payment\Transaction\Builder::class,
             ['transactionRepository' => $this->repositoryMock]
         );
     }
 
     /**
-     * @param int $transactionId
+     * @dataProvider createDataProvider
+     * @param string|null $transactionId
      * @param int $orderId
      * @param int $paymentId
      * @param bool $failSafe
@@ -67,22 +59,19 @@ class BuilderTest extends TestCase
      * @param array $additionalInfo
      * @param bool $document
      * @param bool $isTransactionExists
-     *
-     * @return void
-     * @dataProvider createDataProvider
      */
     public function testCreate(
-        int $transactionId,
-        int $orderId,
-        int $paymentId,
-        bool $failSafe,
-        string $type,
-        bool $isPaymentTransactionClosed,
-        array $additionalInfo,
-        bool $document,
-        bool $isTransactionExists
-    ): void {
-        $parentTransactionId = '12';
+        $transactionId,
+        $orderId,
+        $paymentId,
+        $failSafe,
+        $type,
+        $isPaymentTransactionClosed,
+        $additionalInfo,
+        $document,
+        $isTransactionExists
+    ) {
+        $parentTransactionId = "12";
         $shouldCloseParentTransaction = true;
         $parentTransactionIsClosed = false;
         if ($document) {
@@ -149,21 +138,19 @@ class BuilderTest extends TestCase
     }
 
     /**
-     * @param MockObject $transaction
-     * @param string $parentTransactionId
+     * @param \PHPUnit\Framework\MockObject\MockObject $transaction
+     * @param string|null $parentTransactionId
      * @param bool $shouldCloseParentTransaction
-     * @param MockObject $parentTransaction
+     * @param \PHPUnit\Framework\MockObject\MockObject $parentTransaction
      * @param bool $parentTransactionIsClosed
-     *
-     * @return void
      */
     protected function expectsLinkWithParentTransaction(
-        MockObject $transaction,
-        string $parentTransactionId,
-        bool $shouldCloseParentTransaction,
-        MockObject $parentTransaction,
-        bool $parentTransactionIsClosed
-    ): void {
+        $transaction,
+        $parentTransactionId,
+        $shouldCloseParentTransaction,
+        $parentTransaction,
+        $parentTransactionIsClosed
+    ) {
         $this->paymentMock->method('getParentTransactionId')->willReturn($parentTransactionId);
         if ($parentTransactionId) {
             $transaction->expects($this->once())->method('setParentTxnId')->with($parentTransactionId);
@@ -184,9 +171,7 @@ class BuilderTest extends TestCase
                         ->with(false)
                         ->willReturnSelf();
                 }
-                $this->orderMock
-                    ->method('addRelatedObject')
-                    ->with($parentTransaction);
+                $this->orderMock->expects($this->at(2))->method('addRelatedObject')->with($parentTransaction);
             }
         }
     }
@@ -194,34 +179,29 @@ class BuilderTest extends TestCase
     /**
      * @param int $orderId
      * @param int $paymentId
-     *
-     * @return MockObject
+     * @return \PHPUnit\Framework\MockObject\MockObject
      */
-    protected function expectTransaction(int $orderId, int $paymentId): MockObject
+    protected function expectTransaction($orderId, $paymentId)
     {
-        $newTransaction = $this->getMockBuilder(Transaction::class)
-            ->addMethods(['loadByTxnId', 'setPayment'])
-            ->onlyMethods(
-                [
-                    'getId',
-                    'setOrderId',
-                    'setPaymentId',
-                    'setTxnId',
-                    'setTxnType',
-                    'isFailsafe',
-                    'getTxnId',
-                    'getHtmlTxnId',
-                    'getTxnType',
-                    'setAdditionalInformation',
-                    'setParentTxnId',
-                    'close',
-                    'getIsClosed',
-                    'setOrder',
-                    'setIsClosed'
-                ]
-            )
-            ->disableOriginalConstructor()
-            ->getMock();
+        $newTransaction = $this->createPartialMock(\Magento\Sales\Model\Order\Payment\Transaction::class, [
+                'getId',
+                'setOrderId',
+                'setPaymentId',
+                'loadByTxnId',
+                'setTxnId',
+                'setTxnType',
+                'isFailsafe',
+                'getTxnId',
+                'getHtmlTxnId',
+                'getTxnType',
+                'setAdditionalInformation',
+                'setParentTxnId',
+                'close',
+                'getIsClosed',
+                'setPayment',
+                'setOrder',
+                'setIsClosed'
+            ]);
 
         $this->orderMock->expects($this->atLeastOnce())->method('getId')->willReturn($orderId);
         $this->paymentMock->expects($this->atLeastOnce())->method('getId')->willReturn($paymentId);
@@ -229,33 +209,26 @@ class BuilderTest extends TestCase
     }
 
     /**
-     * @param int $transactionId
-     *
-     * @return MockObject
+     * @param string $transactionId
+     * @return \PHPUnit\Framework\MockObject\MockObject
      */
-    protected function expectDocument(int $transactionId): MockObject
+    protected function expectDocument($transactionId)
     {
-        $document = $this->getMockBuilder(Order::class)
-            ->addMethods(['setTransactionId'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        $document = $this->createPartialMock(\Magento\Sales\Model\Order::class, [
+                'setTransactionId'
+            ]);
 
         $document->expects($this->once())->method('setTransactionId')->with($transactionId);
         return $document;
     }
 
     /**
-     * @param MockObject $newTransaction
+     * @param \PHPUnit\Framework\MockObject\MockObject $newTransaction
      * @param string $type
      * @param bool $failSafe
-     *
-     * @return void
      */
-    protected function expectSetPaymentObject(
-        MockObject $newTransaction,
-        string $type,
-        bool $failSafe
-    ): void {
+    protected function expectSetPaymentObject($newTransaction, $type, $failSafe)
+    {
         $newTransaction->expects($this->once())->method('setOrderId')
             ->willReturnSelf();
         $newTransaction->expects($this->once())->method('setPaymentId')
@@ -270,14 +243,10 @@ class BuilderTest extends TestCase
 
     /**
      * @param bool $isPaymentTransactionClosed
-     * @param MockObject $newTransaction
-     *
-     * @return void
+     * @param \PHPUnit\Framework\MockObject\MockObject $newTransaction
      */
-    protected function expectsIsPaymentTransactionClosed(
-        bool $isPaymentTransactionClosed,
-        MockObject $newTransaction
-    ): void {
+    protected function expectsIsPaymentTransactionClosed($isPaymentTransactionClosed, $newTransaction)
+    {
         $this->paymentMock->expects($this->once())
             ->method('hasIsTransactionClosed')
             ->willReturn($isPaymentTransactionClosed);
@@ -291,7 +260,7 @@ class BuilderTest extends TestCase
     /**
      * @return array
      */
-    public function createDataProvider(): array
+    public function createDataProvider()
     {
         return [
             'transactionNotExists' => [

@@ -60,7 +60,7 @@ class Price extends \Magento\Backend\Block\Widget\Grid\Column\Renderer\AbstractR
                 return $data;
             }
 
-            $data = (float) $data * $this->_getRate($row);
+            $data = (float)$data * $this->_getRate($row);
             $data = sprintf("%f", $data);
             $data = $this->_localeCurrency->getCurrency($currencyCode)->toCurrency($data);
             return $data;
@@ -79,9 +79,7 @@ class Price extends \Magento\Backend\Block\Widget\Grid\Column\Renderer\AbstractR
         if ($code = $this->getColumn()->getCurrencyCode()) {
             return $code;
         }
-        $currency = $this->getColumn()->getCurrency();
-
-        if ($currency !== null && $code = $row->getData($currency)) {
+        if ($code = $row->getData($this->getColumn()->getCurrency())) {
             return $code;
         }
         return false;
@@ -96,12 +94,10 @@ class Price extends \Magento\Backend\Block\Widget\Grid\Column\Renderer\AbstractR
     protected function _getRate($row)
     {
         if ($rate = $this->getColumn()->getRate()) {
-            return (float) $rate;
+            return (float)$rate;
         }
-        $rateField = $this->getColumn()->getRateField();
-
-        if ($rateField !== null && $rate = $row->getData($rateField)) {
-            return (float) $rate;
+        if ($rate = $row->getData($this->getColumn()->getRateField())) {
+            return (float)$rate;
         }
         return 1;
     }

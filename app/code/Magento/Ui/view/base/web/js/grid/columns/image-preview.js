@@ -2,13 +2,11 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-/* eslint-disable no-undef */
 define([
     'jquery',
-    'underscore',
     'Magento_Ui/js/grid/columns/column',
     'Magento_Ui/js/lib/key-codes'
-], function ($, _, Column, keyCodes) {
+], function ($, Column, keyCodes) {
     'use strict';
 
     return Column.extend({
@@ -18,7 +16,7 @@ define([
             visibleRecord: null,
             height: 0,
             displayedRecord: {},
-            lastOpenedImage: false,
+            lastOpenedImage: null,
             fields: {
                 previewUrl: 'preview_url',
                 title: 'title'
@@ -34,8 +32,7 @@ define([
             listens: {
                 '${ $.provider }:params.filters': 'hide',
                 '${ $.provider }:params.search': 'hide',
-                '${ $.provider }:params.paging': 'hide',
-                '${ $.provider }:data.items': 'updateDisplayedRecord'
+                '${ $.provider }:params.paging': 'hide'
             },
             exports: {
                 height: '${ $.parentName }.thumbnail_url:previewHeight'
@@ -50,25 +47,6 @@ define([
         initialize: function () {
             this._super();
             $(document).on('keydown', this.handleKeyDown.bind(this));
-
-            this.lastOpenedImage.subscribe(function (newValue) {
-
-                if (newValue === false && _.isNull(this.visibleRecord())) {
-                    return;
-                }
-
-                if (newValue === this.visibleRecord()) {
-                    return;
-                }
-
-                if (newValue === false) {
-                    this.hide();
-
-                    return;
-                }
-
-                this.show(this.masonry().rows()[newValue]);
-            }.bind(this));
 
             return this;
         },
@@ -150,6 +128,8 @@ define([
          * @param {Object} record
          */
         show: function (record) {
+            var img;
+
             if (record._rowIndex === this.visibleRecord()) {
                 this.hide();
 
@@ -161,21 +141,9 @@ define([
             this._selectRow(record.rowNumber || null);
             this.visibleRecord(record._rowIndex);
 
-            this.lastOpenedImage(record._rowIndex);
-            this.updateImageData();
-        },
+            img = $(this.previewImageSelector + ' img');
 
-        /**
-         * Update image data when image preview is opened
-         */
-        updateImageData: function () {
-            var img = $(this.previewImageSelector + ' img');
-
-            if (!img.get(0)) {
-                setTimeout(function () {
-                    this.updateImageData();
-                }.bind(this), 100);
-            } else if (img.get(0).complete) {
+            if (img.get(0).complete) {
                 this.updateHeight();
                 this.scrollToPreview();
             } else {
@@ -184,17 +152,8 @@ define([
                     this.scrollToPreview();
                 }.bind(this));
             }
-        },
 
-        /**
-         * Update preview displayed record data from the new items data if the preview is expanded
-         *
-         * @param {Array} items
-         */
-        updateDisplayedRecord: function (items) {
-            if (!_.isNull(this.visibleRecord())) {
-                this.displayedRecord(items[this.visibleRecord()]);
-            }
+            this.lastOpenedImage(record._rowIndex);
         },
 
         /**
@@ -208,7 +167,7 @@ define([
          * Close image preview
          */
         hide: function () {
-            this.lastOpenedImage(false);
+            this.lastOpenedImage(null);
             this.visibleRecord(null);
             this.height(0);
             this._selectRow(null);

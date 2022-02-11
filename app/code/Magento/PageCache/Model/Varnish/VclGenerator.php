@@ -11,8 +11,6 @@ use Magento\PageCache\Model\VclTemplateLocatorInterface;
 
 /**
  * Varnish vcl generator model.
- *
- * @api
  */
 class VclGenerator implements VclGeneratorInterface
 {
@@ -85,6 +83,7 @@ class VclGenerator implements VclGeneratorInterface
      *
      * @param int $version
      * @return string
+     * @api
      */
     public function generateVcl($version)
     {

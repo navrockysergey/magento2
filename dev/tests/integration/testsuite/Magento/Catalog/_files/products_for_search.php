@@ -4,15 +4,19 @@
  * See COPYING.txt for license details.
  */
 
-use Magento\Catalog\Api\CategoryLinkRepositoryInterface;
-use Magento\Catalog\Api\Data\CategoryProductLinkInterfaceFactory;
+include 'category.php';
+
+use Magento\Catalog\Api\CategoryLinkManagementInterface;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
 use Magento\Catalog\Model\Product\Visibility;
 use Magento\TestFramework\Helper\Bootstrap;
-use Magento\TestFramework\Workaround\Override\Fixture\Resolver;
+use Magento\Catalog\Api\ProductRepositoryInterface;
 
-Resolver::getInstance()->requireDataFixture('Magento/Catalog/_files/category.php');
+$objectManager = Bootstrap::getObjectManager();
+/** @var ProductRepositoryInterface $productRepository */
+$productRepository = $objectManager->get(ProductRepositoryInterface::class);
+
 $products = [
     [
         'type' => 'simple',
@@ -28,7 +32,6 @@ $products = [
         'meta_title' => 'Key Title',
         'meta_keyword' => 'meta keyword',
         'meta_description' => 'meta description',
-        'position' => 10,
     ],
     [
         'type' => 'simple',
@@ -44,7 +47,6 @@ $products = [
         'meta_title' => 'Last Title',
         'meta_keyword' => 'meta keyword',
         'meta_description' => 'meta description',
-        'position' => 20,
     ],
     [
         'type' => 'simple',
@@ -60,7 +62,6 @@ $products = [
         'meta_title' => 'First Title',
         'meta_keyword' => 'meta keyword',
         'meta_description' => 'meta description',
-        'position' => 30,
     ],
     [
         'type' => 'simple',
@@ -76,7 +77,6 @@ $products = [
         'meta_title' => 'A title',
         'meta_keyword' => 'meta keyword',
         'meta_description' => 'meta description',
-        'position' => 40,
     ],
     [
         'type' => 'simple',
@@ -92,15 +92,17 @@ $products = [
         'meta_title' => 'meta title',
         'meta_keyword' => 'meta keyword',
         'meta_description' => 'meta description',
-        'position' => 50,
     ],
 ];
+
+/** @var CategoryLinkManagementInterface $categoryLinkManagement */
+$categoryLinkManagement = $objectManager->create(CategoryLinkManagementInterface::class);
 
 $categoriesToAssign = [];
 
 foreach ($products as $data) {
     /** @var $product Product */
-    $product = Bootstrap::getObjectManager()->create(Product::class);
+    $product = $objectManager->create(Product::class);
     $product
         ->setTypeId($data['type'])
         ->setId($data['id'])
@@ -114,18 +116,12 @@ foreach ($products as $data) {
         ->setMetaDescription($data['meta_keyword'])
         ->setVisibility($data['visibility'])
         ->setStatus($data['status'])
-        ->setStockData(['use_config_manage_stock' => 0])
-        ->save();
+        ->setStockData(['use_config_manage_stock' => 0]);
+    $productRepository->save($product);
 
-    $categoriesToAssign[$data['sku']] = ['category_id' => $data['category_id'], 'position' => $data['position']];
+    $categoriesToAssign[$data['sku']][] = $data['category_id'];
 }
 
-$linkFactory = Bootstrap::getObjectManager()->get(CategoryProductLinkInterfaceFactory::class);
-$categoryLinkRepository = Bootstrap::getObjectManager()->create(CategoryLinkRepositoryInterface::class);
-foreach ($categoriesToAssign as $sku => $categoryData) {
-    $categoryProductLink = $linkFactory->create();
-    $categoryProductLink->setSku($sku);
-    $categoryProductLink->setCategoryId($categoryData['category_id']);
-    $categoryProductLink->setPosition($categoryData['position']);
-    $categoryLinkRepository->save($categoryProductLink);
+foreach ($categoriesToAssign as $sku => $categoryIds) {
+    $categoryLinkManagement->assignProductToCategories($sku, $categoryIds);
 }

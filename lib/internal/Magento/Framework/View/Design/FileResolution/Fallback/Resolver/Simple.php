@@ -6,6 +6,7 @@
 
 namespace Magento\Framework\View\Design\FileResolution\Fallback\Resolver;
 
+use function GuzzleHttp\Psr7\str;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Filesystem\Directory\ReadFactory;
@@ -20,11 +21,15 @@ use Magento\Framework\View\Design\ThemeInterface;
 class Simple implements Fallback\ResolverInterface
 {
     /**
+     * Directory read factory
+     *
      * @var ReadFactory
      */
     protected $readFactory;
 
     /**
+     * Fallback factory
+     *
      * @var RulePool
      */
     protected $rulePool;
@@ -58,7 +63,9 @@ class Simple implements Fallback\ResolverInterface
         if (!empty($module)) {
             $params['module_name'] = $module;
         }
-        return $this->resolveFile($this->rulePool->getRule($type), $file, $params);
+        $path = $this->resolveFile($this->rulePool->getRule($type), $file, $params);
+
+        return $path;
     }
 
     /**
@@ -133,7 +140,7 @@ class Simple implements Fallback\ResolverInterface
     protected function getDirectoryList()
     {
         if (null === $this->directoryList) {
-            $this->directoryList = ObjectManager::getInstance()->get(DirectoryList::class);
+            $this->directoryList = \Magento\Framework\App\ObjectManager::getInstance()->get(DirectoryList::class);
         }
 
         return $this->directoryList;

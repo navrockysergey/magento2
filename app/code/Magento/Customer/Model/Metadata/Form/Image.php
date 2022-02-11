@@ -16,16 +16,15 @@ use Magento\Customer\Model\FileProcessorFactory;
 use Magento\Framework\Api\ArrayObjectSearch;
 use Magento\Framework\Api\Data\ImageContentInterface;
 use Magento\Framework\Api\Data\ImageContentInterfaceFactory;
-use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\File\UploaderFactory;
 use Magento\Framework\Filesystem;
-use Magento\Framework\Filesystem\Directory\ReadInterface;
-use Magento\Framework\Filesystem\Directory\WriteFactory;
 use Magento\Framework\Filesystem\Directory\WriteInterface;
 use Magento\Framework\Filesystem\Io\File as IoFileSystem;
+use Magento\Framework\App\Filesystem\DirectoryList;
+use Magento\Framework\Filesystem\Directory\WriteFactory;
 use Magento\Framework\Locale\ResolverInterface;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Framework\Url\EncoderInterface;
@@ -50,16 +49,13 @@ class Image extends File
     private $ioFileSystem;
 
     /**
-     * @var ReadInterface
-     */
-    private $mediaEntityTmpReadDirectory;
-
-    /**
      * @var WriteInterface
      */
-    private $mediaWriteDirectory;
+    private $mediaEntityTmpDirectory;
 
     /**
+     * Constructor
+     *
      * @param TimezoneInterface $localeDate
      * @param LoggerInterface $logger
      * @param AttributeMetadataInterface $attribute
@@ -77,7 +73,6 @@ class Image extends File
      * @param DirectoryList|null $directoryList
      * @param WriteFactory|null $writeFactory
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      * @throws FileSystemException
      */
     public function __construct(
@@ -116,10 +111,12 @@ class Image extends File
             ->get(ImageContentInterfaceFactory::class);
         $this->ioFileSystem = $ioFileSystem ?: ObjectManager::getInstance()
             ->get(IoFileSystem::class);
-        $this->mediaWriteDirectory = $fileSystem->getDirectoryWrite(DirectoryList::MEDIA);
-        $this->mediaEntityTmpReadDirectory = $fileSystem->getDirectoryReadByPath(
-            $this->mediaWriteDirectory->getAbsolutePath() . $this->_entityTypeCode
-            . DIRECTORY_SEPARATOR . FileProcessor::TMP_DIR . DIRECTORY_SEPARATOR
+        $writeFactory = $writeFactory ?? ObjectManager::getInstance()->get(WriteFactory::class);
+        $directoryList = $directoryList ?? ObjectManager::getInstance()->get(DirectoryList::class);
+        $this->mediaEntityTmpDirectory = $writeFactory->create(
+            $directoryList->getPath($directoryList::MEDIA)
+            . '/' . $this->_entityTypeCode
+            . '/' . FileProcessor::TMP_DIR
         );
     }
 
@@ -140,7 +137,6 @@ class Image extends File
         $rules = $this->getAttribute()->getValidationRules();
 
         try {
-            // phpcs:ignore Magento2.Functions.DiscouragedFunction
             $imageProp = getimagesize($value['tmp_name']);
         } catch (\Throwable $e) {
             $imageProp = false;
@@ -211,11 +207,13 @@ class Image extends File
     protected function processUiComponentValue(array $value)
     {
         if ($this->_entityTypeCode == AddressMetadataInterface::ENTITY_TYPE_ADDRESS) {
-            return $this->processCustomerAddressValue($value);
+            $result = $this->processCustomerAddressValue($value);
+            return $result;
         }
 
         if ($this->_entityTypeCode == CustomerMetadataInterface::ENTITY_TYPE_CUSTOMER) {
-            return $this->processCustomerValue($value);
+            $result = $this->processCustomerValue($value);
+            return $result;
         }
 
         return $this->_value;
@@ -230,10 +228,10 @@ class Image extends File
      */
     protected function processCustomerAddressValue(array $value)
     {
-        $fileName = $this->mediaWriteDirectory
+        $fileName = $this->mediaEntityTmpDirectory
             ->getDriver()
             ->getRealPathSafety(
-                $this->mediaEntityTmpReadDirectory->getAbsolutePath(
+                $this->mediaEntityTmpDirectory->getAbsolutePath(
                     ltrim(
                         $value['file'],
                         '/'
@@ -241,7 +239,7 @@ class Image extends File
                 )
             );
         return $this->getFileProcessor()->moveTemporaryFile(
-            $this->mediaEntityTmpReadDirectory->getRelativePath($fileName)
+            $this->mediaEntityTmpDirectory->getRelativePath($fileName)
         );
     }
 
@@ -255,7 +253,7 @@ class Image extends File
     protected function processCustomerValue(array $value)
     {
         $file = ltrim($value['file'], '/');
-        if ($this->mediaEntityTmpReadDirectory->isExist($file)) {
+        if ($this->mediaEntityTmpDirectory->isExist($file)) {
             $temporaryFile = FileProcessor::TMP_DIR . '/' . $file;
             $base64EncodedData = $this->getFileProcessor()->getBase64EncodedData($temporaryFile);
             /** @var ImageContentInterface $imageContentDataObject */
@@ -269,6 +267,6 @@ class Image extends File
             return $imageContentDataObject;
         }
 
-        return $this->_value ?: $value['file'];
+        return $this->_value;
     }
 }

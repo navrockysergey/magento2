@@ -25,6 +25,7 @@ use Magento\Vault\Model\VaultPaymentInterface;
 
 /**
  * Provide tokens config
+ * @api
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.CookieAndSessionMisuse)
  *
@@ -227,7 +228,7 @@ class TokensConfigProvider
      */
     private function getVaultPayment($vaultPaymentCode)
     {
-        $storeId = $this->session->getStoreId() ?? $this->storeManager->getStore()->getId();
+        $storeId = $this->storeManager->getStore()->getId();
         $vaultPayment = $this->getPaymentDataHelper()->getMethodInstance($vaultPaymentCode);
         return $vaultPayment->isActive($storeId) ? $vaultPayment : null;
     }

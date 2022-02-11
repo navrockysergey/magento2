@@ -30,12 +30,11 @@ class Concat extends \Magento\Backend\Block\Widget\Grid\Column\Renderer\Abstract
                 && is_callable([$row, $method])
                 && substr_compare('get', $method, 1, 3) !== 0
             ) {
-                //phpcs:ignore Magento2.Functions.DiscouragedFunction
                 $data = call_user_func([$row, $method]);
             } else {
                 $data = $row->getData($method);
             }
-            if (strlen((string) $data) > 0) {
+            if (strlen($data) > 0) {
                 $dataArr[] = $data;
             }
         }

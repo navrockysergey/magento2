@@ -10,17 +10,14 @@ namespace Magento\Wishlist\Controller\Shared;
 
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
-use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\App\Action\HttpPostActionInterface;
-use Magento\Framework\Controller\Result\Forward;
-use Magento\Framework\Controller\Result\Redirect;
-use Magento\Framework\Controller\ResultFactory;
 use Magento\Wishlist\Model\ItemCarrier;
+use Magento\Framework\Controller\ResultFactory;
 
 /**
  * Wishlist Allcart Controller
  */
-class Allcart extends Action implements HttpGetActionInterface, HttpPostActionInterface
+class Allcart extends Action implements HttpPostActionInterface
 {
     /**
      * @var WishlistProvider
@@ -28,7 +25,7 @@ class Allcart extends Action implements HttpGetActionInterface, HttpPostActionIn
     protected $wishlistProvider;
 
     /**
-     * @var ItemCarrier
+     * @var \Magento\Wishlist\Model\ItemCarrier
      */
     protected $itemCarrier;
 
@@ -50,22 +47,21 @@ class Allcart extends Action implements HttpGetActionInterface, HttpPostActionIn
     /**
      * Add all items from wishlist to shopping cart
      *
-     * {@inheritDoc}
+     * @return \Magento\Framework\Controller\ResultInterface
      */
     public function execute()
     {
         $wishlist = $this->wishlistProvider->getWishlist();
         if (!$wishlist) {
-            /** @var Forward $resultForward */
+            /** @var \Magento\Framework\Controller\Result\Forward $resultForward */
             $resultForward = $this->resultFactory->create(ResultFactory::TYPE_FORWARD);
             $resultForward->forward('noroute');
             return $resultForward;
         }
         $redirectUrl = $this->itemCarrier->moveAllToCart($wishlist, $this->getRequest()->getParam('qty'));
-        /** @var Redirect $resultRedirect */
+        /** @var \Magento\Framework\Controller\Result\Redirect $resultRedirect */
         $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
         $resultRedirect->setUrl($redirectUrl);
-
         return $resultRedirect;
     }
 }

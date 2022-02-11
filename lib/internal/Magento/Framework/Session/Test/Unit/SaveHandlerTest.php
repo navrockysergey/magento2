@@ -119,33 +119,16 @@ class SaveHandlerTest extends TestCase
         $this->assertTrue($this->saveHandler->write("test_session_id", "testdata"));
     }
 
-    public function testWriteMoreThanSessionMaxSize(): void
+    public function testWriteMoreThanSessionMaxSize()
     {
-        $this->sessionMaxSizeConfigMock
-            ->expects($this->once())
+        $this->sessionMaxSizeConfigMock->expects($this->once())
             ->method('getSessionMaxSize')
             ->willReturn(1);
 
-        $this->saveHandlerAdapterMock
-            ->expects($this->never())
-            ->method('read');
+        $this->saveHandlerAdapterMock->expects($this->once())
+            ->method('read')
+            ->with('test_session_id');
 
         $this->assertTrue($this->saveHandler->write("test_session_id", "testdata"));
-    }
-    
-    public function testReadMoreThanSessionMaxSize(): void
-    {
-        $this->sessionMaxSizeConfigMock
-            ->expects($this->once())
-            ->method('getSessionMaxSize')
-            ->willReturn(1);
-
-        $this->saveHandlerAdapterMock
-            ->expects($this->once())
-            ->method('read')
-            ->with('test_session_id')
-            ->willReturn('test_session_data');
-
-        $this->assertEquals(null, $this->saveHandler->read("test_session_id"));
     }
 }

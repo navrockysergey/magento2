@@ -15,31 +15,27 @@
             <testCaseId value="MC-14702"/>
             <severity value="CRITICAL"/>
             <group value="mtf_migrated"/>
-            <group value="pr_exclude"/>
         </annotations>
 
         <before>
-            <actionGroup ref="AdminLoginActionGroup" stepKey="loginToAdminPanel"/>
+            <actionGroup ref="LoginAsAdmin" stepKey="loginToAdminPanel"/>
             <createData entity="SimpleSubCategory" stepKey="category"/>
         </before>
         <after>
             <deleteData createDataKey="category" stepKey="deleteCategory"/>
-            <actionGroup ref="AdminLogoutActionGroup" stepKey="logout"/>
+            <actionGroup ref="logout" stepKey="logout"/>
         </after>
 
         <!-- Open Category Page and select Add category -->
-        <actionGroup ref="GoToCreateCategoryPageActionGroup" stepKey="goToCategoryPage"/>
+        <actionGroup ref="goToCreateCategoryPage" stepKey="goToCategoryPage"/>
 
         <!-- Fill the Category form with same name and urlKey as initially created category(SimpleSubCategory) -->
-        <actionGroup ref="FillCategoryNameAndUrlKeyAndSaveActionGroup" stepKey="fillCategoryForm">
+        <actionGroup ref="FillCategoryNameAndUrlKeyAndSave" stepKey="fillCategoryForm">
              <argument name="categoryName" value="$$category.name$$"/>
              <argument name="categoryUrlKey" value="$$category.custom_attributes[url_key]$$"/>
         </actionGroup>
 
         <!-- Assert error message -->
-        <actionGroup ref="AssertMessageInAdminPanelActionGroup" stepKey="seeErrorMessage">
-            <argument name="messageType" value="error"/>
-            <argument name="message" value="The value specified in the URL Key field would generate a URL that already exists."/>
-        </actionGroup>
+        <see selector="{{AdminCategoryMessagesSection.errorMessage}}" userInput="The value specified in the URL Key field would generate a URL that already exists." stepKey="seeErrorMessage"/>
     </test>
 </tests>

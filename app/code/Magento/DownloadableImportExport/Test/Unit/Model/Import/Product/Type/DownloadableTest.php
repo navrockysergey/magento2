@@ -3,62 +3,40 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
 
 namespace Magento\DownloadableImportExport\Test\Unit\Model\Import\Product\Type;
 
-use Magento\CatalogImportExport\Model\Import\Product;
-use Magento\CatalogImportExport\Model\Import\Uploader;
 use Magento\Downloadable\Model\Url\DomainValidator;
-use Magento\DownloadableImportExport\Helper\Data;
-use Magento\DownloadableImportExport\Model\Import\Product\Type\Downloadable;
-use Magento\Eav\Model\ResourceModel\Entity\Attribute\Set\Collection;
-use Magento\Eav\Model\ResourceModel\Entity\Attribute\Set\CollectionFactory;
-use Magento\Framework\App\ResourceConnection;
-use Magento\Framework\DB\Adapter\Pdo\Mysql;
-use Magento\Framework\DB\Select;
-use Magento\Framework\EntityManager\MetadataPool;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Filesystem\Directory\Write;
-use Magento\Framework\Phrase;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManager;
-use Magento\ImportExport\Test\Unit\Model\Import\AbstractImportTestCase;
-use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * Class DownloadableTest for downloadable products import
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class DownloadableTest extends AbstractImportTestCase
+class DownloadableTest extends \Magento\ImportExport\Test\Unit\Model\Import\AbstractImportTestCase
 {
-    /**
-     * @var ObjectManager|Downloadable
-     */
+    /** @var ObjectManager|\Magento\DownloadableImportExport\Model\Import\Product\Type\Downloadable */
     protected $downloadableModelMock;
 
-    /**
-     * @var Mysql|MockObject
-     */
+    /** @var \Magento\Framework\DB\Adapter\Pdo\Mysql|\PHPUnit\Framework\MockObject\MockObject */
     protected $connectionMock;
 
-    /**
-     * @var Select|MockObject
-     */
+    /** @var \Magento\Framework\DB\Select|\PHPUnit\Framework\MockObject\MockObject */
     protected $select;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $attrSetColFacMock;
 
     /**
-     * @var Collection|MockObject
+     * @var \Magento\Eav\Model\ResourceModel\Entity\Attribute\Set\Collection|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $attrSetColMock;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $prodAttrColFacMock;
 
@@ -68,47 +46,37 @@ class DownloadableTest extends AbstractImportTestCase
     private $domainValidator;
 
     /**
-     * @var \Magento\Catalog\Model\ResourceModel\Product\Attribute\Collection|MockObject
+     * @var \Magento\Catalog\Model\ResourceModel\Product\Attribute\Collection|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $prodAttrColMock;
 
-    /**
-     * @var ResourceConnection|MockObject
-     */
+    /** @var \Magento\Framework\App\ResourceConnection|\PHPUnit\Framework\MockObject\MockObject */
     protected $resourceMock;
 
-    /**
-     * @var \Magento\CatalogImportExport\Model\Import\Product|MockObject
-     */
+    /** @var \Magento\CatalogImportExport\Model\Import\Product|\PHPUnit\Framework\MockObject\MockObject */
     protected $entityModelMock;
 
-    /**
-     * @var array|mixed
-     */
+    /** @var array|mixed */
     protected $paramsArray;
 
-    /**
-     * @var Uploader|MockObject
-     */
+    /** @var \Magento\CatalogImportExport\Model\Import\Uploader|\PHPUnit\Framework\MockObject\MockObject */
     protected $uploaderMock;
 
-    /**
-     * @var Write|MockObject
-     */
+    /** @var \Magento\Framework\Filesystem\Directory\Write|\PHPUnit\Framework\MockObject\MockObject */
     protected $directoryWriteMock;
 
     /**
-     * @var MockObject
+     * @var |\PHPUnit\Framework\MockObject\MockObject
      */
     protected $uploaderHelper;
 
     /**
-     * @var MockObject
+     * @var |\PHPUnit\Framework\MockObject\MockObject
      */
     protected $downloadableHelper;
 
     /**
-     * @inheritDoc
+     * Set up
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
     protected function setUp(): void
@@ -116,18 +84,15 @@ class DownloadableTest extends AbstractImportTestCase
         parent::setUp();
 
         //connection and sql query results
-        $this->connectionMock = $this->getMockBuilder(Mysql::class)
-            ->addMethods(['joinLeft'])
-            ->onlyMethods(
-                ['select', 'fetchAll', 'fetchPairs', 'insertOnDuplicate', 'delete', 'quoteInto', 'fetchAssoc']
-            )
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->select = $this->createMock(Select::class);
+        $this->connectionMock = $this->createPartialMock(
+            \Magento\Framework\DB\Adapter\Pdo\Mysql::class,
+            ['select', 'fetchAll', 'fetchPairs', 'joinLeft', 'insertOnDuplicate', 'delete', 'quoteInto', 'fetchAssoc']
+        );
+        $this->select = $this->createMock(\Magento\Framework\DB\Select::class);
         $this->select->expects($this->any())->method('from')->willReturnSelf();
         $this->select->expects($this->any())->method('where')->willReturnSelf();
         $this->select->expects($this->any())->method('joinLeft')->willReturnSelf();
-        $adapter = $this->createMock(Mysql::class);
+        $adapter = $this->createMock(\Magento\Framework\DB\Adapter\Pdo\Mysql::class);
         $adapter->expects($this->any())->method('quoteInto')->willReturn('query');
         $this->select->expects($this->any())->method('getAdapter')->willReturn($adapter);
         $this->connectionMock->expects($this->any())->method('select')->willReturn($this->select);
@@ -139,11 +104,11 @@ class DownloadableTest extends AbstractImportTestCase
         //constructor arguments:
         // 1. $attrSetColFac
         $this->attrSetColFacMock = $this->createPartialMock(
-            CollectionFactory::class,
+            \Magento\Eav\Model\ResourceModel\Entity\Attribute\Set\CollectionFactory::class,
             ['create']
         );
         $this->attrSetColMock = $this->createPartialMock(
-            Collection::class,
+            \Magento\Eav\Model\ResourceModel\Entity\Attribute\Set\Collection::class,
             ['setEntityTypeFilter']
         );
         $this->attrSetColMock
@@ -164,7 +129,7 @@ class DownloadableTest extends AbstractImportTestCase
 
         // 3. $resource
         $this->resourceMock = $this->createPartialMock(
-            ResourceConnection::class,
+            \Magento\Framework\App\ResourceConnection::class,
             ['getConnection', 'getTableName']
         );
         $this->resourceMock->expects($this->any())->method('getConnection')->willReturn(
@@ -175,16 +140,16 @@ class DownloadableTest extends AbstractImportTestCase
         );
 
         // 4. $params
-        $this->entityModelMock = $this->createPartialMock(Product::class, [
-            'addMessageTemplate',
-            'getEntityTypeId',
-            'getBehavior',
-            'getNewSku',
-            'getNextBunch',
-            'isRowAllowedToImport',
-            'getParameters',
-            'addRowError'
-        ]);
+        $this->entityModelMock = $this->createPartialMock(\Magento\CatalogImportExport\Model\Import\Product::class, [
+                'addMessageTemplate',
+                'getEntityTypeId',
+                'getBehavior',
+                'getNewSku',
+                'getNextBunch',
+                'isRowAllowedToImport',
+                'getParameters',
+                'addRowError'
+            ]);
 
         $this->entityModelMock->expects($this->any())->method('addMessageTemplate')->willReturnSelf();
         $this->entityModelMock->expects($this->any())->method('getEntityTypeId')->willReturn(5);
@@ -195,12 +160,12 @@ class DownloadableTest extends AbstractImportTestCase
         ];
 
         $this->uploaderMock = $this->createPartialMock(
-            Uploader::class,
+            \Magento\CatalogImportExport\Model\Import\Uploader::class,
             ['move', 'setTmpDir', 'setDestDir']
         );
 
         // 6. $filesystem
-        $this->directoryWriteMock = $this->createMock(Write::class);
+        $this->directoryWriteMock = $this->createMock(\Magento\Framework\Filesystem\Directory\Write::class);
 
         // 7. $fileHelper
         $this->uploaderHelper = $this->createPartialMock(
@@ -209,22 +174,20 @@ class DownloadableTest extends AbstractImportTestCase
         );
         $this->uploaderHelper->expects($this->any())->method('getUploader')->willReturn($this->uploaderMock);
         $this->downloadableHelper = $this->createPartialMock(
-            Data::class,
+            \Magento\DownloadableImportExport\Helper\Data::class,
             ['prepareDataForSave', 'fillExistOptions']
         );
         $this->downloadableHelper->expects($this->any())->method('prepareDataForSave')->willReturn([]);
     }
 
     /**
-     * @return void
      * @dataProvider dataForSave
      */
-    public function testSaveDataAppend($newSku, $bunch, $allowImport, $fetchResult): void
+    public function testSaveDataAppend($newSku, $bunch, $allowImport, $fetchResult)
     {
         $this->entityModelMock->expects($this->once())->method('getNewSku')->willReturn($newSku);
-        $this->entityModelMock
-            ->method('getNextBunch')
-            ->willReturnOnConsecutiveCalls(null, $bunch, null);
+        $this->entityModelMock->expects($this->at(1))->method('getNextBunch')->willReturn($bunch);
+        $this->entityModelMock->expects($this->at(2))->method('getNextBunch')->willReturn(null);
         $this->entityModelMock->expects($this->any())->method('isRowAllowedToImport')->willReturn($allowImport);
 
         $this->uploaderMock->expects($this->any())->method('setTmpDir')->willReturn(true);
@@ -236,12 +199,12 @@ class DownloadableTest extends AbstractImportTestCase
             [
                 [
                     'attribute_set_name' => '1',
-                    'attribute_id' => '1'
+                    'attribute_id' => '1',
                 ],
                 [
                     'attribute_set_name' => '2',
-                    'attribute_id' => '2'
-                ]
+                    'attribute_id' => '2',
+                ],
             ],
             $fetchResult['sample'],
             $fetchResult['sample'],
@@ -250,7 +213,7 @@ class DownloadableTest extends AbstractImportTestCase
         ));
 
         $downloadableModelMock = $this->objectManagerHelper->getObject(
-            Downloadable::class,
+            \Magento\DownloadableImportExport\Model\Import\Product\Type\Downloadable::class,
             [
                 'attrSetColFac' => $this->attrSetColFacMock,
                 'prodAttrColFac' => $this->prodAttrColFacMock,
@@ -265,12 +228,12 @@ class DownloadableTest extends AbstractImportTestCase
     }
 
     /**
-     * Data for method testSaveDataAppend.
+     * Data for method testSaveDataAppend
      *
      * @return array
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    public function dataForSave(): array
+    public function dataForSave()
     {
         return [
             [
@@ -279,8 +242,8 @@ class DownloadableTest extends AbstractImportTestCase
                         'entity_id' => '25',
                         'type_id' => 'downloadable',
                         'attr_set_id' => '4',
-                        'attr_set_code' => 'Default'
-                    ]
+                        'attr_set_code' => 'Default',
+                    ],
                 ],
                 'bunch' => [
                     [
@@ -291,8 +254,8 @@ class DownloadableTest extends AbstractImportTestCase
                             . ',sortorder=1|group_title=Group Title, title=Title 2, url=media/file2.mp4,sortorder=0',
                         'downloadable_links' => 'group_title=Group Title Links, title=Title 1, price=10,'
                             . ' downloads=unlimited, file=media/file_link.mp4,sortorder=1|group_title=Group Title,'
-                            . 'title=Title 2, price=10, downloads=unlimited, url=media/file2.mp4,sortorder=0'
-                    ]
+                            . 'title=Title 2, price=10, downloads=unlimited, url=media/file2.mp4,sortorder=0',
+                    ],
                 ],
                 'allowImport' => true,
                 [
@@ -303,7 +266,7 @@ class DownloadableTest extends AbstractImportTestCase
                             'sample_url' => null,
                             'sample_file' => '',
                             'sample_type' => 'file',
-                            'sort_order' => '1'
+                            'sort_order' => '1',
                         ],
                         [
                             'sample_id' => '66',
@@ -311,7 +274,7 @@ class DownloadableTest extends AbstractImportTestCase
                             'sample_url' => 'media/file2.mp4',
                             'sample_file' => null,
                             'sample_type' => 'url',
-                            'sort_order' => '0'
+                            'sort_order' => '0',
                         ]
                     ],
                     'link' => [
@@ -326,7 +289,7 @@ class DownloadableTest extends AbstractImportTestCase
                             'link_type' => 'file',
                             'sample_url' => null,
                             'sample_file' => null,
-                            'sample_type' => null
+                            'sample_type' => null,
                         ],
                         [
                             'link_id' => '66',
@@ -339,7 +302,7 @@ class DownloadableTest extends AbstractImportTestCase
                             'link_type' => 'url',
                             'sample_url' => null,
                             'sample_file' => null,
-                            'sample_type' => null
+                            'sample_type' => null,
                         ]
                     ]
                 ]
@@ -350,8 +313,8 @@ class DownloadableTest extends AbstractImportTestCase
                         'entity_id' => '25',
                         'type_id' => 'downloadable',
                         'attr_set_id' => '4',
-                        'attr_set_code' => 'Default'
-                    ]
+                        'attr_set_code' => 'Default',
+                    ],
                 ],
                 'bunch' => [
                     [
@@ -362,8 +325,8 @@ class DownloadableTest extends AbstractImportTestCase
                             . ',sortorder=1|group_title=Group Title, title=Title 2, url=media/file2.mp4,sortorder=0',
                         'downloadable_links' => 'group_title=Group Title Links, title=Title 1, price=10,'
                             . ' downloads=unlimited, file=media/file_link.mp4,sortorder=1|group_title=Group Title, '
-                            . 'title=Title 2, price=10, downloads=unlimited, url=media/file2.mp4,sortorder=0'
-                    ]
+                            . 'title=Title 2, price=10, downloads=unlimited, url=media/file2.mp4,sortorder=0',
+                    ],
                 ],
                 'allowImport' => false,
                 ['sample' => [], 'link' => []]
@@ -374,8 +337,8 @@ class DownloadableTest extends AbstractImportTestCase
                         'entity_id' => '25',
                         'type_id' => 'simple',
                         'attr_set_id' => '4',
-                        'attr_set_code' => 'Default'
-                    ]
+                        'attr_set_code' => 'Default',
+                    ],
                 ],
                 'bunch' => [
                     [
@@ -386,8 +349,8 @@ class DownloadableTest extends AbstractImportTestCase
                             . 'sortorder=1|group_title=Group Title, title=Title 2, url=media/file2.mp4,sortorder=0',
                         'downloadable_links' => 'group_title=Group Title Links, title=Title 1, price=10,'
                             . ' downloads=unlimited, file=media/file_link.mp4,sortorder=1|group_title=Group Title,'
-                            . ' title=Title 2, price=10, downloads=unlimited, url=media/file2.mp4,sortorder=0'
-                    ]
+                            . ' title=Title 2, price=10, downloads=unlimited, url=media/file2.mp4,sortorder=0',
+                    ],
                 ],
                 'allowImport' => true,
                 ['sample' => [], 'link' => []]
@@ -398,8 +361,8 @@ class DownloadableTest extends AbstractImportTestCase
                         'entity_id' => '25',
                         'type_id' => 'downloadable',
                         'attr_set_id' => '4',
-                        'attr_set_code' => 'Default'
-                    ]
+                        'attr_set_code' => 'Default',
+                    ],
                 ],
                 'bunch' => [
                     [
@@ -410,8 +373,8 @@ class DownloadableTest extends AbstractImportTestCase
                             . 'sortorder=1|group_title=Group Title, title=Title 2, url=media/file2.mp4,sortorder=0',
                         'downloadable_links' => 'group_title=Group Title Links, title=Title 1, price=10,'
                             . ' downloads=unlimited, file=media/file_link.mp4,sortorder=1|group_title=Group Title,'
-                            . ' title=Title 2, price=10, downloads=unlimited, url=media/file2.mp4,sortorder=0'
-                    ]
+                            . ' title=Title 2, price=10, downloads=unlimited, url=media/file2.mp4,sortorder=0',
+                    ],
                 ],
                 'allowImport' => true,
                 [
@@ -422,7 +385,7 @@ class DownloadableTest extends AbstractImportTestCase
                             'sample_url' => null,
                             'sample_file' => '',
                             'sample_type' => 'file',
-                            'sort_order' => '1'
+                            'sort_order' => '1',
                         ],
                         [
                             'sample_id' => '66',
@@ -430,7 +393,7 @@ class DownloadableTest extends AbstractImportTestCase
                             'sample_url' => 'media/some_another_file.mp4',
                             'sample_file' => null,
                             'sample_type' => 'url',
-                            'sort_order' => '0'
+                            'sort_order' => '0',
                         ]
                     ],
                     'link' => [
@@ -445,7 +408,7 @@ class DownloadableTest extends AbstractImportTestCase
                             'link_type' => 'file',
                             'sample_url' => null,
                             'sample_file' => null,
-                            'sample_type' => null
+                            'sample_type' => null,
                         ],
                         [
                             'link_id' => '66',
@@ -458,7 +421,7 @@ class DownloadableTest extends AbstractImportTestCase
                             'link_type' => 'url',
                             'sample_url' => null,
                             'sample_file' => null,
-                            'sample_type' => null
+                            'sample_type' => null,
                         ]
                     ]
                 ]
@@ -469,8 +432,8 @@ class DownloadableTest extends AbstractImportTestCase
                         'entity_id' => '25',
                         'type_id' => 'downloadable',
                         'attr_set_id' => '4',
-                        'attr_set_code' => 'Default'
-                    ]
+                        'attr_set_code' => 'Default',
+                    ],
                 ],
                 'bunch' => [
                     [
@@ -482,8 +445,8 @@ class DownloadableTest extends AbstractImportTestCase
                         'downloadable_links' => 'group_title=Group Title, title=Title 2, price=10, downloads=unlimited,'
                             . ' url=http://www.sample.com/pic.jpg,sortorder=0,sample=http://www.sample.com/pic.jpg,'
                             . 'purchased_separately=1,shareable=1|group_title=Group Title, title=Title 2, price=10, '
-                            . 'downloads=unlimited, url=media/file2.mp4,sortorder=0,sample=media/file2mp4'
-                    ]
+                            . 'downloads=unlimited, url=media/file2.mp4,sortorder=0,sample=media/file2mp4',
+                    ],
                 ],
                 'allowImport' => true,
                 [
@@ -494,7 +457,7 @@ class DownloadableTest extends AbstractImportTestCase
                             'sample_url' => null,
                             'sample_file' => '',
                             'sample_type' => 'file',
-                            'sort_order' => '1'
+                            'sort_order' => '1',
                         ],
                         [
                             'sample_id' => '66',
@@ -502,7 +465,7 @@ class DownloadableTest extends AbstractImportTestCase
                             'sample_url' => 'media/file2.mp4',
                             'sample_file' => null,
                             'sample_type' => 'url',
-                            'sort_order' => '0'
+                            'sort_order' => '0',
                         ]
                     ],
                     'link' => [
@@ -517,7 +480,7 @@ class DownloadableTest extends AbstractImportTestCase
                             'link_type' => 'url',
                             'sample_url' => 'http://www.sample.com/pic.jpg',
                             'sample_file' => null,
-                            'sample_type' => 'url'
+                            'sample_type' => 'url',
                         ],
                         [
                             'link_id' => '66',
@@ -530,19 +493,18 @@ class DownloadableTest extends AbstractImportTestCase
                             'link_type' => 'url',
                             'sample_url' => null,
                             'sample_file' => 'f/i/file.png',
-                            'sample_type' => 'file'
+                            'sample_type' => 'file',
                         ]
                     ]
                 ]
-            ]
+            ],
         ];
     }
 
     /**
-     * @return void
      * @dataProvider isRowValidData
      */
-    public function testIsRowValid(array $rowData, $rowNum, $isNewProduct, $isDomainValid, $expectedResult): void
+    public function testIsRowValid(array $rowData, $rowNum, $isNewProduct, $isDomainValid, $expectedResult)
     {
         $this->connectionMock->expects($this->any())->method('fetchAll')->with(
             $this->select
@@ -550,12 +512,12 @@ class DownloadableTest extends AbstractImportTestCase
             [
                 [
                     'attribute_set_name' => '1',
-                    'attribute_id' => '1'
+                    'attribute_id' => '1',
                 ],
                 [
                     'attribute_set_name' => '2',
-                    'attribute_id' => '2'
-                ]
+                    'attribute_id' => '2',
+                ],
             ]
         );
 
@@ -566,7 +528,7 @@ class DownloadableTest extends AbstractImportTestCase
             ->willReturn($isDomainValid);
 
         $this->downloadableModelMock = $this->objectManagerHelper->getObject(
-            Downloadable::class,
+            \Magento\DownloadableImportExport\Model\Import\Product\Type\Downloadable::class,
             [
                 'attrSetColFac' => $this->attrSetColFacMock,
                 'prodAttrColFac' => $this->prodAttrColFacMock,
@@ -582,16 +544,16 @@ class DownloadableTest extends AbstractImportTestCase
     }
 
     /**
-     * Data for method testIsRowValid.
+     * Data for method testIsRowValid
      *
      * @return array
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    public function isRowValidData(): array
+    public function isRowValidData()
     {
         return [
             [
-                'row_data' => [
+                [
                     'sku' => 'downloadablesku1',
                     'product_type' => 'downloadable',
                     'name' => 'Downloadable Product 1',
@@ -599,15 +561,15 @@ class DownloadableTest extends AbstractImportTestCase
                         . 'sortorder=1|group_title=Group Title, title=Title 2, url=media/file2.mp4,sortorder=0',
                     'downloadable_links' => 'group_title=Group Title Links, title=Title 1, price=10, '
                         . 'downloads=unlimited, file=media/file_link.mp4,sortorder=1|group_title=Group Title, '
-                        . 'title=Title 2, price=10, downloads=unlimited, url=media/file2.mp4,sortorder=0'
+                        . 'title=Title 2, price=10, downloads=unlimited, url=media/file2.mp4,sortorder=0',
                 ],
-                'row_num' => 0,
-                'is_new_product' => true,
-                'is_domain_valid' => true,
-                'expected_result' => true
+                0,
+                true,
+                true,
+                true
             ],
             [
-                'row_data' => [
+                [
                     'sku' => 'downloadablesku12',
                     'product_type' => 'downloadable',
                     'name' => 'Downloadable Product 2',
@@ -615,31 +577,31 @@ class DownloadableTest extends AbstractImportTestCase
                         . ',sortorder=1|group_title=Group Title, title=Title 2, url=media/file2.mp4,sortorder=0',
                     'downloadable_links' => 'group_title=Group Title Links, title=Title 1, price=10,'
                         . ' downloads=unlimited, file=media/file.mp4,sortorder=1|group_title=Group Title,'
-                        . ' title=Title 2, price=10, downloads=unlimited, url=media/file2.mp4,sortorder=0'
+                        . ' title=Title 2, price=10, downloads=unlimited, url=media/file2.mp4,sortorder=0',
                 ],
-                'row_num' => 1,
-                'is_new_product' => true,
-                'is_domain_valid' => true,
-                'expected_result' => true
+                1,
+                true,
+                true,
+                true
             ],
             [
-                'row_data' => [
+                [
                     'sku' => 'downloadablesku12',
                     'product_type' => 'downloadable',
                     'name' => 'Downloadable Product 2',
-                    'downloadable_samples' => 'group_title=Group Title Samples, title=Title 1, file=media/file.mp4'
-                        . ',sortorder=1|group_title=Group Title, title=Title 2, url=media/file2.mp4,sortorder=0',
-                    'downloadable_links' => 'group_title=Group Title Links, title=Title 1, price=10,'
-                        . ' downloads=unlimited, file=media/file.mp4,sortorder=1|group_title=Group Title,'
-                        . ' title=Title 2, price=10, downloads=unlimited, url=media/file2.mp4,sortorder=0'
+                    'downloadable_samples' => 'title=Title 1, file=media/file.mp4,sortorder=1|title=Title 2,'
+                        . ' url=media/file2.mp4,sortorder=0',
+                    'downloadable_links' => 'title=Title 1, price=10, downloads=unlimited, file=media/file.mp4,'
+                        . 'sortorder=1|group_title=Group Title, title=Title 2, price=10, downloads=unlimited,'
+                        . ' url=media/file2.mp4,sortorder=0',
                 ],
-                'row_num' => 3,
-                'is_new_product' => true,
-                'is_domain_valid' => true,
-                'expected_result' => true
+                3,
+                true,
+                true,
+                true
             ],
             [
-                'row_data' => [
+                [
                     'sku' => 'downloadablesku12',
                     'product_type' => 'downloadable',
                     'name' => 'Downloadable Product 2',
@@ -647,87 +609,83 @@ class DownloadableTest extends AbstractImportTestCase
                         ' group_title=Group Title, url=media/file2.mp4,sortorder=0',
                     'downloadable_links' => 'title=Title 1, price=10, downloads=unlimited, file=media/file.mp4,'
                         . 'sortorder=1|group_title=Group Title, title=Title 2, price=10, downloads=unlimited,'
-                        . ' url=media/file2.mp4,sortorder=0'
+                        . ' url=media/file2.mp4,sortorder=0',
                 ],
-                'row_num' => 4,
-                'is_new_product' => true,
-                'is_domain_valid' => true,
-                'expected_result' => true
+                4,
+                true,
+                true,
+                true
             ],
             [ //empty group title samples
-                'row_data' => [
+                [
                     'sku' => 'downloadablesku12',
                     'product_type' => 'downloadable',
                     'name' => 'Downloadable Product 2',
-                    'downloadable_samples' => 'group_title=Group Title Samples, title=Title 1, file=media/file.mp4'
-                        . ',sortorder=1|group_title=Group Title, title=Title 2, url=media/file2.mp4,sortorder=0',
+                    'downloadable_samples' => 'group_title=, title=Title 1, file=media/file.mp4,sortorder=1'
+                        . '|group_title=, title=Title 2, url=media/file2.mp4,sortorder=0',
                     'downloadable_links' => 'group_title=Group Title Links, title=Title 1, price=10,'
-                        . ' downloads=unlimited, file=media/file.mp4,sortorder=1|group_title=Group Title,'
-                        . ' title=Title 2, price=10, downloads=unlimited, url=media/file2.mp4,sortorder=0'
+                        . ' downloads=unlimited, file=media/file_link.mp4,sortorder=1|group_title=Group Title,'
+                        . ' title=Title 2, price=10, downloads=unlimited, url=media/file2.mp4,sortorder=0',
                 ],
-                'row_num' => 5,
-                'is_new_product' => true,
-                'is_domain_valid' => true,
-                'expected_result' => true
+                5,
+                true,
+                true,
+                true
             ],
             [ //empty group title links
-                'row_data' => [
+                [
                     'sku' => 'downloadablesku12',
                     'product_type' => 'downloadable',
                     'name' => 'Downloadable Product 2',
-                    'downloadable_samples' => 'group_title=Group Title Samples, title=Title 1, file=media/file.mp4'
-                        . ',sortorder=1|group_title=Group Title, title=Title 2, url=media/file2.mp4,sortorder=0',
-                    'downloadable_links' => 'group_title=Group Title Links, title=Title 1, price=10,'
-                        . ' downloads=unlimited, file=media/file.mp4,sortorder=1|group_title=Group Title,'
-                        . ' title=Title 2, price=10, downloads=unlimited, url=media/file2.mp4,sortorder=0'
+                    'downloadable_samples' => 'group_title=Group Title Samples, title=Title 1, file=media/file.mp4,'
+                        . 'sortorder=1|group_title=Group Title, title=Title 2, url=media/file2.mp4,sortorder=0',
+                    'downloadable_links' => 'group_title=, title=Title 1, price=10, downloads=unlimited, '
+                        . 'file=media/file_link.mp4,sortorder=1|group_title=, title=Title 2, price=10, '
+                        . 'downloads=unlimited, url=media/file2.mp4,sortorder=0',
                 ],
-                'row_num' => 6,
-                'is_new_product' => true,
-                'is_domain_valid' => true,
-                'expected_result' => true
+                6,
+                true,
+                true,
+                true
             ],
             [
-                'row_data' => [
+                [
                     'sku' => 'downloadablesku12',
                     'product_type' => 'downloadable',
-                    'name' => 'Downloadable Product 2'
+                    'name' => 'Downloadable Product 2',
                 ],
-                'row_num' => 2,
-                'is_new_product' => false,
-                'is_domain_valid' => true,
-                'expected_result' => true
+                2,
+                false,
+                true,
+                true
             ],
             [
-                'row_data' => [
+                [
                     'sku' => 'downloadablesku12',
                     'product_type' => 'downloadable',
                     'name' => 'Downloadable Product 2',
                     'downloadable_samples' => '',
-                    'downloadable_links' => ''
+                    'downloadable_links' => '',
                 ],
-                'row_num' => 7,
-                'is_new_product' => true,
-                'is_domain_valid' => true,
-                'expected_result' => false
-            ]
+                7,
+                true,
+                true,
+                false
+            ],
         ];
     }
 
     /**
-     * @return void
      * @dataProvider dataForUploaderDir
      */
-    public function testSetUploaderDirFalse($newSku, $bunch, $allowImport, $parsedOptions): void
+    public function testSetUploaderDirFalse($newSku, $bunch, $allowImport, $parsedOptions)
     {
         $this->connectionMock->expects($this->any())->method('fetchAll')->with(
             $this->select
         )->willReturn([]);
 
-        $metadataPoolMock = $this->getMockBuilder(MetadataPool::class)
-            ->addMethods(['getLinkField'])
-            ->onlyMethods(['getMetadata'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        $metadataPoolMock = $this
+            ->createPartialMock(\Magento\Framework\EntityManager\MetadataPool::class, ['getLinkField', 'getMetadata']);
         $metadataPoolMock->expects($this->any())->method('getMetadata')->willReturnSelf();
         $metadataPoolMock->expects($this->any())->method('getLinkField')->willReturn('entity_id');
         $this->downloadableHelper->expects($this->atLeastOnce())
@@ -735,7 +693,7 @@ class DownloadableTest extends AbstractImportTestCase
         $this->uploaderHelper->method('isFileExist')->willReturn(false);
 
         $this->downloadableModelMock = $this->objectManagerHelper->getObject(
-            Downloadable::class,
+            \Magento\DownloadableImportExport\Model\Import\Product\Type\Downloadable::class,
             [
                 'attrSetColFac' => $this->attrSetColFacMock,
                 'prodAttrColFac' => $this->prodAttrColFacMock,
@@ -743,16 +701,15 @@ class DownloadableTest extends AbstractImportTestCase
                 'params' => $this->paramsArray,
                 'uploaderHelper' => $this->uploaderHelper,
                 'downloadableHelper' => $this->downloadableHelper,
-                'metadataPool' => $metadataPoolMock
+                'metadataPool' => $metadataPoolMock,
             ]
         );
         $this->entityModelMock->expects($this->once())->method('getNewSku')->willReturn($newSku);
-        $this->entityModelMock
-            ->method('getNextBunch')
-            ->willReturnOnConsecutiveCalls($bunch, null);
+        $this->entityModelMock->expects($this->at(1))->method('getNextBunch')->willReturn($bunch);
+        $this->entityModelMock->expects($this->at(2))->method('getNextBunch')->willReturn(null);
         $this->entityModelMock->expects($this->any())->method('isRowAllowedToImport')->willReturn($allowImport);
-        $exception = new LocalizedException(new Phrase('Error'));
-        $this->uploaderMock->expects($this->any())->method('move')->willThrowException($exception);
+        $exception = new \Magento\Framework\Exception\LocalizedException(new \Magento\Framework\Phrase('Error'));
+        $this->uploaderMock->expects($this->any())->method('move')->will($this->throwException($exception));
         $this->entityModelMock->expects($this->exactly(2))->method('addRowError');
         $result = $this->downloadableModelMock->saveData();
         $this->assertNotNull($result);
@@ -763,7 +720,7 @@ class DownloadableTest extends AbstractImportTestCase
      *
      * @return array
      */
-    public function dataForUploaderDir(): array
+    public function dataForUploaderDir()
     {
         return [
             [
@@ -772,8 +729,8 @@ class DownloadableTest extends AbstractImportTestCase
                         'entity_id' => '25',
                         'type_id' => 'downloadable',
                         'attr_set_id' => '4',
-                        'attr_set_code' => 'Default'
-                    ]
+                        'attr_set_code' => 'Default',
+                    ],
                 ],
                 'bunch' => [
                     [
@@ -784,8 +741,8 @@ class DownloadableTest extends AbstractImportTestCase
                             . ',sortorder=1|group_title=Group Title, title=Title 2, url=media/file2.mp4,sortorder=0',
                         'downloadable_links' => 'group_title=Group Title Links, title=Title 1, price=10, downloads='
                             . 'unlimited, file=media/file_link.mp4,sortorder=1|group_title=Group Title, title=Title 2,'
-                            . ' price=10, downloads=unlimited, url=media/file2.mp4,sortorder=0'
-                    ]
+                            . ' price=10, downloads=unlimited, url=media/file2.mp4,sortorder=0',
+                    ],
                 ],
                 'allowImport' => true,
                 'parsedOptions' => [
@@ -797,7 +754,7 @@ class DownloadableTest extends AbstractImportTestCase
                         'sample_type' => 'file',
                         'sort_order' => '1',
                         'group_title' => 'Group Title Samples',
-                        'title' => 'Title 1'
+                        'title' => 'Title 1',
                     ],
                     'link' => [
                         'link_id' => null,
@@ -816,16 +773,14 @@ class DownloadableTest extends AbstractImportTestCase
                         'price' => '10'
                     ]
                 ]
-            ]
+            ],
         ];
     }
 
     /**
-     * Test for method prepareAttributesWithDefaultValueForSave.
-     *
-     * @return void
+     * Test for method prepareAttributesWithDefaultValueForSave
      */
-    public function testPrepareAttributesWithDefaultValueForSave(): void
+    public function testPrepareAttributesWithDefaultValueForSave()
     {
         $rowData = [
             '_attribute_set' => 'Default',
@@ -836,7 +791,7 @@ class DownloadableTest extends AbstractImportTestCase
                 . '|group_title=Group Title, title=Title 2, url=media/file2.mp4,sortorder=0',
             'downloadable_links' => 'group_title=Group Title Links, title=Title 1, price=10, downloads=unlimited,'
                 . ' file=media/file_link.mp4,sortorder=1|group_title=Group Title, title=Title 2, price=10, downloads'
-                . '=unlimited, url=media/file2.mp4,sortorder=0'
+                . '=unlimited, url=media/file2.mp4,sortorder=0',
         ];
         $this->connectionMock->expects($this->any())->method('fetchAll')->with(
             $this->select
@@ -844,16 +799,16 @@ class DownloadableTest extends AbstractImportTestCase
             [
                 [
                     'attribute_set_name' => '1',
-                    'attribute_id' => '1'
+                    'attribute_id' => '1',
                 ],
                 [
                     'attribute_set_name' => '2',
-                    'attribute_id' => '2'
-                ]
+                    'attribute_id' => '2',
+                ],
             ]
         );
         $this->downloadableModelMock = $this->objectManagerHelper->getObject(
-            Downloadable::class,
+            \Magento\DownloadableImportExport\Model\Import\Product\Type\Downloadable::class,
             [
                 'attrSetColFac' => $this->attrSetColFacMock,
                 'prodAttrColFac' => $this->prodAttrColFacMock,
@@ -879,7 +834,7 @@ class DownloadableTest extends AbstractImportTestCase
                         'apply_to' => [],
                         'type' => 'varchar',
                         'default_value' => null,
-                        'options' => []
+                        'options' => [],
                     ],
                     'sku' => [
                         'id' => '70',
@@ -892,7 +847,7 @@ class DownloadableTest extends AbstractImportTestCase
                         'apply_to' => [],
                         'type' => 'varchar',
                         'default_value' => null,
-                        'options' => []
+                        'options' => [],
                     ]
                 ]
             ]

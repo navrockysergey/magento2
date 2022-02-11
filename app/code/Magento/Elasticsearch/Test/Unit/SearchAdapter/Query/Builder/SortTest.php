@@ -3,7 +3,6 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
 
 namespace Magento\Elasticsearch\Test\Unit\SearchAdapter\Query\Builder;
 
@@ -11,13 +10,15 @@ use Magento\Elasticsearch\Model\Adapter\FieldMapper\Product\AttributeAdapter;
 use Magento\Elasticsearch\Model\Adapter\FieldMapper\Product\AttributeProvider;
 use Magento\Elasticsearch\Model\Adapter\FieldMapper\Product\FieldProvider\FieldName\ResolverInterface
     as FieldNameResolver;
-use Magento\Elasticsearch\SearchAdapter\Query\Builder\Sort;
 use Magento\Framework\Search\RequestInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\MockObject\MockObject as MockObject;
+use Magento\Elasticsearch\SearchAdapter\Query\Builder\Sort;
 
-class SortTest extends TestCase
+/**
+ * Class SortTest
+ */
+class SortTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var AttributeProvider
@@ -59,7 +60,6 @@ class SortTest extends TestCase
 
     /**
      * @SuppressWarnings(PHPMD.UnusedLocalVariable)
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      * @dataProvider getSortProvider
      * @param array $sortItems
      * @param $isSortable
@@ -73,7 +73,6 @@ class SortTest extends TestCase
         $isSortable,
         $isFloatType,
         $isIntegerType,
-        $isComplexType,
         $fieldName,
         array $expected
     ) {
@@ -87,7 +86,7 @@ class SortTest extends TestCase
             ->willReturn($sortItems);
         $attributeMock = $this->getMockBuilder(AttributeAdapter::class)
             ->disableOriginalConstructor()
-            ->setMethods(['isSortable', 'isFloatType', 'isIntegerType', 'isComplexType'])
+            ->setMethods(['isSortable', 'isFloatType', 'isIntegerType'])
             ->getMock();
         $attributeMock->expects($this->any())
             ->method('isSortable')
@@ -98,9 +97,6 @@ class SortTest extends TestCase
         $attributeMock->expects($this->any())
             ->method('isIntegerType')
             ->willReturn($isIntegerType);
-        $attributeMock->expects($this->any())
-            ->method('isComplexType')
-            ->willReturn($isComplexType);
         $this->attributeAdapterProvider->expects($this->any())
             ->method('getByAttributeCode')
             ->with($this->anything())
@@ -138,10 +134,9 @@ class SortTest extends TestCase
                         'direction' => 'DESC'
                     ]
                 ],
-                false,
-                false,
-                false,
-                false,
+                null,
+                null,
+                null,
                 null,
                 []
             ],
@@ -156,7 +151,6 @@ class SortTest extends TestCase
                         'direction' => 'DESC'
                     ],
                 ],
-                false,
                 false,
                 false,
                 false,
@@ -183,7 +177,6 @@ class SortTest extends TestCase
                 true,
                 true,
                 true,
-                false,
                 'price',
                 [
                     [
@@ -205,7 +198,6 @@ class SortTest extends TestCase
                     ],
                 ],
                 true,
-                false,
                 false,
                 false,
                 'name',
@@ -231,35 +223,10 @@ class SortTest extends TestCase
                 false,
                 false,
                 false,
-                false,
                 'not_eav_attribute',
                 [
                     [
                         'not_eav_attribute' => [
-                            'order' => 'desc'
-                        ]
-                    ]
-                ]
-            ],
-            [
-                [
-                    [
-                        'field' => 'entity_id',
-                        'direction' => 'DESC'
-                    ],
-                    [
-                        'field' => 'color',
-                        'direction' => 'DESC'
-                    ],
-                ],
-                true,
-                false,
-                false,
-                true,
-                'color',
-                [
-                    [
-                        'color_value.sort_color' => [
                             'order' => 'desc'
                         ]
                     ]

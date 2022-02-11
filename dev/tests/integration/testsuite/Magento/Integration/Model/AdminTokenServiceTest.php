@@ -34,9 +34,10 @@ class AdminTokenServiceTest extends \PHPUnit\Framework\TestCase
     /**
      * Setup AdminTokenService
      */
-    protected function setUp(): void
+    public function setUp(): void
     {
         $this->tokenService = Bootstrap::getObjectManager()->get(\Magento\Integration\Model\AdminTokenService::class);
+        $this->tokenModel = Bootstrap::getObjectManager()->get(\Magento\Integration\Model\Oauth\Token::class);
         $this->userModel = Bootstrap::getObjectManager()->get(\Magento\User\Model\User::class);
     }
 
@@ -50,26 +51,12 @@ class AdminTokenServiceTest extends \PHPUnit\Framework\TestCase
             $adminUserNameFromFixture,
             \Magento\TestFramework\Bootstrap::ADMIN_PASSWORD
         );
-        $this->assertNotNull($accessToken);
-    }
-
-    /**
-     * @magentoDataFixture Magento/Security/_files/expired_users.php
-     */
-    public function testCreateAdminAccessTokenExpiredUser()
-    {
-        $this->expectException(\Magento\Framework\Exception\AuthenticationException::class);
-
-        $adminUserNameFromFixture = 'adminUserExpired';
-        $this->tokenService->createAdminAccessToken(
-            $adminUserNameFromFixture,
-            \Magento\TestFramework\Bootstrap::ADMIN_PASSWORD
-        );
-
-        $this->expectExceptionMessage(
-            'The account sign-in was incorrect or your account is disabled temporarily. '
-            . 'Please wait and try again later.'
-        );
+        $adminUserId = $this->userModel->loadByUsername($adminUserNameFromFixture)->getId();
+        /** @var $token TokenModel */
+        $token = $this->tokenModel
+            ->loadByAdminId($adminUserId)
+            ->getToken();
+        $this->assertEquals($accessToken, $token);
     }
 
     /**
@@ -84,12 +71,9 @@ class AdminTokenServiceTest extends \PHPUnit\Framework\TestCase
         }
     }
 
-    /**
-     */
     public function testCreateAdminAccessTokenInvalidCustomer()
     {
         $this->expectException(\Magento\Framework\Exception\AuthenticationException::class);
-
         $adminUserName = 'invalid';
         $password = 'invalid';
         $this->tokenService->createAdminAccessToken($adminUserName, $password);

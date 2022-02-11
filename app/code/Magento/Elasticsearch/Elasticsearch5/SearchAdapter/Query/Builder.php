@@ -22,8 +22,6 @@ use Magento\Framework\App\ScopeResolverInterface;
  */
 class Builder
 {
-    private const ELASTIC_INT_MAX = 2147483647;
-
     /**
      * @var Config
      * @since 100.2.2
@@ -58,20 +56,17 @@ class Builder
      * @param SearchIndexNameResolver $searchIndexNameResolver
      * @param AggregationBuilder $aggregationBuilder
      * @param ScopeResolverInterface $scopeResolver
-     * @param Sort|null $sortBuilder
      */
     public function __construct(
         Config $clientConfig,
         SearchIndexNameResolver $searchIndexNameResolver,
         AggregationBuilder $aggregationBuilder,
-        ScopeResolverInterface $scopeResolver,
-        ?Sort $sortBuilder = null
+        ScopeResolverInterface $scopeResolver
     ) {
         $this->clientConfig = $clientConfig;
         $this->searchIndexNameResolver = $searchIndexNameResolver;
         $this->aggregationBuilder = $aggregationBuilder;
         $this->scopeResolver = $scopeResolver;
-        $this->sortBuilder = $sortBuilder ?: ObjectManager::getInstance()->get(Sort::class);
     }
 
     /**
@@ -85,19 +80,18 @@ class Builder
     {
         $dimension = current($request->getDimensions());
         $storeId = $this->scopeResolver->getScope($dimension->getValue())->getId();
+
         $searchQuery = [
             'index' => $this->searchIndexNameResolver->getIndexName($storeId, $request->getIndex()),
             'type' => $this->clientConfig->getEntityType(),
             'body' => [
-                'from' => min(self::ELASTIC_INT_MAX, $request->getFrom()),
+                'from' => $request->getFrom(),
                 'size' => $request->getSize(),
-                'stored_fields' => '_none_',
-                'docvalue_fields' => ['_id', '_score'],
-                'sort' => $this->sortBuilder->getSort($request),
+                'stored_fields' => ['_id', '_score'],
+                'sort' => $this->getSortBuilder()->getSort($request),
                 'query' => [],
             ],
         ];
-
         return $searchQuery;
     }
 
@@ -114,5 +108,18 @@ class Builder
         array $searchQuery
     ) {
         return $this->aggregationBuilder->build($request, $searchQuery);
+    }
+
+    /**
+     * Get sort builder instance.
+     *
+     * @return Sort
+     */
+    private function getSortBuilder()
+    {
+        if (null === $this->sortBuilder) {
+            $this->sortBuilder = ObjectManager::getInstance()->get(Sort::class);
+        }
+        return $this->sortBuilder;
     }
 }

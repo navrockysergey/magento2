@@ -8,8 +8,6 @@ namespace Magento\SalesRule\Model\Rule\Action\Discount;
 class ByFixed extends AbstractDiscount
 {
     /**
-     * Calculate fixed amount discount
-     *
      * @param \Magento\SalesRule\Model\Rule $rule
      * @param \Magento\Quote\Model\Quote\Item\AbstractItem $item
      * @param float $qty
@@ -20,23 +18,14 @@ class ByFixed extends AbstractDiscount
         /** @var \Magento\SalesRule\Model\Rule\Action\Discount\Data $discountData */
         $discountData = $this->discountFactory->create();
 
-        $baseDiscountAmount = (float) $rule->getDiscountAmount();
-        $discountAmount = $this->priceCurrency->convert($baseDiscountAmount, $item->getQuote()->getStore());
-        $itemPrice = $this->validator->getItemPrice($item);
-        $baseItemPrice = $this->validator->getItemBasePrice($item);
-
-        $discountAmountMin = min($itemPrice * $qty, $discountAmount * $qty);
-        $baseDiscountAmountMin = min($baseItemPrice * $qty, $baseDiscountAmount * $qty);
-
-        $discountData->setAmount($discountAmountMin);
-        $discountData->setBaseAmount($baseDiscountAmountMin);
+        $quoteAmount = $this->priceCurrency->convert($rule->getDiscountAmount(), $item->getQuote()->getStore());
+        $discountData->setAmount($qty * $quoteAmount);
+        $discountData->setBaseAmount($qty * $rule->getDiscountAmount());
 
         return $discountData;
     }
 
     /**
-     * Fix quantity depending on discount step
-     *
      * @param float $qty
      * @param \Magento\SalesRule\Model\Rule $rule
      * @return float

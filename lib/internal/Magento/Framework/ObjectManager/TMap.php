@@ -8,6 +8,7 @@ namespace Magento\Framework\ObjectManager;
 use Magento\Framework\ObjectManagerInterface;
 
 /**
+ * Class TMap
  * @internal
  */
 class TMap implements \IteratorAggregate, \Countable, \ArrayAccess
@@ -61,7 +62,7 @@ class TMap implements \IteratorAggregate, \Countable, \ArrayAccess
         array $array = [],
         \Closure $objectCreationStrategy = null
     ) {
-        if ((empty($this->type) || !class_exists($this->type)) && !interface_exists($type)) {
+        if (!class_exists($this->type) && !interface_exists($type)) {
             throw new \InvalidArgumentException(sprintf('Unknown type %s', $type));
         }
 
@@ -141,9 +142,8 @@ class TMap implements \IteratorAggregate, \Countable, \ArrayAccess
     }
 
     /**
-     * @inheritdoc
+     * {inheritdoc}
      */
-    #[\ReturnTypeWillChange]
     public function getIterator()
     {
         if (array_keys($this->array) != array_keys($this->objectsArray)) {
@@ -156,27 +156,24 @@ class TMap implements \IteratorAggregate, \Countable, \ArrayAccess
     }
 
     /**
-     * @inheritdoc
+     * {inheritdoc}
      */
-    #[\ReturnTypeWillChange]
     public function offsetExists($offset)
     {
         return array_key_exists($offset, $this->array);
     }
 
     /**
-     * @inheritdoc
+     * {inheritdoc}
      */
-    #[\ReturnTypeWillChange]
     public function offsetGet($offset)
     {
         return isset($this->array[$offset]) ? $this->initObject($offset) : null;
     }
 
     /**
-     * @inheritdoc
+     * {inheritdoc}
      */
-    #[\ReturnTypeWillChange]
     public function offsetSet($offset, $value)
     {
         $this->assertValidTypeLazy($value, $offset);
@@ -190,9 +187,8 @@ class TMap implements \IteratorAggregate, \Countable, \ArrayAccess
     }
 
     /**
-     * @inheritdoc
+     * {inheritdoc}
      */
-    #[\ReturnTypeWillChange]
     public function offsetUnset($offset)
     {
         if ($this->counter && isset($this->array[$offset])) {
@@ -206,9 +202,8 @@ class TMap implements \IteratorAggregate, \Countable, \ArrayAccess
     }
 
     /**
-     * @inheritdoc
+     * {inheritdoc}
      */
-    #[\ReturnTypeWillChange]
     public function count()
     {
         return $this->counter;

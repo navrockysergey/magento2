@@ -3,83 +3,62 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Paypal\Test\Unit\Block\Billing;
-
-use Magento\Framework\App\CacheInterface;
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\DataObject;
-use Magento\Framework\Escaper;
-use Magento\Framework\Event\ManagerInterface;
-use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use Magento\Framework\UrlInterface;
-use Magento\Framework\View\Element\Context;
-use Magento\Framework\View\Element\Template\Context as TemplateContext;
-use Magento\Framework\View\LayoutInterface;
-use Magento\Paypal\Block\Billing\Agreements;
-use Magento\Paypal\Helper\Data;
-use Magento\Paypal\Model\Billing\Agreement;
-use Magento\Paypal\Model\ResourceModel\Billing\Agreement\Collection;
-use Magento\Paypal\Model\ResourceModel\Billing\Agreement\CollectionFactory;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class AgreementsTest extends TestCase
+class AgreementsTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var Context|MockObject
+     * @var \Magento\Framework\View\Element\Context|\PHPUnit\Framework\MockObject\MockObject
      */
     private $context;
 
     /**
      * @codingStandardsIgnoreStart
-     * @var CollectionFactory|MockObject
+     * @var \Magento\Paypal\Model\ResourceModel\Billing\Agreement\CollectionFactory|\PHPUnit\Framework\MockObject\MockObject
      * @codingStandardsIgnoreEnd
      */
     private $agreementCollection;
 
     /**
-     * @var UrlInterface|MockObject
+     * @var \Magento\Framework\UrlInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $urlBuilder;
 
     /**
-     * @var Escaper|MockObject
+     * @var \Magento\Framework\Escaper|\PHPUnit\Framework\MockObject\MockObject
      */
     private $escaper;
 
     /**
-     * @var Data|MockObject
+     * @var \Magento\Paypal\Helper\Data|\PHPUnit\Framework\MockObject\MockObject
      */
     private $helper;
 
     /**
-     * @var LayoutInterface|MockObject
+     * @var \Magento\Framework\View\LayoutInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $layout;
 
     /**
-     * @var ManagerInterface|MockObject
+     * @var \Magento\Framework\Event\ManagerInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $eventManager;
 
     /**
-     * @var ScopeConfigInterface|MockObject
+     * @var \Magento\Framework\App\Config\ScopeConfigInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $scopeConfig;
 
     /**
-     * @var CacheInterface|MockObject
+     * @var \Magento\Framework\App\CacheInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $cache;
 
     /**
-     * @var Agreements
+     * @var \Magento\Paypal\Block\Billing\Agreements
      */
     private $block;
 
@@ -88,59 +67,55 @@ class AgreementsTest extends TestCase
      */
     protected function setUp(): void
     {
-        $this->context = $this->createMock(TemplateContext::class);
-        $this->escaper = $this->createMock(Escaper::class);
+        $this->context = $this->createMock(\Magento\Framework\View\Element\Template\Context::class);
+        $this->escaper = $this->createMock(\Magento\Framework\Escaper::class);
         $this->context->expects($this->once())->method('getEscaper')->willReturn($this->escaper);
         $localeDate = $this->getMockForAbstractClass(
-            TimezoneInterface::class,
+            \Magento\Framework\Stdlib\DateTime\TimezoneInterface::class,
             [],
             '',
             false
         );
         $this->context->expects($this->once())->method('getLocaleDate')->willReturn($localeDate);
-        $this->urlBuilder = $this->getMockForAbstractClass(UrlInterface::class, [], '', false);
+        $this->urlBuilder = $this->getMockForAbstractClass(\Magento\Framework\UrlInterface::class, [], '', false);
         $this->context->expects($this->once())->method('getUrlBuilder')->willReturn($this->urlBuilder);
-        $this->layout = $this->getMockForAbstractClass(LayoutInterface::class, [], '', false);
+        $this->layout = $this->getMockForAbstractClass(\Magento\Framework\View\LayoutInterface::class, [], '', false);
         $this->context->expects($this->once())->method('getLayout')->willReturn($this->layout);
         $this->eventManager = $this->getMockForAbstractClass(
-            ManagerInterface::class,
+            \Magento\Framework\Event\ManagerInterface::class,
             [],
             '',
             false
         );
         $this->context->expects($this->once())->method('getEventManager')->willReturn($this->eventManager);
         $this->scopeConfig = $this->getMockForAbstractClass(
-            ScopeConfigInterface::class,
+            \Magento\Framework\App\Config\ScopeConfigInterface::class,
             [],
             '',
             false
         );
         $this->context->expects($this->once())->method('getScopeConfig')->willReturn($this->scopeConfig);
-        $this->cache = $this->getMockForAbstractClass(CacheInterface::class, [], '', false);
+        $this->cache = $this->getMockForAbstractClass(\Magento\Framework\App\CacheInterface::class, [], '', false);
         $this->context->expects($this->once())->method('getCache')->willReturn($this->cache);
-        $this->agreementCollection = $this->getMockBuilder(CollectionFactory::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['create'])
-            ->getMock();
-        $this->helper = $this->createMock(Data::class);
-        $objectManager = new ObjectManager($this);
+        $this->agreementCollection = $this->getMockBuilder(
+            \Magento\Paypal\Model\ResourceModel\Billing\Agreement\CollectionFactory::class
+        )->disableOriginalConstructor()->setMethods(['create'])->getMock();
+        $this->helper = $this->createMock(\Magento\Paypal\Helper\Data::class);
+        $objectManager = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
 
         $this->block = $objectManager->getObject(
-            Agreements::class,
+            \Magento\Paypal\Block\Billing\Agreements::class,
             [
                 'context' => $this->context,
                 'agreementCollection' => $this->agreementCollection,
-                'helper' => $this->helper
+                'helper' => $this->helper,
             ]
         );
     }
 
-    /**
-     * @return void
-     */
-    public function testGetBillingAgreements(): void
+    public function testGetBillingAgreements()
     {
-        $collection = $this->createMock(Collection::class);
+        $collection = $this->createMock(\Magento\Paypal\Model\ResourceModel\Billing\Agreement\Collection::class);
         $this->agreementCollection->expects($this->once())->method('create')->willReturn($collection);
         $collection->expects($this->once())->method('addFieldToFilter')->willReturn($collection);
         $collection->expects($this->once())->method('setOrder')->willReturn($collection);
@@ -149,60 +124,42 @@ class AgreementsTest extends TestCase
         $this->block->getBillingAgreements();
     }
 
-    /**
-     * @return void
-     */
-    public function testGetItemValueCreatedAt(): void
+    public function testGetItemValueCreatedAt()
     {
         $this->escaper->expects($this->once())->method('escapeHtml');
-        $item = $this->createMock(Agreement::class);
+        $item = $this->createMock(\Magento\Paypal\Model\Billing\Agreement::class);
         $item->expects($this->exactly(2))->method('getData')->with('created_at')->willReturn('03/10/2014');
         $this->block->getItemValue($item, 'created_at');
     }
 
-    /**
-     * @return void
-     */
-    public function testGetItemValueCreatedAtNoData(): void
+    public function testGetItemValueCreatedAtNoData()
     {
         $this->escaper->expects($this->once())->method('escapeHtml');
-        $item = $this->createMock(Agreement::class);
+        $item = $this->createMock(\Magento\Paypal\Model\Billing\Agreement::class);
         $item->expects($this->once())->method('getData')->with('created_at')->willReturn(false);
         $this->block->getItemValue($item, 'created_at');
     }
 
-    /**
-     * @return void
-     */
-    public function testGetItemValueUpdatedAt(): void
+    public function testGetItemValueUpdatedAt()
     {
         $this->escaper->expects($this->once())->method('escapeHtml');
-        $item = $this->createMock(Agreement::class);
+        $item = $this->createMock(\Magento\Paypal\Model\Billing\Agreement::class);
         $item->expects($this->exactly(2))->method('getData')->with('updated_at')->willReturn('03/10/2014');
         $this->block->getItemValue($item, 'updated_at');
     }
 
-    /**
-     * @return void
-     */
-    public function testGetItemValueUpdatedAtNoData(): void
+    public function testGetItemValueUpdatedAtNoData()
     {
         $this->escaper->expects($this->once())->method('escapeHtml');
-        $item = $this->createMock(Agreement::class);
+        $item = $this->createMock(\Magento\Paypal\Model\Billing\Agreement::class);
         $item->expects($this->once())->method('getData')->with('updated_at')->willReturn(false);
         $this->block->getItemValue($item, 'updated_at');
     }
 
-    /**
-     * @return void
-     */
-    public function testGetItemValueEditUrl(): void
+    public function testGetItemValueEditUrl()
     {
         $this->escaper->expects($this->once())->method('escapeHtml');
-        $item = $this->getMockBuilder(Agreement::class)
-            ->addMethods(['getAgreementId'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        $item = $this->createPartialMock(\Magento\Paypal\Model\Billing\Agreement::class, ['getAgreementId']);
         $item->expects($this->once())->method('getAgreementId')->willReturn(1);
         $this->urlBuilder
             ->expects($this->once())
@@ -211,46 +168,31 @@ class AgreementsTest extends TestCase
         $this->block->getItemValue($item, 'edit_url');
     }
 
-    /**
-     * @return void
-     */
-    public function testGetItemPaymentMethodLabel(): void
+    public function testGetItemPaymentMethodLabel()
     {
         $this->escaper->expects($this->once())->method('escapeHtml')->with('label', null);
-        $item = $this->getMockBuilder(Agreement::class)
-            ->addMethods(['getAgreementLabel'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        $item = $this->createPartialMock(\Magento\Paypal\Model\Billing\Agreement::class, ['getAgreementLabel']);
         $item->expects($this->once())->method('getAgreementLabel')->willReturn('label');
         $this->block->getItemValue($item, 'payment_method_label');
     }
 
-    /**
-     * @return void
-     */
-    public function testGetItemStatus(): void
+    public function testGetItemStatus()
     {
         $this->escaper->expects($this->once())->method('escapeHtml')->with('status', null);
-        $item = $this->createMock(Agreement::class);
+        $item = $this->createMock(\Magento\Paypal\Model\Billing\Agreement::class);
         $item->expects($this->once())->method('getStatusLabel')->willReturn('status');
         $this->block->getItemValue($item, 'status');
     }
 
-    /**
-     * @return void
-     */
-    public function testGetItemDefault(): void
+    public function testGetItemDefault()
     {
         $this->escaper->expects($this->once())->method('escapeHtml')->with('value', null);
-        $item = $this->createMock(Agreement::class);
+        $item = $this->createMock(\Magento\Paypal\Model\Billing\Agreement::class);
         $item->expects($this->exactly(2))->method('getData')->with('default')->willReturn('value');
         $this->block->getItemValue($item, 'default');
     }
 
-    /**
-     * @return void
-     */
-    public function testGetWizardPaymentMethodOptions(): void
+    public function testGetWizardPaymentMethodOptions()
     {
         $method1 = $this->createPartialMock(
             \Magento\Paypal\Model\Method\Agreement::class,
@@ -278,18 +220,17 @@ class AgreementsTest extends TestCase
         $this->assertEquals(['code1' => 'title1', 'code3' => 'title3'], $this->block->getWizardPaymentMethodOptions());
     }
 
-    /**
-     * @return void
-     */
-    public function testToHtml(): void
+    public function testToHtml()
     {
-        $transport = new DataObject(['html' => '']);
         $this->eventManager
+            ->expects($this->at(0))
             ->method('dispatch')
-            ->withConsecutive(
-                ['view_block_abstract_to_html_before', ['block' => $this->block]],
-                ['view_block_abstract_to_html_after', ['block' => $this->block, 'transport' => $transport]]
-            );
+            ->with('view_block_abstract_to_html_before', ['block' => $this->block]);
+        $transport = new \Magento\Framework\DataObject(['html' => '']);
+        $this->eventManager
+            ->expects($this->at(1))
+            ->method('dispatch')
+            ->with('view_block_abstract_to_html_after', ['block' => $this->block, 'transport' => $transport]);
         $this->scopeConfig
             ->expects($this->once())
             ->method('getValue')

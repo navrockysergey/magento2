@@ -25,8 +25,9 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Customer\Model\Customer;
 
 /**
- * Class Send Email Wishlist Controller
+ * Class Send
  *
+ * @package Magento\Wishlist\Controller\Index
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class Send extends \Magento\Wishlist\Controller\AbstractIndex implements Action\HttpPostActionInterface
@@ -198,12 +199,12 @@ class Send extends \Magento\Wishlist\Controller\AbstractIndex implements Action\
         if (strlen($message) > $textLimit) {
             $error = __('Message length must not exceed %1 symbols', $textLimit);
         } else {
-            $message = nl2br((string) $this->escaper->escapeHtml($message));
+            $message = nl2br($this->escaper->escapeHtml($message));
             if (empty($emails)) {
                 $error = __('Please enter an email address.');
             } else {
                 if (count($emails) > $emailsLeft) {
-                    $error = __('Maximum of %1 emails can be sent.', $emailsLeft);
+                    $error = __('This wish list can be shared %1 more times.', $emailsLeft);
                 } else {
                     foreach ($emails as $index => $email) {
                         $email = trim($email);
@@ -318,6 +319,7 @@ class Send extends \Magento\Wishlist\Controller\AbstractIndex implements Action\
      *
      * @param int $wishlistId
      * @param \Magento\Framework\View\Result\Layout $resultLayout
+     * @return mixed
      */
     protected function getRssLink($wishlistId, ResultLayout $resultLayout)
     {

@@ -5,15 +5,15 @@
  */
 namespace Magento\CatalogRule\Block\Adminhtml\Promo\Catalog\Edit\Tab;
 
+use Magento\Backend\Block\Widget\Form;
 use Magento\Backend\Block\Widget\Form\Generic;
-use Magento\Backend\Block\Widget\Form\Renderer\Fieldset;
 use Magento\Ui\Component\Layout\Tabs\TabInterface;
 use Magento\Rule\Model\Condition\AbstractCondition;
 
 class Conditions extends Generic implements TabInterface
 {
     /**
-     * @var Fieldset
+     * @var \Magento\Backend\Block\Widget\Form\Renderer\Fieldset
      */
     protected $_rendererFieldset;
 
@@ -27,7 +27,7 @@ class Conditions extends Generic implements TabInterface
      * @param \Magento\Framework\Registry $registry
      * @param \Magento\Framework\Data\FormFactory $formFactory
      * @param \Magento\Rule\Block\Conditions $conditions
-     * @param Fieldset $rendererFieldset
+     * @param \Magento\Backend\Block\Widget\Form\Renderer\Fieldset $rendererFieldset
      * @param array $data
      */
     public function __construct(
@@ -35,7 +35,7 @@ class Conditions extends Generic implements TabInterface
         \Magento\Framework\Registry $registry,
         \Magento\Framework\Data\FormFactory $formFactory,
         \Magento\Rule\Block\Conditions $conditions,
-        Fieldset $rendererFieldset,
+        \Magento\Backend\Block\Widget\Form\Renderer\Fieldset $rendererFieldset,
         array $data = []
     ) {
         $this->_rendererFieldset = $rendererFieldset;
@@ -121,7 +121,7 @@ class Conditions extends Generic implements TabInterface
     }
 
     /**
-     * @inheritdoc
+     * @return Form
      */
     protected function _prepareForm()
     {
@@ -135,8 +135,6 @@ class Conditions extends Generic implements TabInterface
     }
 
     /**
-     * Adds 'Conditions' to the form.
-     *
      * @param \Magento\CatalogRule\Api\Data\RuleInterface $model
      * @param string $fieldsetId
      * @param string $formName
@@ -156,8 +154,7 @@ class Conditions extends Generic implements TabInterface
             ['form_namespace' => $formName]
         );
 
-        $renderer = $this->getLayout()->createBlock(Fieldset::class);
-        $renderer->setTemplate('Magento_CatalogRule::promo/fieldset.phtml')
+        $renderer = $this->_rendererFieldset->setTemplate('Magento_CatalogRule::promo/fieldset.phtml')
             ->setNewChildUrl($newChildUrl)
             ->setFieldSetId($conditionsFieldSetId);
 
@@ -186,8 +183,6 @@ class Conditions extends Generic implements TabInterface
     }
 
     /**
-     * Sets form name for Condition section.
-     *
      * @param AbstractCondition $conditions
      * @param string $formName
      * @param string $jsFormName

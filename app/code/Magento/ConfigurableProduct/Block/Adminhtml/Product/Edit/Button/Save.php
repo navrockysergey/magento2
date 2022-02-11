@@ -9,6 +9,9 @@ use Magento\Ui\Component\Control\Container;
 use Magento\Catalog\Block\Adminhtml\Product\Edit\Button\Generic;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable as ConfigurableType;
 
+/**
+ * Class Save
+ */
 class Save extends Generic
 {
     /**
@@ -40,7 +43,6 @@ class Save extends Generic
             ],
             'class_name' => Container::SPLIT_BUTTON,
             'options' => $this->getOptions(),
-            'dropdown_button_aria_label' => __('Save options'),
         ];
     }
 

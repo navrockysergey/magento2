@@ -17,8 +17,7 @@ define([
         defaults: {
             modules: {
                 variationsComponent: '${ $.variationsComponent }',
-                modalComponent: '${ $.modalComponent }',
-                matrixGridComponent: '${ $.matrixGridComponent }'
+                modalComponent: '${ $.modalComponent }'
             },
             notificationMessage: {
                 text: null,
@@ -97,16 +96,11 @@ define([
                 variationsKeys = [],
                 gridExisting = [],
                 gridNew = [],
-                gridDeleted = [],
-                matrixGridData = this.matrixGridComponent() ?
-                    _.indexBy(this.matrixGridComponent().getUnionInsertData(), 'variationKey') : {};
+                gridDeleted = [];
 
             this.variations = [];
             _.each(variations, function (options) {
                 var product, images, sku, name, quantity, price, variation,
-                    variationsKey = this.variationsComponent().getVariationKey(options),
-                    productDataFromGrid = matrixGridData[variationsKey] || {},
-                    productDataFromWizard = {},
                     productId = this.variationsComponent().getProductIdByOptions(options);
 
                 if (productId) {
@@ -123,61 +117,40 @@ define([
                 }, '');
                 quantity = getSectionValue(this.quantityFieldName, options);
 
-                if (quantity) {
-                    productDataFromWizard[this.quantityFieldName] = quantity;
+                if (!quantity && productId) {
+                    quantity = product[this.quantityFieldName];
                 }
                 price = getSectionValue('price', options);
 
-                if (price) {
-                    productDataFromWizard.price = price;
+                if (!price) {
+                    price = productId ? product.price : productPrice;
                 }
 
                 if (productId && !images.file) {
                     images = product.images;
                 }
-                productDataFromGrid = _.pick(
-                    productDataFromGrid,
-                    'sku',
-                    'name',
-                    'weight',
-                    'status',
-                    'price',
-                    'qty'
-                );
-
-                if (productDataFromGrid.hasOwnProperty('qty')) {
-                    productDataFromGrid[this.quantityFieldName] = productDataFromGrid.qty;
-                }
-                delete productDataFromGrid.qty;
-                product = _.pick(
-                    product || {},
-                    'sku',
-                    'name',
-                    'weight',
-                    'status',
-                    'price',
-                    this.quantityFieldName
-                );
                 variation = {
                     options: options,
                     images: images,
                     sku: sku,
                     name: name,
-                    price: productPrice,
+                    price: price,
                     productId: productId,
                     weight: productWeight,
                     editable: true
                 };
                 variation[this.quantityFieldName] = quantity;
-                variation = _.extend(variation, product, productDataFromGrid, productDataFromWizard);
 
                 if (productId) {
+                    variation.sku = product.sku;
+                    variation.weight = product.weight;
+                    variation.name = product.name;
                     gridExisting.push(this.prepareRowForGrid(variation));
                 } else {
                     gridNew.push(this.prepareRowForGrid(variation));
                 }
                 this.variations.push(variation);
-                variationsKeys.push(variationsKey);
+                variationsKeys.push(this.variationsComponent().getVariationKey(options));
             }, this);
 
             _.each(_.omit(this.variationsComponent().productAttributesMap, variationsKeys), function (productId) {

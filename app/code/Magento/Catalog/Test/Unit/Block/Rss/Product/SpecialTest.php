@@ -3,32 +3,16 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Catalog\Test\Unit\Block\Rss\Product;
 
-use Magento\Catalog\Helper\Image;
-use Magento\Catalog\Helper\Output;
-use Magento\Catalog\Model\Product;
-use Magento\Catalog\Model\Rss\Product\Special;
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\App\Http\Context;
-use Magento\Framework\App\RequestInterface;
-use Magento\Framework\App\Rss\UrlBuilderInterface;
-use Magento\Framework\Pricing\PriceCurrencyInterface;
-use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManagerHelper;
-use Magento\Msrp\Helper\Data as MsrpHelper;
-use Magento\Store\Model\ScopeInterface;
-use Magento\Store\Model\Store;
-use Magento\Store\Model\StoreManagerInterface;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
 /**
+ * Class SpecialTest
+ * Test for Special
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class SpecialTest extends TestCase
+class SpecialTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var \Magento\Catalog\Block\Rss\Product\Special
@@ -36,96 +20,88 @@ class SpecialTest extends TestCase
     protected $block;
 
     /**
-     * @var Context|MockObject
+     * @var \Magento\Framework\App\Http\Context|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $httpContext;
 
     /**
-     * @var Image|MockObject
+     * @var \Magento\Catalog\Helper\Image|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $imageHelper;
 
     /**
-     * @var Output|MockObject
+     * @var \Magento\Catalog\Helper\Output|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $outputHelper;
 
     /**
-     * @var \Magento\Catalog\Helper\Data|MockObject
+     * @var \Magento\Catalog\Helper\Data|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $msrpHelper;
 
     /**
-     * @var PriceCurrencyInterface|MockObject
+     * @var \Magento\Framework\Pricing\PriceCurrencyInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $priceCurrency;
 
     /**
-     * @var \Magento\Catalog\Model\Rss\Product\Special|MockObject
+     * @var \Magento\Catalog\Model\Rss\Product\Special|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $rssModel;
 
     /**
-     * @var UrlBuilderInterface|MockObject
+     * @var \Magento\Framework\App\Rss\UrlBuilderInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $rssUrlBuilder;
 
     /**
-     * @var StoreManagerInterface|MockObject
+     * @var \Magento\Store\Model\StoreManagerInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $storeManager;
 
     /**
-     * @var ScopeConfigInterface|MockObject
+     * @var \Magento\Framework\App\Config\ScopeConfigInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $scopeConfig;
 
     /**
-     * @var TimezoneInterface|MockObject
+     * @var \Magento\Framework\Stdlib\DateTime\TimezoneInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $localeDate;
 
     /**
-     * @var RequestInterface|MockObject
+     * @var \Magento\Framework\App\RequestInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $request;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
-        $this->request = $this->getMockForAbstractClass(RequestInterface::class);
-        $this->request
-            ->method('getParam')
-            ->withConsecutive(['store_id'], ['cid'])
-            ->willReturnOnConsecutiveCalls(null, null);
+        $this->request = $this->createMock(\Magento\Framework\App\RequestInterface::class);
+        $this->request->expects($this->at(0))->method('getParam')->with('store_id')->willReturn(null);
+        $this->request->expects($this->at(1))->method('getParam')->with('cid')->willReturn(null);
 
-        $this->httpContext = $this->getMockBuilder(Context::class)
-            ->onlyMethods(['getValue'])->disableOriginalConstructor()
-            ->getMock();
+        $this->httpContext = $this->getMockBuilder(\Magento\Framework\App\Http\Context::class)
+            ->setMethods(['getValue'])->disableOriginalConstructor()->getMock();
         $this->httpContext->expects($this->any())->method('getValue')->willReturn(1);
 
-        $this->imageHelper = $this->createMock(Image::class);
-        $this->outputHelper = $this->createPartialMock(Output::class, ['productAttribute']);
-        $this->msrpHelper = $this->createPartialMock(MsrpHelper::class, ['canApplyMsrp']);
-        $this->priceCurrency = $this->getMockForAbstractClass(PriceCurrencyInterface::class);
-        $this->rssModel = $this->createMock(Special::class);
-        $this->rssUrlBuilder = $this->getMockForAbstractClass(UrlBuilderInterface::class);
+        $this->imageHelper = $this->createMock(\Magento\Catalog\Helper\Image::class);
+        $this->outputHelper = $this->createPartialMock(\Magento\Catalog\Helper\Output::class, ['productAttribute']);
+        $this->msrpHelper = $this->createPartialMock(\Magento\Msrp\Helper\Data::class, ['canApplyMsrp']);
+        $this->priceCurrency = $this->createMock(\Magento\Framework\Pricing\PriceCurrencyInterface::class);
+        $this->rssModel = $this->createMock(\Magento\Catalog\Model\Rss\Product\Special::class);
+        $this->rssUrlBuilder = $this->createMock(\Magento\Framework\App\Rss\UrlBuilderInterface::class);
 
-        $this->storeManager = $this->getMockForAbstractClass(StoreManagerInterface::class);
-        $store = $this->getMockBuilder(Store::class)
-            ->onlyMethods(['getId', 'getFrontendName'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        $this->storeManager = $this->createMock(\Magento\Store\Model\StoreManagerInterface::class);
+        $store = $this->getMockBuilder(\Magento\Store\Model\Store::class)
+            ->setMethods(['getId', 'getFrontendName', '__wakeup'])->disableOriginalConstructor()->getMock();
         $store->expects($this->any())->method('getId')->willReturn(1);
         $store->expects($this->any())->method('getFrontendName')->willReturn('Store 1');
         $this->storeManager->expects($this->any())->method('getStore')->willReturn($store);
 
-        $this->scopeConfig = $this->getMockForAbstractClass(ScopeConfigInterface::class);
+        $this->scopeConfig = $this->createMock(\Magento\Framework\App\Config\ScopeConfigInterface::class);
         $this->scopeConfig->expects($this->any())->method('getValue')->willReturn('en_US');
 
-        $this->localeDate = $this->getMockForAbstractClass(TimezoneInterface::class);
+        $this->localeDate = $this->createMock(\Magento\Framework\Stdlib\DateTime\TimezoneInterface::class);
 
         $objectManagerHelper = new ObjectManagerHelper($this);
         $this->block = $objectManagerHelper->getObject(
@@ -141,15 +117,12 @@ class SpecialTest extends TestCase
                 'rssUrlBuilder' => $this->rssUrlBuilder,
                 'storeManager' => $this->storeManager,
                 'scopeConfig' => $this->scopeConfig,
-                'localeDate' => $this->localeDate
+                'localeDate' => $this->localeDate,
             ]
         );
     }
 
-    /**
-     * @return void
-     */
-    public function testGetRssData(): void
+    public function testGetRssData()
     {
         $this->rssUrlBuilder->expects($this->once())->method('getUrl')
             ->with(['type' => 'special_products', 'store_id' => 1])
@@ -162,7 +135,8 @@ class SpecialTest extends TestCase
 
         $this->priceCurrency->expects($this->any())->method('convertAndFormat')->willReturnArgument(0);
 
-        $this->imageHelper->expects($this->once())->method('init')->with($item, 'rss_thumbnail')->willReturnSelf();
+        $this->imageHelper->expects($this->once())->method('init')->with($item, 'rss_thumbnail')
+            ->willReturnSelf();
         $this->imageHelper->expects($this->once())->method('getUrl')
             ->willReturn('image_link');
         $this->outputHelper->expects($this->once())->method('productAttribute')->willReturn('');
@@ -175,9 +149,9 @@ class SpecialTest extends TestCase
             'entries' => [
                 [
                     'title' => 'Product Name',
-                    'link' => 'http://magento.com/product-name.html'
-                ]
-            ]
+                    'link' => 'http://magento.com/product-name.html',
+                ],
+            ],
         ];
         $rssData = $this->block->getRssData();
         $description = $rssData['entries'][0]['description'];
@@ -195,32 +169,25 @@ class SpecialTest extends TestCase
     }
 
     /**
-     * @return MockObject
+     * @return \PHPUnit\Framework\MockObject\MockObject
      */
-    protected function getItemMock(): MockObject
+    protected function getItemMock()
     {
-        $item = $this->getMockBuilder(Product::class)
-            ->onlyMethods(
-                [
-                    '__sleep',
-                    'getName',
-                    'getProductUrl',
-                    'getSpecialToDate',
-                    'getSpecialPrice',
-                    'getFinalPrice',
-                    'getPrice'
-                ]
-            )
-            ->addMethods(
-                [
-                    'getDescription',
-                    'getAllowedInRss',
-                    'getAllowedPriceInRss',
-                    'getUseSpecial'
-                ]
-            )
-            ->disableOriginalConstructor()
-            ->getMock();
+        $item = $this->getMockBuilder(\Magento\Catalog\Model\Product::class)
+            ->setMethods([
+                '__wakeup',
+                '__sleep',
+                'getName',
+                'getProductUrl',
+                'getDescription',
+                'getAllowedInRss',
+                'getAllowedPriceInRss',
+                'getSpecialToDate',
+                'getSpecialPrice',
+                'getFinalPrice',
+                'getPrice',
+                'getUseSpecial',
+            ])->disableOriginalConstructor()->getMock();
         $item->expects($this->once())->method('getAllowedInRss')->willReturn(true);
         $item->expects($this->any())->method('getSpecialToDate')->willReturn(date('Y-m-d'));
         $item->expects($this->exactly(2))->method('getFinalPrice')->willReturn(10);
@@ -235,39 +202,30 @@ class SpecialTest extends TestCase
         return $item;
     }
 
-    /**
-     * @return void
-     */
-    public function testIsAllowed(): void
+    public function testIsAllowed()
     {
         $this->scopeConfig->expects($this->once())->method('isSetFlag')
-            ->with('rss/catalog/special', ScopeInterface::SCOPE_STORE)
+            ->with('rss/catalog/special', \Magento\Store\Model\ScopeInterface::SCOPE_STORE)
             ->willReturn(true);
         $this->assertTrue($this->block->isAllowed());
     }
 
-    /**
-     * @return void
-     */
-    public function testGetCacheLifetime(): void
+    public function testGetCacheLifetime()
     {
         $this->assertEquals(600, $this->block->getCacheLifetime());
     }
 
-    /**
-     * @return void
-     */
-    public function testGetFeeds(): void
+    public function testGetFeeds()
     {
         $this->scopeConfig->expects($this->once())->method('isSetFlag')
-            ->with('rss/catalog/special', ScopeInterface::SCOPE_STORE)
+            ->with('rss/catalog/special', \Magento\Store\Model\ScopeInterface::SCOPE_STORE)
             ->willReturn(true);
         $this->rssUrlBuilder->expects($this->once())->method('getUrl')
             ->with(['type' => 'special_products'])
             ->willReturn('http://magento.com/rss/feed/index/type/special_products/store_id/1');
         $expected = [
             'label' => 'Special Products',
-            'link' => 'http://magento.com/rss/feed/index/type/special_products/store_id/1'
+            'link' => 'http://magento.com/rss/feed/index/type/special_products/store_id/1',
         ];
         $this->assertEquals($expected, $this->block->getFeeds());
     }

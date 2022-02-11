@@ -3,7 +3,6 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-
 namespace Magento\Framework\Session;
 
 use Magento\Framework\App\DeploymentConfig;
@@ -113,10 +112,14 @@ class SaveHandlerTest extends \PHPUnit\Framework\TestCase
             ->getMock();
         $defaultHandlerMock->expects($this->once())->method('open')->with('explicit_save_path', 'test_session_id');
 
-        $this->saveHandlerFactoryMock
+        $this->saveHandlerFactoryMock->expects($this->at(0))
             ->method('create')
-            ->withConsecutive(['redis'], [SaveHandlerInterface::DEFAULT_HANDLER])
-            ->willReturnOnConsecutiveCalls($redisHandlerMock, $defaultHandlerMock);
+            ->with('redis')
+            ->willReturn($redisHandlerMock);
+        $this->saveHandlerFactoryMock->expects($this->at(1))
+            ->method('create')
+            ->with(SaveHandlerInterface::DEFAULT_HANDLER)
+            ->willReturn($defaultHandlerMock);
 
         $sessionConfig = $this->objectManager->create(ConfigInterface::class);
         /** @var SaveHandler $saveHandler */

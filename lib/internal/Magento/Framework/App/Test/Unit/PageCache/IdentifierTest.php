@@ -3,19 +3,16 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Framework\App\Test\Unit\PageCache;
 
 use Magento\Framework\App\Http\Context;
 use Magento\Framework\App\PageCache\Identifier;
+use Magento\Framework\App\Response\Http;
 use Magento\Framework\App\Request\Http as HttpRequest;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class IdentifierTest extends TestCase
+class IdentifierTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * Test value for cache vary string
@@ -23,17 +20,17 @@ class IdentifierTest extends TestCase
     const VARY = '123';
 
     /**
-     * @var ObjectManager
+     * @var \Magento\Framework\TestFramework\Unit\Helper\ObjectManager
      */
     private $objectManager;
 
     /**
-     * @var Context|MockObject
+     * @var Context|\PHPUnit\Framework\MockObject\MockObject
      */
     private $contextMock;
 
     /**
-     * @var HttpRequest|MockObject
+     * @var HttpRequest|\PHPUnit\Framework\MockObject\MockObject
      */
     private $requestMock;
 
@@ -43,12 +40,12 @@ class IdentifierTest extends TestCase
     private $model;
 
     /**
-     * @var Json|MockObject
+     * @var Json|\PHPUnit\Framework\MockObject\MockObject
      */
     private $serializerMock;
 
     /**
-     * @inheritdoc
+     * @return \Magento\Framework\TestFramework\Unit\Helper\ObjectManager
      */
     protected function setUp(): void
     {
@@ -62,15 +59,17 @@ class IdentifierTest extends TestCase
             ->getMock();
 
         $this->serializerMock = $this->getMockBuilder(Json::class)
-            ->onlyMethods(['serialize'])
+            ->setMethods(['serialize'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->serializerMock->expects($this->any())
             ->method('serialize')
             ->willReturnCallback(
-                function ($value) {
-                    return json_encode($value);
-                }
+                
+                    function ($value) {
+                        return json_encode($value);
+                    }
+                
             );
 
         $this->model = $this->objectManager->getObject(
@@ -78,20 +77,20 @@ class IdentifierTest extends TestCase
             [
                 'request'    => $this->requestMock,
                 'context'    => $this->contextMock,
-                'serializer' => $this->serializerMock
+                'serializer' => $this->serializerMock,
             ]
         );
         parent::setUp();
     }
 
-    /**
-     * @return void
-     */
-    public function testSecureDifferentiator(): void
+    public function testSecureDifferentiator()
     {
-        $this->requestMock
+        $this->requestMock->expects($this->at(0))
             ->method('isSecure')
-            ->willReturnOnConsecutiveCalls(true, false);
+            ->willReturn(true);
+        $this->requestMock->expects($this->at(3))
+            ->method('isSecure')
+            ->willReturn(false);
         $this->requestMock->method('getUriString')
             ->willReturn('http://example.com/path/');
         $this->contextMock->method('getVaryString')->willReturn(self::VARY);
@@ -101,15 +100,15 @@ class IdentifierTest extends TestCase
         $this->assertNotEquals($valueWithSecureRequest, $valueWithInsecureRequest);
     }
 
-    /**
-     * @return void
-     */
-    public function testDomainDifferentiator(): void
+    public function testDomainDifferentiator()
     {
         $this->requestMock->method('isSecure')->willReturn(true);
-        $this->requestMock
+        $this->requestMock->expects($this->at(1))
             ->method('getUriString')
-            ->willReturnOnConsecutiveCalls('http://example.com/path/', 'http://example.net/path/');
+            ->willReturn('http://example.com/path/');
+        $this->requestMock->expects($this->at(4))
+            ->method('getUriString')
+            ->willReturn('http://example.net/path/');
         $this->contextMock->method('getVaryString')->willReturn(self::VARY);
 
         $valueDomain1 = $this->model->getValue();
@@ -117,15 +116,15 @@ class IdentifierTest extends TestCase
         $this->assertNotEquals($valueDomain1, $valueDomain2);
     }
 
-    /**
-     * @return void
-     */
-    public function testPathDifferentiator(): void
+    public function testPathDifferentiator()
     {
         $this->requestMock->method('isSecure')->willReturn(true);
-        $this->requestMock
+        $this->requestMock->expects($this->at(1))
             ->method('getUriString')
-            ->willReturnOnConsecutiveCalls('http://example.com/path/', 'http://example.com/path1/');
+            ->willReturn('http://example.com/path/');
+        $this->requestMock->expects($this->at(4))
+            ->method('getUriString')
+            ->willReturn('http://example.com/path1/');
         $this->contextMock->method('getVaryString')->willReturn(self::VARY);
 
         $valuePath1 = $this->model->getValue();
@@ -136,10 +135,9 @@ class IdentifierTest extends TestCase
     /**
      * @param $cookieExists
      *
-     * @return void
      * @dataProvider trueFalseDataProvider
      */
-    public function testVaryStringSource($cookieExists): void
+    public function testVaryStringSource($cookieExists)
     {
         $this->requestMock->method('get')->willReturn($cookieExists ? 'vary-string-from-cookie' : null);
         $this->contextMock->expects($cookieExists ? $this->never() : $this->once())->method('getVaryString');
@@ -149,17 +147,15 @@ class IdentifierTest extends TestCase
     /**
      * @return array
      */
-    public function trueFalseDataProvider(): array
+    public function trueFalseDataProvider()
     {
         return [[true], [false]];
     }
 
     /**
-     * Test get identifier value.
-     *
-     * @return void
+     * Test get identifier value
      */
-    public function testGetValue(): void
+    public function testGetValue()
     {
         $this->requestMock->expects($this->any())
             ->method('isSecure')

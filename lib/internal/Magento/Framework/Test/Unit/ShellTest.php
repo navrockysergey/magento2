@@ -3,52 +3,38 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
 
 namespace Magento\Framework\Test\Unit;
 
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Shell;
-use Magento\Framework\Shell\CommandRenderer;
-use Magento\Framework\Shell\CommandRendererInterface;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
-
-class ShellTest extends TestCase
+class ShellTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var CommandRendererInterface|MockObject
+     * @var \Magento\Framework\Shell\CommandRendererInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $commandRenderer;
 
     /**
-     * @var LoggerInterface|MockObject
+     * @var \Psr\Log\LoggerInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $logger;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
-        $this->logger = $this->getMockBuilder(LoggerInterface::class)
+        $this->logger = $this->getMockBuilder(\Psr\Log\LoggerInterface::class)
             ->disableOriginalConstructor()
-            ->getMockForAbstractClass();
-        $this->commandRenderer = new CommandRenderer();
+            ->getMock();
+        $this->commandRenderer = new \Magento\Framework\Shell\CommandRenderer();
     }
 
     /**
-     * Test that a command with input arguments returns an expected result.
+     * Test that a command with input arguments returns an expected result
      *
-     * @param Shell $shell
+     * @param \Magento\Framework\Shell $shell
      * @param string $command
      * @param array $commandArgs
      * @param string $expectedResult
-     *
-     * @return void
      */
-    protected function _testExecuteCommand(Shell $shell, $command, $commandArgs, $expectedResult): void
+    protected function _testExecuteCommand(\Magento\Framework\Shell $shell, $command, $commandArgs, $expectedResult)
     {
         $this->expectOutputString('');
         // nothing is expected to be ever printed to the standard output
@@ -60,14 +46,12 @@ class ShellTest extends TestCase
      * @param string $command
      * @param array $commandArgs
      * @param string $expectedResult
-     *
-     * @return void
      * @dataProvider executeDataProvider
      */
-    public function testExecute($command, $commandArgs, $expectedResult): void
+    public function testExecute($command, $commandArgs, $expectedResult)
     {
         $this->_testExecuteCommand(
-            new Shell($this->commandRenderer, $this->logger),
+            new \Magento\Framework\Shell($this->commandRenderer, $this->logger),
             $command,
             $commandArgs,
             $expectedResult
@@ -79,25 +63,20 @@ class ShellTest extends TestCase
      * @param array $commandArgs
      * @param string $expectedResult
      * @param array $expectedLogRecords
-     *
-     * @return void
      * @dataProvider executeDataProvider
      */
-    public function testExecuteLog($command, $commandArgs, $expectedResult, $expectedLogRecords): void
+    public function testExecuteLog($command, $commandArgs, $expectedResult, $expectedLogRecords)
     {
         $quoteChar = substr(escapeshellarg(' '), 0, 1);
-        $withArgs = [];
         // environment-dependent quote character
-        foreach ($expectedLogRecords as $expectedLogMessage) {
+        foreach ($expectedLogRecords as $logRecordIndex => $expectedLogMessage) {
             $expectedLogMessage = str_replace('`', $quoteChar, $expectedLogMessage);
-            $withArgs[] = [$expectedLogMessage];
+            $this->logger->expects($this->at($logRecordIndex))
+                ->method('info')
+                ->with($expectedLogMessage);
         }
-        $this->logger
-            ->method('info')
-            ->withConsecutive(...$withArgs);
-
         $this->_testExecuteCommand(
-            new Shell($this->commandRenderer, $this->logger),
+            new \Magento\Framework\Shell($this->commandRenderer, $this->logger),
             $command,
             $commandArgs,
             $expectedResult
@@ -107,7 +86,7 @@ class ShellTest extends TestCase
     /**
      * @return array
      */
-    public function executeDataProvider(): array
+    public function executeDataProvider()
     {
         // backtick symbol (`) has to be replaced with environment-dependent quote character
         return [
@@ -116,33 +95,33 @@ class ShellTest extends TestCase
                 'php -r %s',
                 ['fwrite(STDERR, 27182);'],
                 '27182',
-                ['php -r `fwrite(STDERR, 27182);` 2>&1', '27182']
+                ['php -r `fwrite(STDERR, 27182);` 2>&1', '27182'],
             ],
             'piping STDERR -> STDOUT' => [
                 // intentionally no spaces around the pipe symbol
                 'php -r %s|php -r %s',
                 ['fwrite(STDERR, 27183);', 'echo fgets(STDIN);'],
                 '27183',
-                ['php -r `fwrite(STDERR, 27183);` 2>&1|php -r `echo fgets(STDIN);` 2>&1', '27183']
+                ['php -r `fwrite(STDERR, 27183);` 2>&1|php -r `echo fgets(STDIN);` 2>&1', '27183'],
             ],
             'piping STDERR -> STDERR' => [
                 'php -r %s | php -r %s',
                 ['fwrite(STDERR, 27184);', 'fwrite(STDERR, fgets(STDIN));'],
                 '27184',
-                ['php -r `fwrite(STDERR, 27184);` 2>&1 | php -r `fwrite(STDERR, fgets(STDIN));` 2>&1', '27184']
+                ['php -r `fwrite(STDERR, 27184);` 2>&1 | php -r `fwrite(STDERR, fgets(STDIN));` 2>&1', '27184'],
             ]
         ];
     }
 
     /**
-     * @return void
      */
-    public function testExecuteFailure(): void
+    public function testExecuteFailure()
     {
-        $this->expectException('Magento\Framework\Exception\LocalizedException');
-        $this->expectExceptionCode('0');
+        $this->expectException(\Magento\Framework\Exception\LocalizedException::class);
         $this->expectExceptionMessage('Command returned non-zero exit code:');
-        $shell = new Shell($this->commandRenderer, $this->logger);
+        $this->expectExceptionCode(0);
+
+        $shell = new \Magento\Framework\Shell($this->commandRenderer, $this->logger);
         $shell->execute('non_existing_command');
     }
 
@@ -150,17 +129,15 @@ class ShellTest extends TestCase
      * @param string $command
      * @param array $commandArgs
      * @param string $expectedError
-     *
-     * @return void
      * @dataProvider executeDataProvider
      */
-    public function testExecuteFailureDetails($command, $commandArgs, $expectedError): void
+    public function testExecuteFailureDetails($command, $commandArgs, $expectedError)
     {
         try {
             /* Force command to return non-zero exit code */
             $commandArgs[count($commandArgs) - 1] .= ' exit(42);';
             $this->testExecute($command, $commandArgs, ''); // no result is expected in a case of a command failure
-        } catch (LocalizedException $e) {
+        } catch (\Magento\Framework\Exception\LocalizedException $e) {
             $this->assertInstanceOf('Exception', $e->getPrevious());
             $this->assertEquals($expectedError, $e->getPrevious()->getMessage());
             $this->assertEquals(42, $e->getPrevious()->getCode());

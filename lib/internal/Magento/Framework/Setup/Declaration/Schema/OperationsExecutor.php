@@ -132,10 +132,10 @@ class OperationsExecutor
     private function startSetupForAllConnections()
     {
         foreach ($this->sharding->getResources() as $resource) {
-            $connection = $this->resourceConnection->getConnection($resource);
-
-            $connection->startSetup();
-            $connection->query('SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0');
+            $this->resourceConnection->getConnection($resource)
+                ->startSetup();
+            $this->resourceConnection->getConnection($resource)
+                ->query('SET UNIQUE_CHECKS=0');
         }
     }
 
@@ -148,10 +148,8 @@ class OperationsExecutor
     private function endSetupForAllConnections()
     {
         foreach ($this->sharding->getResources() as $resource) {
-            $connection = $this->resourceConnection->getConnection($resource);
-
-            $connection->query('SET UNIQUE_CHECKS=IF(@OLD_UNIQUE_CHECKS=0, 0, 1)');
-            $connection->endSetup();
+            $this->resourceConnection->getConnection($resource)
+                ->endSetup();
         }
     }
 

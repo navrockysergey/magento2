@@ -3,20 +3,17 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Analytics\Test\Unit\ReportXml;
 
 use Magento\Analytics\ReportXml\SelectHydrator;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\DB\Select;
+use Magento\Framework\DB\Sql\JsonSerializableExpression;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManagerHelper;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class SelectHydratorTest extends TestCase
+class SelectHydratorTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var SelectHydrator
@@ -24,22 +21,22 @@ class SelectHydratorTest extends TestCase
     private $selectHydrator;
 
     /**
-     * @var ResourceConnection|MockObject
+     * @var ResourceConnection|\PHPUnit\Framework\MockObject\MockObject
      */
     private $resourceConnectionMock;
 
     /**
-     * @var AdapterInterface|MockObject
+     * @var AdapterInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $connectionMock;
 
     /**
-     * @var Select|MockObject
+     * @var Select|\PHPUnit\Framework\MockObject\MockObject
      */
     private $selectMock;
 
     /**
-     * @var ObjectManagerInterface|MockObject
+     * @var ObjectManagerInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $objectManagerMock;
 
@@ -53,13 +50,21 @@ class SelectHydratorTest extends TestCase
      */
     protected function setUp(): void
     {
-        $this->resourceConnectionMock = $this->createMock(ResourceConnection::class);
+        $this->resourceConnectionMock = $this->getMockBuilder(ResourceConnection::class)
+            ->disableOriginalConstructor()
+            ->getMock();
 
-        $this->connectionMock = $this->getMockForAbstractClass(AdapterInterface::class);
+        $this->connectionMock = $this->getMockBuilder(AdapterInterface::class)
+            ->disableOriginalConstructor()
+            ->getMockForAbstractClass();
 
-        $this->selectMock = $this->createMock(Select::class);
+        $this->selectMock = $this->getMockBuilder(Select::class)
+            ->disableOriginalConstructor()
+            ->getMock();
 
-        $this->objectManagerMock = $this->getMockForAbstractClass(ObjectManagerInterface::class);
+        $this->objectManagerMock = $this->getMockBuilder(ObjectManagerInterface::class)
+            ->disableOriginalConstructor()
+            ->getMockForAbstractClass();
 
         $this->objectManagerHelper = new ObjectManagerHelper($this);
 
@@ -67,15 +72,12 @@ class SelectHydratorTest extends TestCase
             SelectHydrator::class,
             [
                 'resourceConnection' => $this->resourceConnectionMock,
-                'objectManager' => $this->objectManagerMock
+                'objectManager' => $this->objectManagerMock,
             ]
         );
     }
 
-    /**
-     * @return void
-     */
-    public function testExtract(): void
+    public function testExtract()
     {
         $selectParts =
             [
@@ -96,21 +98,19 @@ class SelectHydratorTest extends TestCase
         foreach ($selectParts as $part) {
             $result[$part] = "Part";
         }
-        $this->selectMock
+        $this->selectMock->expects($this->any())
             ->method('getPart')
             ->willReturn("Part");
         $this->assertEquals($this->selectHydrator->extract($this->selectMock), $result);
     }
 
     /**
+     * @dataProvider recreateWithoutExpressionDataProvider
      * @param array $selectParts
      * @param array $parts
      * @param array $partValues
-     *
-     * @return void
-     * @dataProvider recreateWithoutExpressionDataProvider
      */
-    public function testRecreateWithoutExpression(array $selectParts, array $parts, array $partValues): void
+    public function testRecreateWithoutExpression($selectParts, $parts, $partValues)
     {
         $this->resourceConnectionMock->expects($this->once())
             ->method('getConnection')
@@ -118,14 +118,11 @@ class SelectHydratorTest extends TestCase
         $this->connectionMock->expects($this->once())
             ->method('select')
             ->willReturn($this->selectMock);
-        $withArgs = [];
-
         foreach ($parts as $key => $part) {
-            $withArgs[] = [$part, $partValues[$key]];
+            $this->selectMock->expects($this->at($key))
+                ->method('setPart')
+                ->with($part, $partValues[$key]);
         }
-        $this->selectMock
-            ->method('setPart')
-            ->withConsecutive(...$withArgs);
 
         $this->assertSame($this->selectMock, $this->selectHydrator->recreate($selectParts));
     }
@@ -133,7 +130,7 @@ class SelectHydratorTest extends TestCase
     /**
      * @return array
      */
-    public function recreateWithoutExpressionDataProvider(): array
+    public function recreateWithoutExpressionDataProvider()
     {
         return [
             'Select without expressions' => [
@@ -142,12 +139,12 @@ class SelectHydratorTest extends TestCase
                         [
                             'table_name',
                             'field_name',
-                            'alias'
+                            'alias',
                         ],
                         [
                             'table_name',
                             'field_name_2',
-                            'alias_2'
+                            'alias_2',
                         ],
                     ]
                 ],
@@ -156,31 +153,29 @@ class SelectHydratorTest extends TestCase
                     [
                         'table_name',
                         'field_name',
-                        'alias'
+                        'alias',
                     ],
                     [
                         'table_name',
                         'field_name_2',
-                        'alias_2'
-                    ]
-                ]]
-            ]
+                        'alias_2',
+                    ],
+                ]],
+            ],
         ];
     }
 
     /**
+     * @dataProvider recreateWithExpressionDataProvider
      * @param array $selectParts
      * @param array $expectedParts
-     * @param MockObject[] $expressionMocks
-     *
-     * @return void
-     * @dataProvider recreateWithExpressionDataProvider
+     * @param \PHPUnit\Framework\MockObject\MockObject[] $expressionMocks
      */
     public function testRecreateWithExpression(
         array $selectParts,
         array $expectedParts,
         array $expressionMocks
-    ): void {
+    ) {
         $this->objectManagerMock
             ->expects($this->exactly(count($expressionMocks)))
             ->method('create')
@@ -196,14 +191,12 @@ class SelectHydratorTest extends TestCase
             ->method('select')
             ->with()
             ->willReturn($this->selectMock);
-        $withArgs = [];
-
-        foreach (array_keys($selectParts) as $partName) {
-            $withArgs[] = [$partName, $expectedParts[$partName]];
+        foreach (array_keys($selectParts) as $key => $partName) {
+            $this->selectMock
+                ->expects($this->at($key))
+                ->method('setPart')
+                ->with($partName, $expectedParts[$partName]);
         }
-        $this->selectMock
-            ->method('setPart')
-            ->withConsecutive(...$withArgs);
 
         $this->assertSame($this->selectMock, $this->selectHydrator->recreate($selectParts));
     }
@@ -211,9 +204,11 @@ class SelectHydratorTest extends TestCase
     /**
      * @return array
      */
-    public function recreateWithExpressionDataProvider(): array
+    public function recreateWithExpressionDataProvider()
     {
-        $expressionMock = $this->createMock(\JsonSerializable::class);
+        $expressionMock = $this->getMockBuilder(\JsonSerializable::class)
+            ->disableOriginalConstructor()
+            ->getMock();
 
         return [
             'Select without expressions' => [
@@ -222,7 +217,7 @@ class SelectHydratorTest extends TestCase
                         [
                             'table_name',
                             'field_name',
-                            'alias'
+                            'alias',
                         ],
                         [
                             'table_name',
@@ -232,8 +227,8 @@ class SelectHydratorTest extends TestCase
                                     'expression' => ['some(expression)']
                                 ]
                             ],
-                            'alias_2'
-                        ]
+                            'alias_2',
+                        ],
                     ]
                 ],
                 'expectedParts' => [
@@ -241,19 +236,19 @@ class SelectHydratorTest extends TestCase
                         [
                             'table_name',
                             'field_name',
-                            'alias'
+                            'alias',
                         ],
                         [
                             'table_name',
                             $expressionMock,
-                            'alias_2'
-                        ]
+                            'alias_2',
+                        ],
                     ]
                 ],
                 'expectedExpressions' => [
                     $expressionMock
                 ]
-            ]
+            ],
         ];
     }
 }

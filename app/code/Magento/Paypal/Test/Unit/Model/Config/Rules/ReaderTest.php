@@ -3,8 +3,6 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Paypal\Test\Unit\Model\Config\Rules;
 
 use Magento\Framework\Config\FileResolverInterface;
@@ -13,68 +11,54 @@ use Magento\Framework\Config\ValidationStateInterface;
 use Magento\Paypal\Helper\Backend;
 use Magento\Paypal\Model\Config\Rules\Converter;
 use Magento\Paypal\Model\Config\Rules\Reader;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class ReaderTest extends TestCase
+class ReaderTest extends \PHPUnit\Framework\TestCase
 {
-    /**
-     * @var  Reader
-     */
+    /** @var  Reader */
     protected $reader;
 
-    /**
-     * @var  FileResolverInterface|MockObject
-     */
+    /** @var  FileResolverInterface|\PHPUnit\Framework\MockObject\MockObject */
     protected $fileResolver;
 
-    /**
-     * @var  Converter|MockObject
-     */
+    /** @var  Converter|\PHPUnit\Framework\MockObject\MockObject */
     protected $converter;
 
-    /**
-     * @var  SchemaLocatorInterface|MockObject
-     */
+    /** @var  SchemaLocatorInterface|\PHPUnit\Framework\MockObject\MockObject */
     protected $schemaLocator;
 
-    /**
-     * @var  ValidationStateInterface|MockObject
-     */
+    /** @var  ValidationStateInterface|\PHPUnit\Framework\MockObject\MockObject */
     protected $validationState;
 
-    /**
-     * @var Backend|MockObject
-     */
+    /** @var Backend|\PHPUnit\Framework\MockObject\MockObject */
     protected $helper;
 
     /**
-     * @inheritdoc
+     * Set up
+     *
+     * @return void
      */
     protected function setUp(): void
     {
         $this->fileResolver = $this->getMockForAbstractClass(
-            FileResolverInterface::class
+            \Magento\Framework\Config\FileResolverInterface::class
         );
-        $this->converter = $this->createMock(Converter::class);
+        $this->converter = $this->createMock(\Magento\Paypal\Model\Config\Rules\Converter::class);
         $this->schemaLocator = $this->getMockForAbstractClass(
-            SchemaLocatorInterface::class
+            \Magento\Framework\Config\SchemaLocatorInterface::class
         );
         $this->validationState = $this->getMockForAbstractClass(
-            ValidationStateInterface::class
+            \Magento\Framework\Config\ValidationStateInterface::class
         );
-        $this->helper = $this->createMock(Backend::class);
+        $this->helper = $this->createMock(\Magento\Paypal\Helper\Backend::class);
     }
 
     /**
      * @param string $countryCode
      * @param string $xml
      * @param string $expected
-     *
-     * @return void
      * @dataProvider dataProviderReadExistingCountryConfig
      */
-    public function testReadExistingCountryConfig($countryCode, $xml, $expected): void
+    public function testReadExistingCountryConfig($countryCode, $xml, $expected)
     {
         $this->helper->expects($this->once())
             ->method('getConfigurationCountryCode')
@@ -82,7 +66,38 @@ class ReaderTest extends TestCase
 
         $this->fileResolver->expects($this->once())
             ->method('get')
-            ->with($expected)
+            ->with($this->equalTo($expected))
+            ->willReturn($xml);
+
+        $this->reader = new \Magento\Paypal\Model\Config\Rules\Reader(
+            $this->fileResolver,
+            $this->converter,
+            $this->schemaLocator,
+            $this->validationState,
+            $this->helper
+        );
+
+        $this->reader->read();
+    }
+
+    /**
+     * @param string $countryCode
+     * @param string $xml
+     * @param string $expected
+     * @dataProvider dataProviderReadOtherCountryConfig
+     */
+    public function testReadOtherCountryConfig($countryCode, $xml, $expected)
+    {
+        $this->helper->expects($this->once())
+            ->method('getConfigurationCountryCode')
+            ->willReturn($countryCode);
+
+        $this->fileResolver->expects($this->at(0))
+            ->method('get')
+            ->willReturn([]);
+        $this->fileResolver->expects($this->at(1))
+            ->method('get')
+            ->with($this->equalTo($expected))
             ->willReturn($xml);
 
         $this->reader = new Reader(
@@ -97,39 +112,9 @@ class ReaderTest extends TestCase
     }
 
     /**
-     * @param string $countryCode
-     * @param string $xml
-     * @param string $expected
-     *
-     * @return void
-     * @dataProvider dataProviderReadOtherCountryConfig
-     */
-    public function testReadOtherCountryConfig($countryCode, $xml, $expected): void
-    {
-        $this->helper->expects($this->once())
-            ->method('getConfigurationCountryCode')
-            ->willReturn($countryCode);
-
-        $this->fileResolver
-            ->method('get')
-            ->withConsecutive([], [$expected])
-            ->willReturnOnConsecutiveCalls([], $xml);
-
-        $this->reader = new Reader(
-            $this->fileResolver,
-            $this->converter,
-            $this->schemaLocator,
-            $this->validationState,
-            $this->helper
-        );
-
-        $this->reader->read();
-    }
-
-    /**
      * @return array
      */
-    public function dataProviderReadExistingCountryConfig(): array
+    public function dataProviderReadExistingCountryConfig()
     {
         return [
             ['us', ['<payment/>'], 'adminhtml/rules/payment_us.xml'],
@@ -142,17 +127,17 @@ class ReaderTest extends TestCase
             ['es', ['<payment/>'], 'adminhtml/rules/payment_es.xml'],
             ['hk', ['<payment/>'], 'adminhtml/rules/payment_hk.xml'],
             ['nz', ['<payment/>'], 'adminhtml/rules/payment_nz.xml'],
-            ['de', ['<payment/>'], 'adminhtml/rules/payment_de.xml']
+            ['de', ['<payment/>'], 'adminhtml/rules/payment_de.xml'],
         ];
     }
 
     /**
      * @return array
      */
-    public function dataProviderReadOtherCountryConfig(): array
+    public function dataProviderReadOtherCountryConfig()
     {
         return [
-            ['no', ['<payment/>'], 'adminhtml/rules/payment_other.xml']
+            ['no', ['<payment/>'], 'adminhtml/rules/payment_other.xml'],
         ];
     }
 }

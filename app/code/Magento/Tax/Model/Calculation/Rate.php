@@ -10,7 +10,6 @@ use Magento\Directory\Model\Region;
 use Magento\Framework\Api\AttributeValueFactory;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Tax\Api\Data\TaxRateInterface;
-use Magento\Tax\Api\Data\TaxRateTitleInterface;
 
 /**
  * Tax Rate Model
@@ -22,22 +21,20 @@ class Rate extends \Magento\Framework\Model\AbstractExtensibleModel implements T
     /**#@+
      * Constants defined for keys of array, makes typos less likely
      */
-    public const KEY_ID              = 'id';
-    public const KEY_COUNTRY_ID      = 'tax_country_id';
-    public const KEY_REGION_ID       = 'tax_region_id';
-    public const KEY_REGION_NAME     = 'region_name';
-    public const KEY_POSTCODE        = 'tax_postcode';
-    public const KEY_ZIP_IS_RANGE    = 'zip_is_range';
-    public const KEY_ZIP_RANGE_FROM  = 'zip_from';
-    public const KEY_ZIP_RANGE_TO    = 'zip_to';
-    public const KEY_PERCENTAGE_RATE = 'rate';
-    public const KEY_CODE            = 'code';
-    public const KEY_TITLES          = 'titles';
+    const KEY_ID              = 'id';
+    const KEY_COUNTRY_ID      = 'tax_country_id';
+    const KEY_REGION_ID       = 'tax_region_id';
+    const KEY_REGION_NAME     = 'region_name';
+    const KEY_POSTCODE        = 'tax_postcode';
+    const KEY_ZIP_IS_RANGE    = 'zip_is_range';
+    const KEY_ZIP_RANGE_FROM  = 'zip_from';
+    const KEY_ZIP_RANGE_TO    = 'zip_to';
+    const KEY_PERCENTAGE_RATE = 'rate';
+    const KEY_CODE            = 'code';
+    const KEY_TITLES          = 'titles';
     /**#@-*/
 
-    /**
-     * @var TaxRateTitleInterface[]
-     */
+    /**#@-*/
     protected $_titles = null;
 
     /**
@@ -54,7 +51,6 @@ class Rate extends \Magento\Framework\Model\AbstractExtensibleModel implements T
      * @var \Magento\Tax\Model\Calculation\Rate\TitleFactory
      */
     protected $_titleFactory;
-
     /**
      * @var Region
      */
@@ -167,7 +163,7 @@ class Rate extends \Magento\Framework\Model\AbstractExtensibleModel implements T
         } else {
             $taxPostCode = $this->getTaxPostcode();
 
-            if ($taxPostCode !== null && strlen($taxPostCode) > 10) {
+            if (strlen($taxPostCode) > 10) {
                 $taxPostCode = substr($taxPostCode, 0, 10);
             }
 
@@ -216,8 +212,7 @@ class Rate extends \Magento\Framework\Model\AbstractExtensibleModel implements T
 
     /**
      * After rate delete
-     *
-     * Redeclared for dispatch tax_settings_change_after event
+     * redeclared for dispatch tax_settings_change_after event
      *
      * @return \Magento\Tax\Model\Calculation\Rate
      */
@@ -271,7 +266,7 @@ class Rate extends \Magento\Framework\Model\AbstractExtensibleModel implements T
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getTitles()
     {
@@ -319,7 +314,7 @@ class Rate extends \Magento\Framework\Model\AbstractExtensibleModel implements T
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getRegionName()
     {
@@ -331,8 +326,8 @@ class Rate extends \Magento\Framework\Model\AbstractExtensibleModel implements T
     }
 
     /**
-     * @inheritdoc
      * @codeCoverageIgnoreStart
+     * {@inheritdoc}
      */
     public function getTaxCalculationRateId()
     {
@@ -340,7 +335,7 @@ class Rate extends \Magento\Framework\Model\AbstractExtensibleModel implements T
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getTaxCountryId()
     {
@@ -348,7 +343,7 @@ class Rate extends \Magento\Framework\Model\AbstractExtensibleModel implements T
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getTaxRegionId()
     {
@@ -356,7 +351,7 @@ class Rate extends \Magento\Framework\Model\AbstractExtensibleModel implements T
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getTaxPostcode()
     {
@@ -364,7 +359,7 @@ class Rate extends \Magento\Framework\Model\AbstractExtensibleModel implements T
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getZipFrom()
     {
@@ -372,7 +367,7 @@ class Rate extends \Magento\Framework\Model\AbstractExtensibleModel implements T
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getZipTo()
     {
@@ -380,7 +375,7 @@ class Rate extends \Magento\Framework\Model\AbstractExtensibleModel implements T
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getRate()
     {
@@ -388,7 +383,7 @@ class Rate extends \Magento\Framework\Model\AbstractExtensibleModel implements T
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getCode()
     {
@@ -396,7 +391,7 @@ class Rate extends \Magento\Framework\Model\AbstractExtensibleModel implements T
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getZipIsRange()
     {
@@ -505,7 +500,7 @@ class Rate extends \Magento\Framework\Model\AbstractExtensibleModel implements T
     /**
      * Set tax rate titles
      *
-     * @param TaxRateTitleInterface[] $titles
+     * @param \Magento\Tax\Api\Data\TaxRateTitleInterface[] $titles
      * @return $this
      */
     public function setTitles(array $titles = null)
@@ -516,7 +511,7 @@ class Rate extends \Magento\Framework\Model\AbstractExtensibleModel implements T
     // @codeCoverageIgnoreEnd
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      *
      * @return \Magento\Tax\Api\Data\TaxRateExtensionInterface|null
      */
@@ -526,7 +521,7 @@ class Rate extends \Magento\Framework\Model\AbstractExtensibleModel implements T
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      *
      * @param \Magento\Tax\Api\Data\TaxRateExtensionInterface $extensionAttributes
      * @return $this

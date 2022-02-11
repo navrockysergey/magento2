@@ -11,7 +11,7 @@ use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\LocalizedException;
 
 /**
- * The product gallery upload controller
+ * Class Upload image(s)
  */
 class Upload extends \Magento\Backend\App\Action implements HttpPostActionInterface
 {
@@ -20,7 +20,7 @@ class Upload extends \Magento\Backend\App\Action implements HttpPostActionInterf
      *
      * @see _isAllowed()
      */
-    public const ADMIN_RESOURCE = 'Magento_Catalog::products';
+    const ADMIN_RESOURCE = 'Magento_Catalog::products';
 
     /**
      * @var \Magento\Framework\Controller\Result\RawFactory
@@ -97,20 +97,17 @@ class Upload extends \Magento\Backend\App\Action implements HttpPostActionInterf
             $result = $uploader->save(
                 $mediaDirectory->getAbsolutePath($this->productMediaConfig->getBaseTmpMediaPath())
             );
+
             $this->_eventManager->dispatch(
                 'catalog_product_gallery_upload_image_after',
                 ['result' => $result, 'action' => $this]
             );
 
-            if (is_array($result)) {
-                unset($result['tmp_name']);
-                unset($result['path']);
+            unset($result['tmp_name']);
+            unset($result['path']);
 
-                $result['url'] = $this->productMediaConfig->getTmpMediaUrl($result['file']);
-                $result['file'] = $result['file'] . '.tmp';
-            } else {
-                $result = ['error' => 'Something went wrong while saving the file(s).'];
-            }
+            $result['url'] = $this->productMediaConfig->getTmpMediaUrl($result['file']);
+            $result['file'] = $result['file'] . '.tmp';
         } catch (LocalizedException $e) {
             $result = ['error' => $e->getMessage(), 'errorcode' => $e->getCode()];
         } catch (\Throwable $e) {

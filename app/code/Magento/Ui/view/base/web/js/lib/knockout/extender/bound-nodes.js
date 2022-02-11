@@ -3,11 +3,13 @@
  * See COPYING.txt for license details.
  */
 
+/* global WeakMap */
 define([
     'ko',
     'underscore',
     'mage/utils/wrapper',
-    'uiEvents'
+    'uiEvents',
+    'es6-collections'
 ], function (ko, _, wrapper, Events) {
     'use strict';
 

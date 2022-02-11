@@ -30,17 +30,12 @@ class MessageList
     protected $_messages;
 
     /**
-     * @var \Magento\Framework\ObjectManagerInterface
-     */
-    private $objectManager;
-
-    /**
      * @param \Magento\Framework\ObjectManagerInterface $objectManager
      * @param array $messages
      */
     public function __construct(\Magento\Framework\ObjectManagerInterface $objectManager, $messages = [])
     {
-        $this->objectManager = $objectManager;
+        $this->_objectManager = $objectManager;
         $this->_messageClasses = $messages;
     }
 
@@ -60,7 +55,7 @@ class MessageList
             if (!$messageClass) {
                 throw new \InvalidArgumentException('Message class for message "' . $key . '" is not set');
             }
-            $message = $this->objectManager->get($messageClass);
+            $message = $this->_objectManager->get($messageClass);
             if ($message instanceof \Magento\Framework\Notification\MessageInterface) {
                 $this->_messages[$message->getIdentity()] = $message;
             } else {

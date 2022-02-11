@@ -12,6 +12,7 @@ use Magento\Payment\Helper\Formatter;
  * Config model that is aware of all \Magento\Paypal payment methods
  *
  * Works with PayPal-specific system configuration
+
  * @SuppressWarnings(PHPMD.ExcessivePublicCount)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
@@ -174,11 +175,7 @@ class Config extends AbstractConfig
     const XML_PATH_PAYPAL_EXPRESS_SKIP_ORDER_REVIEW_STEP_FLAG = 'payment/paypal_express/skip_order_review_step';
 
     /**
-     * PayPal PayLater
-     */
-    const PAYLATER = 'paypal_paylater';
-
-    /**
+     * Instructions for generating proper BN code
      *
      * @var array
      */
@@ -189,6 +186,7 @@ class Config extends AbstractConfig
     ];
 
     /**
+     * Style system config map (Express Checkout)
      *
      * @var array
      */
@@ -201,6 +199,7 @@ class Config extends AbstractConfig
     ];
 
     /**
+     * Currency codes supported by PayPal methods
      *
      * @var string[]
      */
@@ -230,6 +229,7 @@ class Config extends AbstractConfig
     ];
 
     /**
+     * Merchant country supported by PayPal
      *
      * @var string[]
      */
@@ -305,6 +305,7 @@ class Config extends AbstractConfig
     ];
 
     /**
+     * Buyer country supported by PayPal
      *
      * @var string[]
      */
@@ -822,7 +823,7 @@ class Config extends AbstractConfig
         if ($countryCode === null) {
             return $countryMethods;
         }
-        return $countryMethods[$countryCode] ?? $countryMethods['other'];
+        return isset($countryMethods[$countryCode]) ? $countryMethods[$countryCode] : $countryMethods['other'];
     }
 
     /**
@@ -831,10 +832,10 @@ class Config extends AbstractConfig
      * @param string $token
      * @return string
      */
-    public function getPayPalBasicStartUrl($token): string
+    public function getPayPalBasicStartUrl($token)
     {
         $params = [
-            'cmd' => '_express-checkout',
+            'cmd'   => '_express-checkout',
             'token' => $token,
         ];
 
@@ -1329,7 +1330,6 @@ class Config extends AbstractConfig
      * @param string $code
      * @return bool
      * @SuppressWarnings(PHPMD.BooleanGetMethodName)
-     * phpcs:disable Magento2.Functions.StaticFunction
      */
     public static function getIsCreditCardMethod($code)
     {
@@ -1511,11 +1511,7 @@ class Config extends AbstractConfig
             case 'allow_ba_signup':
             case 'in_context':
             case 'merchant_id':
-            case 'client_id':
-            case 'sandbox_client_id':
-            case 'buyer_country':
             case 'supported_locales':
-            case 'smart_buttons_supported_locales':
                 return "payment/{$this->_methodCode}/{$fieldName}";
             default:
                 return $this->_mapMethodFieldset($fieldName);
@@ -1586,7 +1582,6 @@ class Config extends AbstractConfig
             case 'api_signature':
             case 'api_cert':
             case 'sandbox_flag':
-            case 'buyer_country':
             case 'use_proxy':
             case 'proxy_host':
             case 'proxy_port':
@@ -1627,7 +1622,6 @@ class Config extends AbstractConfig
             case 'vendor':
             case 'pwd':
             case 'sandbox_flag':
-            case 'buyer_country':
             case 'use_proxy':
             case 'proxy_host':
             case 'proxy_port':
@@ -1826,21 +1820,6 @@ class Config extends AbstractConfig
     {
         return $this->_scopeConfig->getValue(
             'payment/' . self::METHOD_WPP_BML . '/' . $section . '_size',
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
-            $this->_storeId
-        );
-    }
-
-    /**
-     * Get PayLater config values
-     *
-     * @param string $fieldName
-     * @return mixed
-     */
-    public function getPayLaterConfigValue($fieldName)
-    {
-        return $this->_scopeConfig->getValue(
-            'payment/' . self::PAYLATER . '/' . $fieldName,
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
             $this->_storeId
         );

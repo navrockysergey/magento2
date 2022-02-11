@@ -126,17 +126,13 @@ abstract class Validator
      */
     protected function parseExtensionsString($extensions)
     {
-        $extensions = is_string($extensions) ? strtolower($extensions) : '';
-
-        if (preg_match_all('/(?<extension>[a-z0-9]+)/si', $extensions, $matches)) {
+        if (preg_match_all('/(?<extension>[a-z0-9]+)/si', strtolower($extensions), $matches)) {
             return $matches['extension'] ?: null;
         }
         return null;
     }
 
     /**
-     * Adds required validators to th $object
-     *
      * @param \Zend_File_Transfer_Adapter_Http|\Zend_Validate $object
      * @param \Magento\Catalog\Model\Product\Option $option
      * @param array $fileFullPath
@@ -197,12 +193,10 @@ abstract class Validator
         if (!$this->rootDirectory->isReadable($this->rootDirectory->getRelativePath($fileInfo))) {
             return false;
         }
-
-        $fileContent = $this->rootDirectory->readFile($fileInfo);
-        if (empty($fileContent) || !getimagesizefromstring($fileContent)) {
+        $imageInfo = getimagesize($fileInfo);
+        if (!$imageInfo) {
             return false;
         }
-
         return true;
     }
 }

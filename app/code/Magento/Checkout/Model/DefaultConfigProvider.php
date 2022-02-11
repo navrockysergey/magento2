@@ -11,7 +11,6 @@ use Magento\Checkout\Helper\Data as CheckoutHelper;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Customer\Api\AddressMetadataInterface;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
-use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Customer\Model\Address\CustomerAddressDataProvider;
 use Magento\Customer\Model\Context as CustomerContext;
 use Magento\Customer\Model\Session as CustomerSession;
@@ -97,7 +96,7 @@ class DefaultConfigProvider implements ConfigProviderInterface
     private $configurationPool;
 
     /**
-     * @var QuoteIdMaskFactory
+     * @param QuoteIdMaskFactory
      */
     protected $quoteIdMaskFactory;
 
@@ -312,10 +311,13 @@ class DefaultConfigProvider implements ConfigProviderInterface
         $output['isCustomerLoggedIn'] = $this->isCustomerLoggedIn();
         $output['selectedShippingMethod'] = $this->getSelectedShippingMethod();
         if ($email && !$this->isCustomerLoggedIn()) {
+            $shippingAddressFromData = $this->getAddressFromData($quote->getShippingAddress());
+            $billingAddressFromData = $this->getAddressFromData($quote->getBillingAddress());
+            $output['shippingAddressFromData'] = $shippingAddressFromData;
+            if ($shippingAddressFromData != $billingAddressFromData) {
+                $output['billingAddressFromData'] = $billingAddressFromData;
+            }
             $output['validatedEmailValue'] = $email;
-        }
-        if (!$this->isCustomerLoggedIn() || !$this->getCustomer()->getAddresses()) {
-            $output = array_merge($output, $this->getQuoteAddressData());
         }
         $output['storeCode'] = $this->getStoreCode();
         $output['isGuestCheckoutAllowed'] = $this->isGuestCheckoutAllowed();
@@ -338,17 +340,17 @@ class DefaultConfigProvider implements ConfigProviderInterface
         $output['imageData'] = $this->imageProvider->getImages($quoteId);
 
         $output['totalsData'] = $this->getTotalsData();
-
-        $policyContent = $this->scopeConfig->getValue(
-            'shipping/shipping_policy/shipping_policy_content',
-            ScopeInterface::SCOPE_STORE
-        );
         $output['shippingPolicy'] = [
             'isEnabled' => $this->scopeConfig->isSetFlag(
                 'shipping/shipping_policy/enable_shipping_policy',
                 ScopeInterface::SCOPE_STORE
             ),
-            'shippingPolicyContent' => $policyContent ? nl2br($policyContent) : ''
+            'shippingPolicyContent' => nl2br(
+                $this->scopeConfig->getValue(
+                    'shipping/shipping_policy/shipping_policy_content',
+                    ScopeInterface::SCOPE_STORE
+                )
+            )
         ];
         $output['useQty'] = $this->scopeConfig->isSetFlag(
             'checkout/cart_link/use_qty',
@@ -385,7 +387,8 @@ class DefaultConfigProvider implements ConfigProviderInterface
     {
         $customerData = [];
         if ($this->isCustomerLoggedIn()) {
-            $customer = $this->getCustomer();
+            /** @var \Magento\Customer\Api\Data\CustomerInterface $customer */
+            $customer = $this->customerRepository->getById($this->customerSession->getCustomerId());
             $customerData = $customer->__toArray();
             $customerData['addresses'] = $this->customerAddressData->getAddressDataByCustomer($customer);
         }
@@ -727,44 +730,5 @@ class DefaultConfigProvider implements ConfigProviderInterface
         }
 
         return $quoteItemsMessages;
-    }
-
-    /**
-     * Get quote address data for checkout
-     *
-     * @return array
-     */
-    private function getQuoteAddressData(): array
-    {
-        $output = [];
-        $quote = $this->checkoutSession->getQuote();
-        $shippingAddressFromData = [];
-        if ($quote->getShippingAddress()->getEmail()) {
-            $shippingAddressFromData = $this->getAddressFromData($quote->getShippingAddress());
-            if ($shippingAddressFromData) {
-                $output['isShippingAddressFromDataValid'] = $quote->getShippingAddress()->validate() === true;
-                $output['shippingAddressFromData'] = $shippingAddressFromData;
-            }
-        }
-
-        if ($quote->getBillingAddress()->getEmail()) {
-            $billingAddressFromData = $this->getAddressFromData($quote->getBillingAddress());
-            if ($billingAddressFromData && $shippingAddressFromData != $billingAddressFromData) {
-                $output['isBillingAddressFromDataValid'] = $quote->getBillingAddress()->validate() === true;
-                $output['billingAddressFromData'] = $billingAddressFromData;
-            }
-        }
-
-        return $output;
-    }
-
-    /**
-     * Get logged-in customer
-     *
-     * @return CustomerInterface
-     */
-    private function getCustomer(): CustomerInterface
-    {
-        return $this->customerRepository->getById($this->customerSession->getCustomerId());
     }
 }

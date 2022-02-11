@@ -3,23 +3,14 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Framework\View\Test\Unit\File\Collector\Override;
 
 use Magento\Framework\Component\ComponentRegistrar;
-use Magento\Framework\Component\ComponentRegistrarInterface;
-use Magento\Framework\Filesystem\Directory\Read;
-use Magento\Framework\Filesystem\Directory\ReadFactory;
-use Magento\Framework\View\Design\ThemeInterface;
-use Magento\Framework\View\File;
 use Magento\Framework\View\File\Collector\Override\Base;
+use Magento\Framework\Filesystem\Directory\Read;
 use Magento\Framework\View\File\Factory;
-use Magento\Framework\View\Helper\PathPattern;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class BaseTest extends TestCase
+class BaseTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var Base
@@ -27,51 +18,48 @@ class BaseTest extends TestCase
     private $model;
 
     /**
-     * @var Read|MockObject
+     * @var Read | \PHPUnit\Framework\MockObject\MockObject
      */
     private $themeDirectory;
 
     /**
-     * @var Factory|MockObject
+     * @var Factory | \PHPUnit\Framework\MockObject\MockObject
      */
     private $fileFactory;
 
     /**
-     * @var PathPattern|MockObject
+     * @var \Magento\Framework\View\Helper\PathPattern|\PHPUnit\Framework\MockObject\MockObject
      */
     private $pathPatternHelperMock;
 
     /**
-     * @var ReadFactory|MockObject
+     * @var \Magento\Framework\Filesystem\Directory\ReadFactory|\PHPUnit\Framework\MockObject\MockObject
      */
     private $readDirFactory;
 
     /**
-     * @var ComponentRegistrarInterface|MockObject
+     * @var \Magento\Framework\Component\ComponentRegistrarInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $componentRegistrar;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
         $this->themeDirectory = $this->createPartialMock(
-            Read::class,
+            \Magento\Framework\Filesystem\Directory\Read::class,
             ['getAbsolutePath', 'search']
         );
-        $this->pathPatternHelperMock = $this->getMockBuilder(PathPattern::class)
+        $this->pathPatternHelperMock = $this->getMockBuilder(\Magento\Framework\View\Helper\PathPattern::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->fileFactory = $this->createMock(Factory::class);
-        $this->readDirFactory = $this->createMock(ReadFactory::class);
+        $this->fileFactory = $this->createMock(\Magento\Framework\View\File\Factory::class);
+        $this->readDirFactory = $this->createMock(\Magento\Framework\Filesystem\Directory\ReadFactory::class);
         $this->readDirFactory->expects($this->any())
             ->method('create')
             ->willReturn($this->themeDirectory);
         $this->componentRegistrar = $this->getMockForAbstractClass(
-            ComponentRegistrarInterface::class
+            \Magento\Framework\Component\ComponentRegistrarInterface::class
         );
-        $this->model = new Base(
+        $this->model = new \Magento\Framework\View\File\Collector\Override\Base(
             $this->fileFactory,
             $this->readDirFactory,
             $this->componentRegistrar,
@@ -80,15 +68,12 @@ class BaseTest extends TestCase
         );
     }
 
-    /**
-     * @return void
-     */
-    public function testGetFilesWrongTheme(): void
+    public function testGetFilesWrongTheme()
     {
         $this->componentRegistrar->expects($this->once())
             ->method('getPath')
             ->willReturn('');
-        $theme = $this->getMockForAbstractClass(ThemeInterface::class);
+        $theme = $this->getMockForAbstractClass(\Magento\Framework\View\Design\ThemeInterface::class);
         $theme->expects($this->once())
             ->method('getFullPath')
             ->willReturn('area/Vendor/theme');
@@ -100,13 +85,12 @@ class BaseTest extends TestCase
      * @param string $filePath
      * @param string $pathPattern
      *
-     * @return void
      * @dataProvider getFilesDataProvider
      */
-    public function testGetFiles($files, $filePath, $pathPattern): void
+    public function testGetFiles($files, $filePath, $pathPattern)
     {
         $themePath = 'area/theme/path';
-        $theme = $this->getMockForAbstractClass(ThemeInterface::class);
+        $theme = $this->getMockForAbstractClass(\Magento\Framework\View\Design\ThemeInterface::class);
         $theme->expects($this->once())->method('getFullPath')->willReturn($themePath);
 
         $handlePath = 'design/area/theme/path/%s/override/%s';
@@ -131,17 +115,14 @@ class BaseTest extends TestCase
             ->willReturnArgument(0);
 
         $checkResult = [];
-        $withArgs = $willReturnArgs = [];
-
         foreach ($files as $key => $file) {
-            $checkResult[$key] = new File($file['handle'], $file['module']);
-            $withArgs[] = [sprintf($handlePath, $file['module'], $file['handle']), $file['module']];
-            $willReturnArgs[] = $checkResult[$key];
+            $checkResult[$key] = new \Magento\Framework\View\File($file['handle'], $file['module']);
+            $this->fileFactory
+                ->expects($this->at($key))
+                ->method('create')
+                ->with(sprintf($handlePath, $file['module'], $file['handle']), $file['module'])
+                ->willReturn($checkResult[$key]);
         }
-        $this->fileFactory
-            ->method('create')
-            ->withConsecutive(...$withArgs)
-            ->willReturnOnConsecutiveCalls(...$willReturnArgs);
 
         $this->assertSame($checkResult, $this->model->getFiles($theme, $filePath));
     }
@@ -149,14 +130,14 @@ class BaseTest extends TestCase
     /**
      * @return array
      */
-    public function getFilesDataProvider(): array
+    public function getFilesDataProvider()
     {
         return [
             [
                 [
                     ['handle' => '1.xml', 'module' => 'Module_One'],
                     ['handle' => '2.xml', 'module' => 'Module_One'],
-                    ['handle' => '3.xml', 'module' => 'Module_Two']
+                    ['handle' => '3.xml', 'module' => 'Module_Two'],
                 ],
                 '*.xml',
                 '[^/]*\\.xml'
@@ -167,7 +148,7 @@ class BaseTest extends TestCase
                 ],
                 'preset/4',
                 'preset/4'
-            ]
+            ],
         ];
     }
 }

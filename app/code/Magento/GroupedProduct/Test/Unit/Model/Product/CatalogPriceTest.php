@@ -3,89 +3,66 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\GroupedProduct\Test\Unit\Model\Product;
 
-use Magento\Catalog\Model\Product;
-use Magento\Catalog\Model\Product\Type\Price;
-use Magento\GroupedProduct\Model\Product\CatalogPrice;
-use Magento\GroupedProduct\Model\Product\Type\Grouped;
-use Magento\Store\Api\Data\StoreInterface;
-use Magento\Store\Model\StoreManagerInterface;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-
-class CatalogPriceTest extends TestCase
+class CatalogPriceTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var CatalogPrice
+     * @var \Magento\GroupedProduct\Model\Product\CatalogPrice
      */
     protected $catalogPrice;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $storeManagerMock;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $commonPriceMock;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $productMock;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $priceModelMock;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $productTypeMock;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $associatedProductMock;
 
-    /**
-     * @inheritdoc
-     */
     protected function setUp(): void
     {
-        $this->storeManagerMock = $this->getMockForAbstractClass(StoreManagerInterface::class);
-        $this->commonPriceMock = $this->createMock(Product\CatalogPrice::class);
-        $this->productMock = $this->getMockBuilder(Product::class)
-            ->addMethods(['getWebsiteId', 'getCustomerGroupId', 'setTaxClassId'])
-            ->onlyMethods(['__wakeup', 'getTypeInstance'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->associatedProductMock = $this->getMockBuilder(Product::class)
-            ->addMethods(['setWebsiteId', 'setCustomerGroupId', 'getTaxClassId'])
-            ->onlyMethods(['isSalable', '__wakeup'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->priceModelMock = $this->getMockBuilder(Price::class)
-            ->addMethods(['getTotalPrices'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->productTypeMock = $this->createMock(Grouped::class);
+        $this->storeManagerMock = $this->createMock(\Magento\Store\Model\StoreManagerInterface::class);
+        $this->commonPriceMock = $this->createMock(\Magento\Catalog\Model\Product\CatalogPrice::class);
+        $productMethods = ['getWebsiteId', 'getCustomerGroupId', '__wakeup', 'getTypeInstance', 'setTaxClassId'];
+        $this->productMock = $this->createPartialMock(\Magento\Catalog\Model\Product::class, $productMethods);
+        $methods = ['setWebsiteId', 'isSalable', '__wakeup', 'setCustomerGroupId', 'getTaxClassId'];
+        $this->associatedProductMock = $this->createPartialMock(\Magento\Catalog\Model\Product::class, $methods);
+        $this->priceModelMock = $this->createPartialMock(
+            \Magento\Catalog\Model\Product\Type\Price::class,
+            ['getTotalPrices']
+        );
+        $this->productTypeMock = $this->createMock(\Magento\GroupedProduct\Model\Product\Type\Grouped::class);
 
-        $this->catalogPrice = new CatalogPrice(
+        $this->catalogPrice = new \Magento\GroupedProduct\Model\Product\CatalogPrice(
             $this->storeManagerMock,
             $this->commonPriceMock
         );
     }
 
-    /**
-     * @return void
-     */
-    public function testGetCatalogPriceWithDefaultStoreAndWhenProductDoesNotHaveAssociatedProducts(): void
+    public function testGetCatalogPriceWithDefaultStoreAndWhenProductDoesNotHaveAssociatedProducts()
     {
         $this->productMock->expects(
             $this->once()
@@ -108,10 +85,7 @@ class CatalogPriceTest extends TestCase
         $this->assertNull($this->catalogPrice->getCatalogPrice($this->productMock));
     }
 
-    /**
-     * @return void
-     */
-    public function testGetCatalogPriceWithDefaultStoreAndSubProductIsNotSalable(): void
+    public function testGetCatalogPriceWithDefaultStoreAndSubProductIsNotSalable()
     {
         $this->productMock->expects(
             $this->once()
@@ -154,14 +128,11 @@ class CatalogPriceTest extends TestCase
         $this->assertNull($this->catalogPrice->getCatalogPrice($this->productMock));
     }
 
-    /**
-     * @return void
-     */
-    public function testGetCatalogPriceWithCustomStoreAndSubProductIsSalable(): void
+    public function testGetCatalogPriceWithCustomStoreAndSubProductIsSalable()
     {
-        $storeMock = $this->getMockForAbstractClass(StoreInterface::class);
+        $storeMock = $this->createMock(\Magento\Store\Api\Data\StoreInterface::class);
         $storeMock->expects($this->once())->method('getId')->willReturn('store_id');
-        $currentStoreMock = $this->getMockForAbstractClass(StoreInterface::class);
+        $currentStoreMock = $this->createMock(\Magento\Store\Api\Data\StoreInterface::class);
         $currentStoreMock->expects($this->once())->method('getId')->willReturn('current_store_id');
 
         $this->productMock->expects(
@@ -217,20 +188,14 @@ class CatalogPriceTest extends TestCase
         );
         $this->productMock->expects($this->once())->method('setTaxClassId')->with('tax_class');
 
-        $this->storeManagerMock
-            ->method('getStore')
-            ->willReturn($currentStoreMock);
-        $this->storeManagerMock
-            ->method('setCurrentStore')
-            ->withConsecutive(['store_id'], ['current_store_id']);
+        $this->storeManagerMock->expects($this->at(0))->method('getStore')->willReturn($currentStoreMock);
+        $this->storeManagerMock->expects($this->at(1))->method('setCurrentStore')->with('store_id');
+        $this->storeManagerMock->expects($this->at(2))->method('setCurrentStore')->with('current_store_id');
 
         $this->assertEquals(15, $this->catalogPrice->getCatalogPrice($this->productMock, $storeMock, true));
     }
 
-    /**
-     * @return void
-     */
-    public function testGetCatalogRegularPrice(): void
+    public function testGetCatalogRegularPrice()
     {
         $this->assertNull($this->catalogPrice->getCatalogRegularPrice($this->productMock));
     }

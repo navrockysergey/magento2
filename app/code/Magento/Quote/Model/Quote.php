@@ -10,7 +10,6 @@ use Magento\Customer\Api\Data\GroupInterface;
 use Magento\Directory\Model\AllowedCountries;
 use Magento\Framework\Api\AttributeValueFactory;
 use Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Model\AbstractExtensibleModel;
 use Magento\Quote\Api\Data\PaymentInterface;
 use Magento\Quote\Model\Quote\Address;
@@ -112,7 +111,7 @@ class Quote extends AbstractExtensibleModel implements \Magento\Quote\Api\Data\C
     /**
      * Checkout login method key
      */
-    public const CHECKOUT_METHOD_LOGIN_IN = 'login_in';
+    const CHECKOUT_METHOD_LOGIN_IN = 'login_in';
 
     /**
      * @var string
@@ -172,14 +171,14 @@ class Quote extends AbstractExtensibleModel implements \Magento\Quote\Api\Data\C
     protected $_preventSaving = false;
 
     /**
-     * Product of the catalog
+     * Catalog product
      *
      * @var \Magento\Catalog\Helper\Product
      */
     protected $_catalogProduct;
 
     /**
-     * To perform validation on the quote
+     * Quote validator
      *
      * @var \Magento\Quote\Model\QuoteValidator
      */
@@ -213,7 +212,7 @@ class Quote extends AbstractExtensibleModel implements \Magento\Quote\Api\Data\C
     protected $_customerFactory;
 
     /**
-     * Repository for group to perform CRUD operations
+     * Group repository
      *
      * @var \Magento\Customer\Api\GroupRepositoryInterface
      */
@@ -260,21 +259,21 @@ class Quote extends AbstractExtensibleModel implements \Magento\Quote\Api\Data\C
     protected $_objectCopyService;
 
     /**
-     * Repository for customer address to perform crud operations
+     * Address repository
      *
      * @var \Magento\Customer\Api\AddressRepositoryInterface
      */
     protected $addressRepository;
 
     /**
-     * It is used for building search criteria
+     * Search criteria builder
      *
      * @var \Magento\Framework\Api\SearchCriteriaBuilder
      */
     protected $searchCriteriaBuilder;
 
     /**
-     * This is used for holding  builder object for filter service
+     * Filter builder
      *
      * @var \Magento\Framework\Api\FilterBuilder
      */
@@ -866,8 +865,6 @@ class Quote extends AbstractExtensibleModel implements \Magento\Quote\Api\Data\C
         }
 
         parent::beforeSave();
-
-        return $this;
     }
 
     /**
@@ -948,8 +945,8 @@ class Quote extends AbstractExtensibleModel implements \Magento\Quote\Api\Data\C
             } else {
                 try {
                     $defaultBillingAddress = $this->addressRepository->getById($customer->getDefaultBilling());
-                    // phpcs:ignore Magento2.CodeAnalysis.EmptyBlock
                 } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
+                    //
                 }
                 if (isset($defaultBillingAddress)) {
                     /** @var \Magento\Quote\Model\Quote\Address $billingAddress */
@@ -962,8 +959,8 @@ class Quote extends AbstractExtensibleModel implements \Magento\Quote\Api\Data\C
             if (null === $shippingAddress) {
                 try {
                     $defaultShippingAddress = $this->addressRepository->getById($customer->getDefaultShipping());
-                    // phpcs:ignore Magento2.CodeAnalysis.EmptyBlock
                 } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
+                    //
                 }
                 if (isset($defaultShippingAddress)) {
                     /** @var \Magento\Quote\Model\Quote\Address $shippingAddress */
@@ -1105,22 +1102,7 @@ class Quote extends AbstractExtensibleModel implements \Magento\Quote\Api\Data\C
         //if (!$this->getData('customer_group_id') && !$this->getData('customer_tax_class_id')) {
         $groupId = $this->getCustomerGroupId();
         if ($groupId !== null) {
-            $taxClassId = null;
-            try {
-                $taxClassId = $this->groupRepository->getById($this->getCustomerGroupId())->getTaxClassId();
-            } catch (NoSuchEntityException $e) {
-                /**
-                 * A customer MAY create a quote and AFTER that customer group MAY be deleted.
-                 * That breaks a quote because it still refers no a non-existent customer group.
-                 * In such a case we should load a new customer group id from the current customer
-                 * object and use it to retrieve tax class and update quote.
-                 */
-                $groupId = $this->getCustomer()->getGroupId();
-                $this->setCustomerGroupId($groupId);
-                if ($groupId !== null) {
-                    $taxClassId = $this->groupRepository->getById($groupId)->getTaxClassId();
-                }
-            }
+            $taxClassId = $this->groupRepository->getById($this->getCustomerGroupId())->getTaxClassId();
             $this->setCustomerTaxClassId($taxClassId);
         }
 
@@ -1356,7 +1338,7 @@ class Quote extends AbstractExtensibleModel implements \Magento\Quote\Api\Data\C
     {
         $old = $this->getAddressesCollection()->getItemById($address->getId())
             ?? $this->getBillingAddress();
-        if ($old !== null) {
+        if (!empty($old)) {
             $old->addData($address->getData());
         } else {
             $this->addAddress($address->setAddressType(Address::TYPE_BILLING));
@@ -1378,7 +1360,7 @@ class Quote extends AbstractExtensibleModel implements \Magento\Quote\Api\Data\C
         } else {
             $old = $this->getAddressesCollection()->getItemById($address->getId())
                 ?? $this->getShippingAddress();
-            if ($old !== null) {
+            if (!empty($old)) {
                 $old->addData($address->getData());
             } else {
                 $this->addAddress($address->setAddressType(Address::TYPE_SHIPPING));
@@ -1557,6 +1539,10 @@ class Quote extends AbstractExtensibleModel implements \Magento\Quote\Api\Data\C
 
         if ($item) {
             $item->setQuote($this);
+            /**
+             * If we remove item from quote - we can't use multishipping mode
+             */
+            $this->setIsMultiShipping(false);
             $item->isDeleted(true);
             if ($item->getHasChildren()) {
                 foreach ($item->getChildren() as $child) {
@@ -1693,14 +1679,12 @@ class Quote extends AbstractExtensibleModel implements \Magento\Quote\Api\Data\C
 
             // collect errors instead of throwing first one
             if ($item->getHasError()) {
-                $this->deleteItem($item);
                 foreach ($item->getMessage(false) as $message) {
                     if (!in_array($message, $errors)) {
                         // filter duplicate messages
                         $errors[] = $message;
                     }
                 }
-                break;
             }
         }
         if (!empty($errors)) {
@@ -2308,9 +2292,7 @@ class Quote extends AbstractExtensibleModel implements \Magento\Quote\Api\Data\C
 
         if (!$minOrderMulti) {
             foreach ($addresses as $address) {
-                $taxes = $taxInclude
-                    ? $address->getBaseTaxAmount() + $address->getBaseDiscountTaxCompensationAmount()
-                    : 0;
+                $taxes = ($taxInclude) ? $address->getBaseTaxAmount() : 0;
                 foreach ($address->getQuote()->getItemsCollection() as $item) {
                     /** @var \Magento\Quote\Model\Quote\Item $item */
                     $amount = $includeDiscount ?
@@ -2325,9 +2307,7 @@ class Quote extends AbstractExtensibleModel implements \Magento\Quote\Api\Data\C
         } else {
             $baseTotal = 0;
             foreach ($addresses as $address) {
-                $taxes = $taxInclude
-                    ? $address->getBaseTaxAmount() + $address->getBaseDiscountTaxCompensationAmount()
-                    : 0;
+                $taxes = ($taxInclude) ? $address->getBaseTaxAmount() : 0;
                 $baseTotal += $includeDiscount ?
                     $address->getBaseSubtotalWithDiscount() + $taxes :
                     $address->getBaseSubtotal() + $taxes;

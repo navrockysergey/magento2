@@ -22,6 +22,7 @@ interface RendererInterface
      * @param Column $column
      * @return void
      * @abstract
+     * @api
      */
     public function setColumn($column);
 
@@ -30,6 +31,7 @@ interface RendererInterface
      *
      * @abstract
      * @return void
+     * @api
      */
     public function getColumn();
 
@@ -38,6 +40,7 @@ interface RendererInterface
      *
      * @param \Magento\Framework\DataObject $row
      * @return string
+     * @api
      */
     public function render(\Magento\Framework\DataObject $row);
 }

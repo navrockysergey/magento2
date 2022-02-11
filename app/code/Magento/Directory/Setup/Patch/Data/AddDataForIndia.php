@@ -42,9 +42,7 @@ class AddDataForIndia implements DataPatchInterface, PatchVersionInterface
     }
 
     /**
-     * Run code inside patch
-     *
-     * @return void
+     * @inheritdoc
      */
     public function apply()
     {

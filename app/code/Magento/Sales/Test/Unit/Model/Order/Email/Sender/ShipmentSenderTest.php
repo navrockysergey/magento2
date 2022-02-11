@@ -3,24 +3,12 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Sales\Test\Unit\Model\Order\Email\Sender;
 
-use Magento\Sales\Api\Data\OrderInterface;
-use Magento\Sales\Model\Order\Address;
-use Magento\Sales\Model\Order\Email\Container\ShipmentIdentity;
 use Magento\Sales\Model\Order\Email\Sender\ShipmentSender;
-use Magento\Sales\Model\Order\Shipment;
-use Magento\Sales\Model\ResourceModel\EntityAbstract;
-use Magento\Sales\Model\ResourceModel\Order\Shipment as ShipmentResource;
-use PHPUnit\Framework\MockObject\MockObject;
 
 /**
- * Test for Magento\Sales\Model\Order\Email\Sender\ShipmentSender class
- *
- * @deprecated since ShipmentSender is deprecated
- * @see \Magento\Sales\Model\Order\Email\Sender\ShipmentSender
+ * Test for Magento\Sales\Model\Order\Email\Sender\ShipmentSender class.
  */
 class ShipmentSenderTest extends AbstractSenderTest
 {
@@ -29,37 +17,42 @@ class ShipmentSenderTest extends AbstractSenderTest
     private const ORDER_ID = 1;
 
     /**
-     * @var ShipmentSender
+     * @var \Magento\Sales\Model\Order\Email\Sender\ShipmentSender
      */
     protected $sender;
 
     /**
-     * @var Shipment|MockObject
+     * @var \Magento\Sales\Model\Order\Shipment|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $shipmentMock;
 
     /**
-     * @var EntityAbstract|MockObject
+     * @var \Magento\Sales\Model\ResourceModel\EntityAbstract|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $shipmentResourceMock;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
         $this->stepMockSetup();
 
         $this->shipmentResourceMock = $this->createPartialMock(
-            ShipmentResource::class,
+            \Magento\Sales\Model\ResourceModel\Order\Shipment::class,
             ['saveAttribute']
         );
 
-        $this->shipmentMock = $this->getMockBuilder(Shipment::class)
-            ->addMethods(['setSendEmail', 'getCustomerNoteNotify', 'getCustomerNote'])
-            ->onlyMethods(['getStore', 'getId', 'getOrder', 'setEmailSent'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        $this->shipmentMock = $this->createPartialMock(
+            \Magento\Sales\Model\Order\Shipment::class,
+            [
+                'getStore',
+                'getId',
+                '__wakeup',
+                'getOrder',
+                'setSendEmail',
+                'setEmailSent',
+                'getCustomerNoteNotify',
+                'getCustomerNote'
+            ]
+        );
         $this->shipmentMock->expects($this->any())
             ->method('getStore')
             ->willReturn($this->storeMock);
@@ -73,7 +66,7 @@ class ShipmentSenderTest extends AbstractSenderTest
             ->willReturn(self::ORDER_ID);
 
         $this->identityContainerMock = $this->createPartialMock(
-            ShipmentIdentity::class,
+            \Magento\Sales\Model\Order\Email\Container\ShipmentIdentity::class,
             ['getStore', 'isEnabled', 'getConfigValue', 'getTemplateId', 'getGuestTemplateId', 'getCopyMethod']
         );
         $this->identityContainerMock->expects($this->any())
@@ -89,27 +82,21 @@ class ShipmentSenderTest extends AbstractSenderTest
             $this->paymentHelper,
             $this->shipmentResourceMock,
             $this->globalConfig,
-            $this->eventManagerMock,
-            $this->appEmulator
+            $this->eventManagerMock
         );
     }
 
     /**
      * @param int $configValue
-     * @param int|null $forceSyncMode
-     * @param int|null $customerNoteNotify
+     * @param bool|null $forceSyncMode
+     * @param bool|null $customerNoteNotify
      * @param bool|null $emailSendingResult
-     *
+     * @dataProvider sendDataProvider
      * @return void
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-     * @dataProvider sendDataProvider
      */
-    public function testSend(
-        int $configValue,
-        ?int $forceSyncMode,
-        ?int $customerNoteNotify,
-        ?bool $emailSendingResult
-    ): void {
+    public function testSend($configValue, $forceSyncMode, $customerNoteNotify, $emailSendingResult)
+    {
         $comment = 'comment_test';
         $address = 'address_test';
         $configPath = 'sales_email/general/async_sending';
@@ -127,7 +114,7 @@ class ShipmentSenderTest extends AbstractSenderTest
             ->willReturn($configValue);
 
         if (!$configValue || $forceSyncMode) {
-            $addressMock = $this->createMock(Address::class);
+            $addressMock = $this->createMock(\Magento\Sales\Model\Order\Address::class);
 
             $this->addressRenderer->expects($this->any())
                 ->method('format')
@@ -189,8 +176,6 @@ class ShipmentSenderTest extends AbstractSenderTest
                     ]
                 );
 
-            $this->appEmulator->expects($this->once())->method('startEnvironmentEmulation');
-            $this->appEmulator->expects($this->once())->method('stopEnvironmentEmulation');
             $this->identityContainerMock->expects($this->exactly(2))
                 ->method('isEnabled')
                 ->willReturn($emailSendingResult);
@@ -229,12 +214,12 @@ class ShipmentSenderTest extends AbstractSenderTest
                 );
             }
         } else {
-            $this->shipmentResourceMock
+            $this->shipmentResourceMock->expects($this->at(0))
                 ->method('saveAttribute')
-                ->withConsecutive(
-                    [$this->shipmentMock, 'email_sent'],
-                    [$this->shipmentMock, 'send_email']
-                );
+                ->with($this->shipmentMock, 'email_sent');
+            $this->shipmentResourceMock->expects($this->at(1))
+                ->method('saveAttribute')
+                ->with($this->shipmentMock, 'send_email');
 
             $this->assertFalse(
                 $this->sender->send($this->shipmentMock)
@@ -245,7 +230,7 @@ class ShipmentSenderTest extends AbstractSenderTest
     /**
      * @return array
      */
-    public function sendDataProvider(): array
+    public function sendDataProvider()
     {
         return [
             [0, 0, 1, true],
@@ -262,17 +247,12 @@ class ShipmentSenderTest extends AbstractSenderTest
      * @param bool $isVirtualOrder
      * @param int $formatCallCount
      * @param string|null $expectedShippingAddress
-     *
-     * @return void
      * @dataProvider sendVirtualOrderDataProvider
      */
-    public function testSendVirtualOrder(
-        bool $isVirtualOrder,
-        int $formatCallCount,
-        ?string $expectedShippingAddress
-    ): void {
+    public function testSendVirtualOrder($isVirtualOrder, $formatCallCount, $expectedShippingAddress)
+    {
         $address = 'address_test';
-        $this->orderMock->setData(OrderInterface::IS_VIRTUAL, $isVirtualOrder);
+        $this->orderMock->setData(\Magento\Sales\Api\Data\OrderInterface::IS_VIRTUAL, $isVirtualOrder);
         $customerName = 'Test Customer';
         $frontendStatusLabel = 'Complete';
         $isNotVirtual = false;
@@ -286,7 +266,7 @@ class ShipmentSenderTest extends AbstractSenderTest
             ->with('sales_email/general/async_sending')
             ->willReturn(false);
 
-        $addressMock = $this->createMock(Address::class);
+        $addressMock = $this->createMock(\Magento\Sales\Model\Order\Address::class);
 
         $this->addressRenderer->expects($this->exactly($formatCallCount))
             ->method('format')
@@ -338,8 +318,6 @@ class ShipmentSenderTest extends AbstractSenderTest
                 ]
             );
 
-        $this->appEmulator->expects($this->once())->method('startEnvironmentEmulation');
-        $this->appEmulator->expects($this->once())->method('stopEnvironmentEmulation');
         $this->identityContainerMock->expects($this->exactly(2))
             ->method('isEnabled')
             ->willReturn(false);
@@ -353,7 +331,7 @@ class ShipmentSenderTest extends AbstractSenderTest
     /**
      * @return array
      */
-    public function sendVirtualOrderDataProvider(): array
+    public function sendVirtualOrderDataProvider()
     {
         return [
             [true, 1, null],

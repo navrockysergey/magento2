@@ -1,13 +1,13 @@
 <?php
 /**
+ * Default application path for backend area
+ *
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Backend\App;
 
 /**
- * Default application path for backend area
- *
  * @api
  * @since 100.0.2
  */
@@ -24,11 +24,7 @@ class DefaultPath implements \Magento\Framework\App\DefaultPathInterface
      */
     public function __construct(\Magento\Backend\App\ConfigInterface $config)
     {
-        $pathConfigValue = $config->getValue('web/default/admin') ?? '';
-        $pathParts  = [];
-        if ($pathConfigValue) {
-            $pathParts = explode('/', $pathConfigValue);
-        }
+        $pathParts = explode('/', $config->getValue('web/default/admin'));
 
         $this->_parts = [
             'area' => isset($pathParts[0]) ? $pathParts[0] : '',

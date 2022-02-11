@@ -3,12 +3,8 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Sales\Model\Order\Email\Sender;
 
-use Magento\Framework\App\Area;
-use Magento\Framework\App\ObjectManager;
 use Magento\Framework\DataObject;
 use Magento\Framework\Event\ManagerInterface;
 use Magento\Payment\Helper\Data as PaymentHelper;
@@ -19,7 +15,6 @@ use Magento\Sales\Model\Order\Email\Container\Template;
 use Magento\Sales\Model\Order\Email\Sender;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Sales\Model\ResourceModel\Order\Invoice as InvoiceResource;
-use Magento\Store\Model\App\Emulation;
 
 /**
  * Sends order invoice email to the customer.
@@ -58,11 +53,6 @@ class InvoiceSender extends Sender
     protected $eventManager;
 
     /**
-     * @var Emulation
-     */
-    private $appEmulation;
-
-    /**
      * @param Template $templateContainer
      * @param InvoiceIdentity $identityContainer
      * @param Order\Email\SenderBuilderFactory $senderBuilderFactory
@@ -72,9 +62,6 @@ class InvoiceSender extends Sender
      * @param InvoiceResource $invoiceResource
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $globalConfig
      * @param ManagerInterface $eventManager
-     * @param Emulation|null $appEmulation
-     *
-     * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
         Template $templateContainer,
@@ -85,8 +72,7 @@ class InvoiceSender extends Sender
         PaymentHelper $paymentHelper,
         InvoiceResource $invoiceResource,
         \Magento\Framework\App\Config\ScopeConfigInterface $globalConfig,
-        ManagerInterface $eventManager,
-        Emulation $appEmulation = null
+        ManagerInterface $eventManager
     ) {
         parent::__construct($templateContainer, $identityContainer, $senderBuilderFactory, $logger, $addressRenderer);
         $this->paymentHelper = $paymentHelper;
@@ -94,7 +80,6 @@ class InvoiceSender extends Sender
         $this->globalConfig = $globalConfig;
         $this->addressRenderer = $addressRenderer;
         $this->eventManager = $eventManager;
-        $this->appEmulation = $appEmulation ?: ObjectManager::getInstance()->get(Emulation::class);
     }
 
     /**
@@ -115,17 +100,18 @@ class InvoiceSender extends Sender
      */
     public function send(Invoice $invoice, $forceSyncMode = false)
     {
-        $this->identityContainer->setStore($invoice->getStore());
         $invoice->setSendEmail($this->identityContainer->isEnabled());
 
         if (!$this->globalConfig->getValue('sales_email/general/async_sending') || $forceSyncMode) {
             $order = $invoice->getOrder();
+            $this->identityContainer->setStore($order->getStore());
+
             if ($this->checkIfPartialInvoice($order, $invoice)) {
                 $order->setBaseSubtotal((float) $invoice->getBaseSubtotal());
                 $order->setBaseTaxAmount((float) $invoice->getBaseTaxAmount());
                 $order->setBaseShippingAmount((float) $invoice->getBaseShippingAmount());
             }
-            $this->appEmulation->startEnvironmentEmulation($order->getStoreId(), Area::AREA_FRONTEND, true);
+
             $transport = [
                 'order' => $order,
                 'order_id' => $order->getId(),
@@ -145,7 +131,6 @@ class InvoiceSender extends Sender
                 ]
             ];
             $transportObject = new DataObject($transport);
-            $this->appEmulation->stopEnvironmentEmulation();
 
             /**
              * Event argument `transport` is @deprecated. Use `transportObject` instead.

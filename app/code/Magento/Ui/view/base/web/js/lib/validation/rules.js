@@ -458,7 +458,7 @@ define([
                     return false;
                 }
 
-                pass = value.trim();
+                pass = $.trim(value);
 
                 if (!pass.length) {
                     return true;
@@ -476,7 +476,7 @@ define([
                     return false;
                 }
 
-                pass = value.trim();
+                pass = $.trim(value);
 
                 if (pass.length === 0) {
                     return true;
@@ -500,7 +500,7 @@ define([
                     counter = 0,
                     passwordMinLength = $(elm).data('password-min-length'),
                     passwordMinCharacterSets = $(elm).data('password-min-character-sets'),
-                    pass = v.trim(),
+                    pass = $.trim(v),
                     result = pass.length >= passwordMinLength;
 
                 if (result === false) {
@@ -830,53 +830,29 @@ define([
         ],
         'validate-state': [
             function (value) {
-                return value !== 0;
+                return value !== 0 || value === '';
             },
             $.mage.__('Please select State/Province.')
         ],
         'less-than-equals-to': [
             function (value, params) {
-                value = utils.parseNumber(value);
-
-                if (isNaN(parseFloat(params))) {
-                    params = $(params).val();
-                }
-
-                params = utils.parseNumber(params);
-
-                if (!isNaN(params) && !isNaN(value)) {
-                    this.lteToVal = params;
-
-                    return value <= params;
+                if ($.isNumeric(params) && $.isNumeric(value)) {
+                    return parseFloat(value) <= parseFloat(params);
                 }
 
                 return true;
             },
-            function () {
-                return $.mage.__('Please enter a value less than or equal to %s.').replace('%s', this.lteToVal);
-            }
+            $.mage.__('Please enter a value less than or equal to {0}.')
         ],
         'greater-than-equals-to': [
             function (value, params) {
-                value = utils.parseNumber(value);
-
-                if (isNaN(parseFloat(params))) {
-                    params = $(params).val();
-                }
-
-                params = utils.parseNumber(params);
-
-                if (!isNaN(params) && !isNaN(value)) {
-                    this.gteToVal = params;
-
-                    return value >= params;
+                if ($.isNumeric(params) && $.isNumeric(value)) {
+                    return parseFloat(value) >= parseFloat(params);
                 }
 
                 return true;
             },
-            function () {
-                return $.mage.__('Please enter a value greater than or equal to %s.').replace('%s', this.gteToVal);
-            }
+            $.mage.__('Please enter a value greater than or equal to {0}.')
         ],
         'validate-emails': [
             function (value) {
@@ -1093,30 +1069,14 @@ define([
             $.mage.__('This link is not allowed.')
         ],
         'validate-dob': [
-            function (value, param, params) {
+            function (value) {
                 if (value === '') {
                     return true;
                 }
 
-                return moment.utc(value, params.dateFormat).isSameOrBefore(moment.utc());
+                return moment(value).isBefore(moment());
             },
             $.mage.__('The Date of Birth should not be greater than today.')
-        ],
-        'validate-no-utf8mb4-characters': [
-            function (value) {
-                var validator = this,
-                    message = $.mage.__('Please remove invalid characters: {0}.'),
-                    matches = value.match(/(?:[\uD800-\uDBFF][\uDC00-\uDFFF])/g),
-                    result = matches === null;
-
-                if (!result) {
-                    validator.charErrorMessage = message.replace('{0}', matches.join());
-                }
-
-                return result;
-            }, function () {
-                return this.charErrorMessage;
-            }
         ]
     }, function (data) {
         return {

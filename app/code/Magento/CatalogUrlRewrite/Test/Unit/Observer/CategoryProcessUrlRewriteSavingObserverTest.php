@@ -7,31 +7,28 @@ declare(strict_types=1);
 
 namespace Magento\CatalogUrlRewrite\Test\Unit\Observer;
 
-use Magento\Catalog\Model\Category;
 use Magento\CatalogUrlRewrite\Model\CategoryUrlRewriteGenerator;
-use Magento\CatalogUrlRewrite\Model\Map\DatabaseMapPool;
-use Magento\CatalogUrlRewrite\Model\UrlRewriteBunchReplacer;
 use Magento\CatalogUrlRewrite\Observer\CategoryProcessUrlRewriteSavingObserver;
+use Magento\CatalogUrlRewrite\Model\UrlRewriteBunchReplacer;
 use Magento\CatalogUrlRewrite\Observer\UrlRewriteHandler;
+use Magento\CatalogUrlRewrite\Model\Map\DatabaseMapPool;
 use Magento\Framework\App\Config\ScopeConfigInterface as ScopeConfigInterfaceAlias;
-use Magento\Framework\Event\Observer;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManagerHelper;
 use Magento\Store\Model\ResourceModel\Group\CollectionFactory;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManagerHelper;
+use Magento\Catalog\Model\Category;
 
 /**
  * Unit tests for \Magento\CatalogUrlRewrite\Observer\CategoryProcessUrlRewriteSavingObserver class.
  */
-class CategoryProcessUrlRewriteSavingObserverTest extends TestCase
+class CategoryProcessUrlRewriteSavingObserverTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var Observer|MockObject
+     * @var \Magento\Framework\Event\Observer|\PHPUnit\Framework\MockObject\MockObject
      */
     private $observer;
 
     /**
-     * @var Category|MockObject
+     * @var \Magento\Catalog\Model\Category|\PHPUnit\Framework\MockObject\MockObject
      */
     private $category;
 
@@ -41,49 +38,54 @@ class CategoryProcessUrlRewriteSavingObserverTest extends TestCase
     private $categoryProcessUrlRewriteSavingObserver;
 
     /**
-     * @var CategoryUrlRewriteGenerator|MockObject
+     * @var CategoryUrlRewriteGenerator|\PHPUnit\Framework\MockObject\MockObject
      */
     private $categoryUrlRewriteGeneratorMock;
 
     /**
-     * @var UrlRewriteBunchReplacer|MockObject
+     * @var UrlRewriteBunchReplacer|\PHPUnit\Framework\MockObject\MockObject
      */
     private $urlRewriteBunchReplacerMock;
 
     /**
-     * @var UrlRewriteHandler|MockObject
+     * @var UrlRewriteHandler|\PHPUnit\Framework\MockObject\MockObject
      */
     private $urlRewriteHandlerMock;
 
     /**
-     * @var DatabaseMapPool|MockObject
+     * @var DatabaseMapPool|\PHPUnit\Framework\MockObject\MockObject
      */
     private $databaseMapPoolMock;
 
     /**
-     * @var CollectionFactory|MockObject
+     * @var CollectionFactory|\PHPUnit\Framework\MockObject\MockObject
      */
     private $storeGroupFactory;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     private $scopeConfigMock;
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     protected function setUp(): void
     {
         $this->observer = $this->createPartialMock(
-            Observer::class,
+            \Magento\Framework\Event\Observer::class,
             ['getEvent', 'getData']
         );
-        $this->category = $this->getMockBuilder(Category::class)
-            ->addMethods(['getChangedProductIds'])
-            ->onlyMethods(['hasData', 'getParentId', 'getStoreId', 'dataHasChangedFor'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        $this->category = $this->createPartialMock(
+            Category::class,
+            [
+                'hasData',
+                'getParentId',
+                'getStoreId',
+                'dataHasChangedFor',
+                'getChangedProductIds',
+            ]
+        );
         $this->observer->expects($this->any())
             ->method('getEvent')
             ->willReturnSelf();
@@ -105,11 +107,11 @@ class CategoryProcessUrlRewriteSavingObserverTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
         $this->storeGroupFactory = $this->getMockBuilder(CollectionFactory::class)
-            ->onlyMethods(['create'])
+            ->setMethods(['create'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->scopeConfigMock = $this->getMockBuilder(ScopeConfigInterfaceAlias::class)
-            ->onlyMethods(['getValue'])
+            ->setMethods(['getValue'])
             ->disableOriginalConstructor()
             ->getMockForAbstractClass();
         $this->scopeConfigMock->method('getValue')->willReturn(true);
@@ -127,10 +129,7 @@ class CategoryProcessUrlRewriteSavingObserverTest extends TestCase
         );
     }
 
-    /**
-     * @return void
-     */
-    public function testExecuteForRootDirectory(): void
+    public function testExecuteForRootDirectory()
     {
         $this->category->expects($this->once())
             ->method('getParentId')
@@ -141,10 +140,7 @@ class CategoryProcessUrlRewriteSavingObserverTest extends TestCase
         $this->categoryProcessUrlRewriteSavingObserver->execute($this->observer);
     }
 
-    /**
-     * @return void
-     */
-    public function testExecuteHasStoreId(): void
+    public function testExecuteHasStoreId()
     {
         $this->category->expects($this->once())
             ->method('getParentId')
@@ -160,7 +156,7 @@ class CategoryProcessUrlRewriteSavingObserverTest extends TestCase
             ->willReturnMap(
                 [
                     ['url_key', false],
-                    ['is_anchor', false]
+                    ['is_anchor', false],
                 ]
             );
         $this->category->expects($this->once())
@@ -170,10 +166,7 @@ class CategoryProcessUrlRewriteSavingObserverTest extends TestCase
         $this->categoryProcessUrlRewriteSavingObserver->execute($this->observer);
     }
 
-    /**
-     * @return void
-     */
-    public function testExecuteHasNotChanges(): void
+    public function testExecuteHasNotChanges()
     {
         $this->category->expects($this->once())
             ->method('getParentId')
@@ -189,7 +182,7 @@ class CategoryProcessUrlRewriteSavingObserverTest extends TestCase
             ->willReturnMap(
                 [
                     ['url_key', false],
-                    ['is_anchor', false]
+                    ['is_anchor', false],
                 ]
             );
         $this->category->expects($this->once())
@@ -201,10 +194,7 @@ class CategoryProcessUrlRewriteSavingObserverTest extends TestCase
         $this->categoryProcessUrlRewriteSavingObserver->execute($this->observer);
     }
 
-    /**
-     * @return void
-     */
-    public function testExecuteHasChanges(): void
+    public function testExecuteHasChanges()
     {
         $this->category->expects($this->once())
             ->method('getParentId')
@@ -220,7 +210,7 @@ class CategoryProcessUrlRewriteSavingObserverTest extends TestCase
             ->willReturnMap(
                 [
                     ['url_key', true],
-                    ['is_anchor', false]
+                    ['is_anchor', false],
                 ]
             );
         $this->category->expects($this->any())
@@ -233,16 +223,20 @@ class CategoryProcessUrlRewriteSavingObserverTest extends TestCase
             ->method('generate')
             ->with($this->category)
             ->willReturn($result1);
+        $this->urlRewriteBunchReplacerMock->expects($this->at(0))
+            ->method('doBunchReplace')
+            ->with($result1)
+            ->willReturn(null);
 
         $result2 = ['test2'];
         $this->urlRewriteHandlerMock->expects($this->once())
             ->method('generateProductUrlRewrites')
             ->with($this->category)
             ->willReturn($result2);
-        $this->urlRewriteBunchReplacerMock
+        $this->urlRewriteBunchReplacerMock->expects($this->at(1))
             ->method('doBunchReplace')
-            ->withConsecutive([$result1], [$result2])
-            ->willReturnOnConsecutiveCalls(null, null);
+            ->with($result2)
+            ->willReturn(null);
 
         $this->databaseMapPoolMock->expects($this->any())
             ->method('resetMap');

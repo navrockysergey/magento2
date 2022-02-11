@@ -99,7 +99,7 @@ class VisitorTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * Authenticate customer and return its DTO
+     * Authenticate customer and return its DTOCustomer/Model/VisitorTest
      * @param string $username
      * @param string $password
      * @return \Magento\Customer\Api\Data\CustomerInterface

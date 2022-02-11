@@ -8,7 +8,6 @@ namespace Magento\User\Model;
 
 use Magento\Backend\Model\Auth\Credential\StorageInterface;
 use Magento\Framework\App\ObjectManager;
-use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\Exception\AuthenticationException;
 use Magento\Framework\Serialize\Serializer\Json;
@@ -20,6 +19,7 @@ use Magento\Framework\App\DeploymentConfig;
 /**
  * Admin user model
  *
+ * @api
  * @method string getLogdate()
  * @method \Magento\User\Model\User setLogdate(string $value)
  * @method int getLognum()
@@ -38,31 +38,32 @@ use Magento\Framework\App\DeploymentConfig;
 class User extends AbstractModel implements StorageInterface, UserInterface
 {
     /**
-     * @deprecated New functionality has been added
+     * @deprecated Notificator is now responsible for sending messages to admin users.
      * @see \Magento\User\Model\Spi\NotificatorInterface
      */
-    public const XML_PATH_FORGOT_EMAIL_TEMPLATE = 'admin/emails/forgot_email_template';
+    const XML_PATH_FORGOT_EMAIL_TEMPLATE = 'admin/emails/forgot_email_template';
 
     /**
-     * @deprecated New functionality has been added
+     * @deprecated Notificator is now responsible for sending messages to admin users.
      * @see \Magento\User\Model\Spi\NotificatorInterface
      */
-    public const XML_PATH_FORGOT_EMAIL_IDENTITY = 'admin/emails/forgot_email_identity';
+    const XML_PATH_FORGOT_EMAIL_IDENTITY = 'admin/emails/forgot_email_identity';
 
     /**
-     * @deprecated New functionality has been added
+     * @deprecated Notificator is now responsible for sending messages to admin users.
      * @see \Magento\User\Model\Spi\NotificatorInterface
      */
-    public const XML_PATH_USER_NOTIFICATION_TEMPLATE = 'admin/emails/user_notification_template';
+    const XML_PATH_USER_NOTIFICATION_TEMPLATE = 'admin/emails/user_notification_template';
 
     /**
      * Configuration paths for admin user reset password email template
      *
-     * @deprecated New functionality has been added
+     * @deprecated Notificator is now responsible for sending messages to admin users.
+     * @see \Magento\User\Model\Spi\NotificatorInterface
      */
-    public const XML_PATH_RESET_PASSWORD_TEMPLATE = 'admin/emails/reset_password_template';
+    const XML_PATH_RESET_PASSWORD_TEMPLATE = 'admin/emails/reset_password_template';
 
-    public const MESSAGE_ID_PASSWORD_EXPIRED = 'magento_user_password_expired';
+    const MESSAGE_ID_PASSWORD_EXPIRED = 'magento_user_password_expired';
 
     /**
      * Tag to use for user assigned role caching.
@@ -70,6 +71,8 @@ class User extends AbstractModel implements StorageInterface, UserInterface
     private const CACHE_TAG = 'user_assigned_role';
 
     /**
+     * Model event prefix
+     *
      * @var string
      */
     protected $_eventPrefix = 'admin_user';
@@ -82,11 +85,15 @@ class User extends AbstractModel implements StorageInterface, UserInterface
     protected $_role;
 
     /**
+     * Available resources flag
+     *
      * @var bool
      */
     protected $_hasResources = true;
 
     /**
+     * User data
+     *
      * @var \Magento\User\Helper\Data
      */
     protected $_userData = null;
@@ -118,13 +125,11 @@ class User extends AbstractModel implements StorageInterface, UserInterface
     protected $_encryptor;
 
     /**
-     * @var \Magento\Framework\Mail\Template\TransportBuilder
      * @deprecated 101.1.0
      */
     protected $_transportBuilder;
 
     /**
-     * @var \Magento\Store\Model\StoreManagerInterface
      * @deprecated 101.1.0
      */
     protected $_storeManager;
@@ -145,7 +150,6 @@ class User extends AbstractModel implements StorageInterface, UserInterface
     private $notificator;
 
     /**
-     * @var DeploymentConfig
      * @deprecated 101.1.0
      */
     private $deploymentConfig;
@@ -339,9 +343,7 @@ class User extends AbstractModel implements StorageInterface, UserInterface
      */
     public function validate()
     {
-        /** @var $validator \Magento\Framework\Validator\DataObject */
-        $validator = $this->_validatorObject->create();
-        $this->validationRules->addUserInfoRules($validator);
+        $validator = $this->_getValidationRulesBeforeSave();
 
         if (!$validator->isValid($this)) {
             return $validator->getMessages();
@@ -409,7 +411,7 @@ class User extends AbstractModel implements StorageInterface, UserInterface
      * Retrieve user roles
      *
      * @return array
-     * @throws LocalizedException
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getRoles()
     {
@@ -576,7 +578,7 @@ class User extends AbstractModel implements StorageInterface, UserInterface
      * @param string $username
      * @param string $password
      * @return bool
-     * @throws LocalizedException
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function authenticate($username, $password)
     {
@@ -598,7 +600,7 @@ class User extends AbstractModel implements StorageInterface, UserInterface
                 'admin_user_authenticate_after',
                 ['username' => $username, 'password' => $password, 'user' => $this, 'result' => $result]
             );
-        } catch (LocalizedException $e) {
+        } catch (\Magento\Framework\Exception\LocalizedException $e) {
             $this->unsetData();
             throw $e;
         }
@@ -642,7 +644,7 @@ class User extends AbstractModel implements StorageInterface, UserInterface
      * @param string $username
      * @param string $password
      * @return $this
-     * @throws LocalizedException
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function login($username, $password)
     {
@@ -675,7 +677,7 @@ class User extends AbstractModel implements StorageInterface, UserInterface
     {
         $data = $this->getResource()->loadByUsername($username);
         if ($data !== false) {
-            if (isset($data['extra']) && is_string($data['extra'])) {
+            if (is_string($data['extra'])) {
                 $data['extra'] = $this->serializer->unserialize($data['extra']);
             }
 
@@ -688,7 +690,7 @@ class User extends AbstractModel implements StorageInterface, UserInterface
     /**
      * Check if user is assigned to any role
      *
-     * @param int|User $user
+     * @param int|\Magento\User\Model\User $user
      * @return null|array
      */
     public function hasAssigned2Role($user)
@@ -734,12 +736,12 @@ class User extends AbstractModel implements StorageInterface, UserInterface
      *
      * @param string $newToken
      * @return $this
-     * @throws LocalizedException
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function changeResetPasswordLinkToken($newToken)
     {
         if (!is_string($newToken) || empty($newToken)) {
-            throw new LocalizedException(
+            throw new \Magento\Framework\Exception\LocalizedException(
                 __('The password reset token is incorrect. Verify the token and try again.')
             );
         }

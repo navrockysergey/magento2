@@ -5,12 +5,6 @@
  */
 namespace Magento\Payment\Model;
 
-use Magento\Framework\DataObject;
-use Magento\Framework\Event\ManagerInterface;
-use Magento\Payment\Model\Cart\SalesModel\Factory;
-use Magento\Payment\Model\Cart\SalesModel\SalesModelInterface;
-use Magento\Quote\Api\Data\CartInterface;
-
 /**
  * Provide methods for collecting cart items information of specific sales model entity
  *
@@ -22,60 +16,68 @@ class Cart
     /**#@+
      * Amounts
      */
-    public const AMOUNT_TAX = 'tax';
+    const AMOUNT_TAX = 'tax';
 
-    public const AMOUNT_SHIPPING = 'shipping';
+    const AMOUNT_SHIPPING = 'shipping';
 
-    public const AMOUNT_DISCOUNT = 'discount';
+    const AMOUNT_DISCOUNT = 'discount';
 
-    public const AMOUNT_SUBTOTAL = 'subtotal';
+    const AMOUNT_SUBTOTAL = 'subtotal';
     /**#@-*/
 
-    /**
-     * @var SalesModelInterface
-     */
+    /**#@-*/
     protected $_salesModel;
 
     /**
      * Core event manager proxy
      *
-     * @var ManagerInterface
+     * @var \Magento\Framework\Event\ManagerInterface
      */
     protected $_eventManager;
 
     /**
+     * Amounts
+     *
      * @var array
      */
     protected $_amounts;
 
     /**
+     * Custom items list
+     *
      * @var array
      */
     protected $_customItems = [];
 
     /**
+     * Items imported from sales model
+     *
      * @var array
      */
     protected $_salesModelItems = [];
 
     /**
+     * Flags that indicates whether discount, shopping and taxes should be transferred as cart item
+     *
      * @var array
      */
     protected $_transferFlags = [];
 
     /**
+     * Flags which indicates whether items data is outdated and has to be recollected
+     *
      * @var bool
      */
     protected $_itemsCollectingRequired = true;
 
     /**
-     * @param Factory $salesModelFactory
-     * @param ManagerInterface $eventManager
-     * @param CartInterface $salesModel
+     * @param \Magento\Payment\Model\Cart\SalesModel\Factory $salesModelFactory
+     * @param \Magento\Framework\Event\ManagerInterface $eventManager
+     * @param \Magento\Quote\Api\Data\CartInterface $salesModel
      */
     public function __construct(
-        Factory $salesModelFactory,
-        ManagerInterface $eventManager,
+        \Magento\Payment\Model\Cart\SalesModel\Factory $salesModelFactory,
+        \Magento\Framework\Event\ManagerInterface $eventManager,
         $salesModel
     ) {
         $this->_eventManager = $eventManager;
@@ -86,7 +88,8 @@ class Cart
     /**
      * Return payment cart sales model
      *
-     * @return SalesModelInterface
+     * @return \Magento\Payment\Model\Cart\SalesModel\SalesModelInterface
+     * @api
      */
     public function getSalesModel()
     {
@@ -98,6 +101,7 @@ class Cart
      *
      * @param float $taxAmount
      * @return void
+     * @api
      */
     public function addTax($taxAmount)
     {
@@ -109,6 +113,7 @@ class Cart
      *
      * @param float $taxAmount
      * @return void
+     * @api
      */
     public function setTax($taxAmount)
     {
@@ -119,6 +124,7 @@ class Cart
      * Get tax amount
      *
      * @return float
+     * @api
      */
     public function getTax()
     {
@@ -130,6 +136,7 @@ class Cart
      *
      * @param float $discountAmount
      * @return void
+     * @api
      */
     public function addDiscount($discountAmount)
     {
@@ -141,6 +148,7 @@ class Cart
      *
      * @param float $discountAmount
      * @return void
+     * @api
      */
     public function setDiscount($discountAmount)
     {
@@ -151,6 +159,7 @@ class Cart
      * Get discount amount
      *
      * @return float
+     * @api
      */
     public function getDiscount()
     {
@@ -162,6 +171,7 @@ class Cart
      *
      * @param float $shippingAmount
      * @return void
+     * @api
      */
     public function addShipping($shippingAmount)
     {
@@ -173,6 +183,7 @@ class Cart
      *
      * @param float $shippingAmount
      * @return void
+     * @api
      */
     public function setShipping($shippingAmount)
     {
@@ -183,6 +194,7 @@ class Cart
      * Get shipping amount
      *
      * @return float
+     * @api
      */
     public function getShipping()
     {
@@ -194,6 +206,7 @@ class Cart
      *
      * @param float $subtotalAmount
      * @return void
+     * @api
      */
     public function addSubtotal($subtotalAmount)
     {
@@ -204,6 +217,7 @@ class Cart
      * Get subtotal amount
      *
      * @return float
+     * @api
      */
     public function getSubtotal()
     {
@@ -218,6 +232,7 @@ class Cart
      * @param float $amount
      * @param string|null $identifier
      * @return void
+     * @api
      */
     public function addCustomItem($name, $qty, $amount, $identifier = null)
     {
@@ -228,6 +243,7 @@ class Cart
      * Get all cart items
      *
      * @return array
+     * @api
      */
     public function getAllItems()
     {
@@ -239,6 +255,7 @@ class Cart
      * Get shipping, tax, subtotal and discount amounts all together
      *
      * @return array
+     * @api
      */
     public function getAmounts()
     {
@@ -251,6 +268,7 @@ class Cart
      * Specify that shipping should be transferred as cart item
      *
      * @return void
+     * @api
      */
     public function setTransferShippingAsItem()
     {
@@ -261,6 +279,7 @@ class Cart
      * Specify that discount should be transferred as cart item
      *
      * @return void
+     * @api
      */
     public function setTransferDiscountAsItem()
     {
@@ -316,7 +335,7 @@ class Cart
         $this->addSubtotal($this->_salesModel->getBaseSubtotal());
         $this->addTax($this->_salesModel->getBaseTaxAmount());
         $this->addShipping($this->_salesModel->getBaseShippingAmount());
-        $this->addDiscount(abs((float) $this->_salesModel->getBaseDiscountAmount()));
+        $this->addDiscount(abs($this->_salesModel->getBaseDiscountAmount()));
     }
 
     /**
@@ -342,8 +361,6 @@ class Cart
     }
 
     /**
-     * Method for set transfer flag.
-     *
      * @param string $flagType
      * @param bool $value
      * @return void
@@ -355,8 +372,6 @@ class Cart
     }
 
     /**
-     * Method for set amount.
-     *
      * @param string $amountType
      * @param float $amount
      * @return void
@@ -367,8 +382,6 @@ class Cart
     }
 
     /**
-     * Method for add amount.
-     *
      * @param string $amountType
      * @param float $amount
      * @return void
@@ -396,11 +409,11 @@ class Cart
      * @param int $qty
      * @param float $amount
      * @param null|string $identifier
-     * @return DataObject
+     * @return \Magento\Framework\DataObject
      */
     protected function _createItemFromData($name, $qty, $amount, $identifier = null)
     {
-        $item = new DataObject(['name' => $name, 'qty' => $qty, 'amount' => (double)$amount]);
+        $item = new \Magento\Framework\DataObject(['name' => $name, 'qty' => $qty, 'amount' => (double)$amount]);
 
         if ($identifier) {
             $item->setData('id', $identifier);

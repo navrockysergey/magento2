@@ -33,8 +33,6 @@ class Totals extends \Magento\Sales\Block\Order\Totals
     protected $_invoice = null;
 
     /**
-     * Get order
-     *
      * @return Order
      */
     public function getInvoice()
@@ -52,8 +50,6 @@ class Totals extends \Magento\Sales\Block\Order\Totals
     }
 
     /**
-     * Set Order
-     *
      * @param Order $invoice
      * @return $this
      */

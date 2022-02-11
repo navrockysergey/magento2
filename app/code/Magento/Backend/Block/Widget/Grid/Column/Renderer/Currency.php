@@ -102,9 +102,7 @@ class Currency extends \Magento\Backend\Block\Widget\Grid\Column\Renderer\Abstra
         if ($code = $this->getColumn()->getCurrencyCode()) {
             return $code;
         }
-        $currency = $this->getColumn()->getCurrency();
-
-        if ($currency !== null && $code = $row->getData($currency)) {
+        if ($code = $row->getData($this->getColumn()->getCurrency())) {
             return $code;
         }
 
@@ -120,14 +118,11 @@ class Currency extends \Magento\Backend\Block\Widget\Grid\Column\Renderer\Abstra
     protected function _getRate($row)
     {
         if ($rate = $this->getColumn()->getRate()) {
-            return (float) $rate;
+            return (float)$rate;
         }
-        $rateField = $this->getColumn()->getRateField();
-
-        if ($rateField !== null && $rate = $row->getData($rateField)) {
-            return (float) $rate;
+        if ($rate = $row->getData($this->getColumn()->getRateField())) {
+            return (float)$rate;
         }
-
         return $this->_defaultBaseCurrency->getRate($this->_getCurrencyCode($row));
     }
 

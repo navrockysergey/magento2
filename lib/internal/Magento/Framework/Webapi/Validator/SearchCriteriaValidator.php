@@ -9,9 +9,7 @@ declare(strict_types=1);
 namespace Magento\Framework\Webapi\Validator;
 
 use Magento\Framework\Api\SearchCriteriaInterface;
-use Magento\Framework\App\ObjectManager;
-use Magento\Framework\Exception\InvalidArgumentException;
-use Magento\Framework\Webapi\Validator\IOLimit\IOLimitConfigProvider;
+use Magento\Framework\Exception\LocalizedException;
 
 /**
  * Validates search criteria inputs
@@ -24,19 +22,11 @@ class SearchCriteriaValidator implements ServiceInputValidatorInterface
     private $maximumPageSize;
 
     /**
-     * @var IOLimitConfigProvider|null
-     */
-    private $configProvider;
-
-    /**
      * @param int $maximumPageSize
-     * @param IOLimitConfigProvider|null $configProvider
      */
-    public function __construct(int $maximumPageSize, ?IOLimitConfigProvider $configProvider = null)
+    public function __construct(int $maximumPageSize)
     {
         $this->maximumPageSize = $maximumPageSize;
-        $this->configProvider = $configProvider ?? ObjectManager::getInstance()
-            ->get(IOLimitConfigProvider::class);
     }
 
     /**
@@ -54,11 +44,10 @@ class SearchCriteriaValidator implements ServiceInputValidatorInterface
     {
         if ($entity instanceof SearchCriteriaInterface
             && $propertyName === 'pageSize'
-            && $this->configProvider->isInputLimitingEnabled()
-            && $value > ($max = $this->configProvider->getMaximumPageSize() ?? $this->maximumPageSize)
+            && $value > $this->maximumPageSize
         ) {
-            throw new InvalidArgumentException(
-                __('Maximum SearchCriteria pageSize is %max', ['max' => $max])
+            throw new LocalizedException(
+                __('Maximum SearchCriteria pageSize is %max', ['max' => $this->maximumPageSize])
             );
         }
     }

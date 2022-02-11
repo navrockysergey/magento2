@@ -19,22 +19,21 @@
         <before>
             <createData entity="Simple_US_Customer" stepKey="createCustomer"/>
             <createData entity="SimpleProduct2" stepKey="createSimpleProduct"/>
-            <actionGroup ref="AdminLoginActionGroup" stepKey="LoginAsAdmin"/>
+            <actionGroup ref="LoginAsAdmin" stepKey="LoginAsAdmin"/>
         </before>
         <after>
             <deleteData createDataKey="createCustomer" stepKey="deleteCustomer"/>
             <deleteData createDataKey="createSimpleProduct" stepKey="deleteSimpleProduct"/>
-            <actionGroup ref="AdminLogoutActionGroup" stepKey="logout"/>
+            <actionGroup ref="logout" stepKey="logout"/>
         </after>
         <actionGroup ref="CreateOrderActionGroup" stepKey="goToCreateOrderPage">
             <argument name="customer" value="$$createCustomer$$"/>
             <argument name="product" value="$$createSimpleProduct$$"/>
         </actionGroup>
-        <grabFromCurrentUrl regex="~/order_id/(\d+)/~" stepKey="orderId"/>
-        <grabTextFrom selector="|Order # (\d+)|" stepKey="orderNumber"/>
+        <grabTextFrom selector="|Order # (\d+)|" stepKey="orderId"/>
         <actionGroup ref="AdminShipThePendingOrderActionGroup" stepKey="createShipmentForOrder"/>
         <actionGroup ref="FilterShipmentGridByOrderIdActionGroup" stepKey="filterForNewlyCreatedShipment">
-            <argument name="orderId" value="$orderNumber"/>
+            <argument name="orderId" value="$orderId"/>
         </actionGroup>
         <actionGroup ref="AdminSelectFirstGridRowActionGroup" stepKey="selectShipmentFromGrid"/>
         <actionGroup ref="AdminAddTrackingNumberToShipmentActionGroup" stepKey="addTrackingNumber">

@@ -3,9 +3,6 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-
-declare(strict_types=1);
-
 namespace Magento\Webapi\Model\Soap;
 
 use Magento\Webapi\Model\ServiceMetadata;
@@ -80,14 +77,12 @@ class Config
                     $class = $serviceData[ServiceMetadata::KEY_CLASS];
                     $operation = $methodData[ServiceMetadata::KEY_METHOD_ALIAS];
                     $operationName = $serviceName . ucfirst($operation);
-                    $inputArraySizeLimit = $methodData[ServiceMetadata::KEY_INPUT_ARRAY_SIZE_LIMIT];
                     $this->soapOperations[$operationName] = [
                         ServiceMetadata::KEY_CLASS => $class,
                         ServiceMetadata::KEY_METHOD => $method,
                         ServiceMetadata::KEY_IS_SECURE => $methodData[ServiceMetadata::KEY_IS_SECURE],
                         ServiceMetadata::KEY_ACL_RESOURCES => $methodData[ServiceMetadata::KEY_ACL_RESOURCES],
-                        ServiceMetadata::KEY_ROUTE_PARAMS => $methodData[ServiceMetadata::KEY_ROUTE_PARAMS],
-                        ServiceMetadata::KEY_INPUT_ARRAY_SIZE_LIMIT => $inputArraySizeLimit,
+                        ServiceMetadata::KEY_ROUTE_PARAMS => $methodData[ServiceMetadata::KEY_ROUTE_PARAMS]
                     ];
                 }
             }
@@ -113,15 +108,12 @@ class Config
                 \Magento\Framework\Webapi\Exception::HTTP_NOT_FOUND
             );
         }
-        $inputArraySizeLimit = $soapOperations[$soapOperation][ServiceMetadata::KEY_INPUT_ARRAY_SIZE_LIMIT];
-
         return [
             ServiceMetadata::KEY_CLASS => $soapOperations[$soapOperation][ServiceMetadata::KEY_CLASS],
             ServiceMetadata::KEY_METHOD => $soapOperations[$soapOperation][ServiceMetadata::KEY_METHOD],
             ServiceMetadata::KEY_IS_SECURE => $soapOperations[$soapOperation][ServiceMetadata::KEY_IS_SECURE],
             ServiceMetadata::KEY_ACL_RESOURCES => $soapOperations[$soapOperation][ServiceMetadata::KEY_ACL_RESOURCES],
-            ServiceMetadata::KEY_ROUTE_PARAMS => $soapOperations[$soapOperation][ServiceMetadata::KEY_ROUTE_PARAMS],
-            ServiceMetadata::KEY_INPUT_ARRAY_SIZE_LIMIT => $inputArraySizeLimit,
+            ServiceMetadata::KEY_ROUTE_PARAMS => $soapOperations[$soapOperation][ServiceMetadata::KEY_ROUTE_PARAMS]
         ];
     }
 

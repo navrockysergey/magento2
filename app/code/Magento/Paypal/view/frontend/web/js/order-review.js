@@ -25,6 +25,7 @@ define([
             shippingMethodContainer: '#shipping-method-container',
             agreementSelector: 'div.checkout-agreements input',
             isAjax: false,
+            updateShippingMethodSubmitSelector: '#update-shipping-method-submit',
             shippingMethodUpdateUrl: null,
             updateOrderSubmitUrl: null,
             canEditShippingMethod: false
@@ -54,12 +55,14 @@ define([
                         this.options.updateOrderSubmitUrl,
                         this.options.updateContainerSelector
                     )
-                ).find(this.options.updateOrderSelector).on('click', $.proxy(this._updateOrderHandler, this)).end();
+                ).find(this.options.updateOrderSelector).on('click', $.proxy(this._updateOrderHandler, this)).end()
+                .find(this.options.updateShippingMethodSubmitSelector).hide().end();
             this._shippingTobilling();
 
             if ($(this.options.shippingSubmitFormSelector).length && this.options.canEditShippingMethod) {
                 this.isShippingSubmitForm = true;
                 $(this.options.shippingSubmitFormSelector)
+                    .find(this.options.updateShippingMethodSubmitSelector).hide().end()
                     .on('change',
                         this.options.shippingSelector,
                         $.proxy(
@@ -116,7 +119,7 @@ define([
             if (this._validateForm()) {
                 this.element.find(this.options.updateOrderSelector).fadeTo(0, 0.5)
                     .end().find(this.options.waitLoadingContainer).show()
-                    .end().trigger('submit');
+                    .end().submit();
                 this._updateOrderSubmit(true);
             }
         },
@@ -143,14 +146,14 @@ define([
                 success: function (response) {
                     var msg;
 
-                    if (typeof response === 'object' && !$.isEmptyObject(response)) {
+                    if ($.type(response) === 'object' && !$.isEmptyObject(response)) {
                         if (response['error_messages']) {
                             this._ajaxComplete();
                             msg = response['error_messages'];
 
                             /* eslint-disable max-depth */
                             if (msg) {
-                                if (Array.isArray(msg)) {
+                                if ($.type(msg) === 'array') {
                                     msg = msg.join('\n');
                                 }
                             }
@@ -216,7 +219,7 @@ define([
         _updateOrderSubmit: function (shouldDisable, fn) {
             this._toggleButton(this.options.orderReviewSubmitSelector, shouldDisable);
 
-            if (typeof fn === 'function') {
+            if ($.type(fn) === 'function') {
                 fn.call(this);
             }
         },
@@ -285,9 +288,7 @@ define([
             isChecked = $(this.options.billingAsShippingSelector).is(':checked');
             formData = null;
             callBackResponseHandler = null;
-            let val = $(this.options.shippingSelector).val();
-
-            shippingMethod = val.trim();
+            shippingMethod = $.trim($(this.options.shippingSelector).val());
             this._shippingTobilling();
 
             if (url && resultId && shippingMethod) {
@@ -360,9 +361,7 @@ define([
          * Actions on change Shipping Address data
          */
         _onShippingChange: function () {
-            let val = $(this.options.shippingSelector).val();
-
-            if (this.triggerPropertyChange && val.trim()) {
+            if (this.triggerPropertyChange && $.trim($(this.options.shippingSelector).val())) {
                 this.element.find(this.options.shippingSelector).hide().end()
                     .find(this.options.shippingSelector + '_update').show();
             }

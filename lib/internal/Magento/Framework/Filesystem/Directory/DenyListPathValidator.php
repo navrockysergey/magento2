@@ -55,7 +55,7 @@ class DenyListPathValidator implements PathValidatorInterface
     ): void {
         $realDirectoryPath = $this->driver->getRealPathSafety($directoryPath);
         $fullPath = $this->driver->getAbsolutePath(
-            rtrim($realDirectoryPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR,
+            $realDirectoryPath . DIRECTORY_SEPARATOR,
             $path,
             $scheme
         );

@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace Magento\CatalogGraphQl\Model\Resolver\Product;
 
-use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\CatalogGraphQl\Model\Resolver\Product\Price\Discount;
 use Magento\CatalogGraphQl\Model\Resolver\Product\Price\ProviderPool as PriceProviderPool;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
@@ -23,8 +22,6 @@ use Magento\Store\Api\Data\StoreInterface;
  */
 class PriceRange implements ResolverInterface
 {
-    private const STORE_FILTER_CACHE_KEY = '_cache_instance_store_filter';
-
     /**
      * @var Discount
      */
@@ -64,26 +61,15 @@ class PriceRange implements ResolverInterface
         /** @var Product $product */
         $product = $value['model'];
         $product->unsetData('minimal_price');
-        // add store filter for the product
-        $product->setData(self::STORE_FILTER_CACHE_KEY, $store);
-
-        if ($context) {
-            $customerGroupId = $context->getExtensionAttributes()->getCustomerGroupId();
-            if ($customerGroupId !== null) {
-                $product->setCustomerGroupId($customerGroupId);
-            }
-        }
 
         $requestedFields = $info->getFieldSelection(10);
         $returnArray = [];
 
         if (isset($requestedFields['minimum_price'])) {
-            $returnArray['minimum_price'] =  $this->canShowPrice($product) ?
-                $this->getMinimumProductPrice($product, $store) : $this->formatEmptyResult();
+            $returnArray['minimum_price'] =  $this->getMinimumProductPrice($product, $store);
         }
         if (isset($requestedFields['maximum_price'])) {
-            $returnArray['maximum_price'] =  $this->canShowPrice($product) ?
-                $this->getMaximumProductPrice($product, $store) : $this->formatEmptyResult();
+            $returnArray['maximum_price'] =  $this->getMaximumProductPrice($product, $store);
         }
         return $returnArray;
     }
@@ -142,41 +128,6 @@ class PriceRange implements ResolverInterface
                 'currency' => $store->getCurrentCurrencyCode()
             ],
             'discount' => $this->discount->getDiscountByDifference($regularPrice, $finalPrice),
-        ];
-    }
-
-    /**
-     * Check if the product is allowed to show price
-     *
-     * @param ProductInterface $product
-     * @return bool
-     */
-    private function canShowPrice($product): bool
-    {
-        if ($product->hasData('can_show_price') && $product->getData('can_show_price') === false) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Format empty result
-     *
-     * @return array
-     */
-    private function formatEmptyResult(): array
-    {
-        return [
-            'regular_price' => [
-                'value' => null,
-                'currency' => null
-            ],
-            'final_price' => [
-                'value' => null,
-                'currency' => null
-            ],
-            'discount' => null
         ];
     }
 }

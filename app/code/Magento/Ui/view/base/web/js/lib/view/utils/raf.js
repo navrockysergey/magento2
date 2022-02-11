@@ -3,7 +3,10 @@
  * See COPYING.txt for license details.
  */
 
-define([], function () {
+/* global WeakMap */
+define([
+    'es6-collections'
+], function () {
     'use strict';
 
     var processMap = new WeakMap(),

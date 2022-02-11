@@ -13,7 +13,6 @@ use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingErrorAggregatorI
 /**
  * Import entity abstract customer model
  *
- * phpcs:disable Magento2.Classes.AbstractApi
  * @api
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
@@ -27,36 +26,34 @@ abstract class AbstractCustomer extends \Magento\ImportExport\Model\Import\Entit
      * Names that begins with underscore is not an attribute. This name convention is for
      * to avoid interference with same attribute name.
      */
-    public const COLUMN_WEBSITE = '_website';
+    const COLUMN_WEBSITE = '_website';
 
-    public const COLUMN_EMAIL = '_email';
+    const COLUMN_EMAIL = '_email';
 
-    public const COLUMN_DEFAULT_BILLING = 'default_billing';
+    const COLUMN_DEFAULT_BILLING = 'default_billing';
 
-    public const COLUMN_DEFAULT_SHIPPING = 'default_shipping';
+    const COLUMN_DEFAULT_SHIPPING = 'default_shipping';
 
     /**#@-*/
 
     /**#@+
      * Error codes
      */
-    public const ERROR_WEBSITE_IS_EMPTY = 'websiteIsEmpty';
+    const ERROR_WEBSITE_IS_EMPTY = 'websiteIsEmpty';
 
-    public const ERROR_EMAIL_IS_EMPTY = 'emailIsEmpty';
+    const ERROR_EMAIL_IS_EMPTY = 'emailIsEmpty';
 
-    public const ERROR_INVALID_WEBSITE = 'invalidWebsite';
+    const ERROR_INVALID_WEBSITE = 'invalidWebsite';
 
-    public const ERROR_INVALID_EMAIL = 'invalidEmail';
+    const ERROR_INVALID_EMAIL = 'invalidEmail';
 
-    public const ERROR_VALUE_IS_REQUIRED = 'valueIsRequired';
+    const ERROR_VALUE_IS_REQUIRED = 'valueIsRequired';
 
-    public const ERROR_CUSTOMER_NOT_FOUND = 'customerNotFound';
+    const ERROR_CUSTOMER_NOT_FOUND = 'customerNotFound';
 
     /**#@-*/
 
-    /**
-     * @var string[]
-     */
+    /**#@-*/
     protected $_ignoredAttributes = ['website_id', 'store_id',
         self::COLUMN_DEFAULT_BILLING, self::COLUMN_DEFAULT_SHIPPING];
 
@@ -80,7 +77,7 @@ abstract class AbstractCustomer extends \Magento\ImportExport\Model\Import\Entit
     protected $needColumnCheck = true;
 
     /**
-     * @var string
+     * {@inheritdoc}
      */
     protected $masterAttributeCode = '_email';
 
@@ -267,9 +264,9 @@ abstract class AbstractCustomer extends \Magento\ImportExport\Model\Import\Entit
      */
     protected function getSelectAttrIdByValue(array $attributeParameters, $value)
     {
-        $value = is_string($value) ? strtolower($value) : '';
-
-        return $attributeParameters['options'][$value] ?? 0;
+        return isset($attributeParameters['options'][strtolower($value)])
+            ? $attributeParameters['options'][strtolower($value)]
+            : 0;
     }
 
     /**

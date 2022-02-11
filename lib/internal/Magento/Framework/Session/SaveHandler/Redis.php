@@ -14,6 +14,9 @@ use Magento\Framework\Phrase;
 use Magento\Framework\Filesystem;
 use Magento\Framework\App\Filesystem\DirectoryList;
 
+/**
+ * Redis session save handler
+ */
 class Redis implements \SessionHandlerInterface
 {
     /**
@@ -40,7 +43,6 @@ class Redis implements \SessionHandlerInterface
      * @param ConfigInterface $config
      * @param LoggerInterface $logger
      * @param Filesystem $filesystem
-     * @throws SessionException
      */
     public function __construct(ConfigInterface $config, LoggerInterface $logger, Filesystem $filesystem)
     {
@@ -76,7 +78,6 @@ class Redis implements \SessionHandlerInterface
      * @return bool
      * @throws SessionException
      */
-    #[\ReturnTypeWillChange]
     public function open($savePath, $sessionName)
     {
         return $this->getConnection()->open($savePath, $sessionName);
@@ -86,21 +87,17 @@ class Redis implements \SessionHandlerInterface
      * Fetch session data
      *
      * @param string $sessionId
-     * @return string|false
+     * @return string
+     * @throws ConcurrentConnectionsExceededException
      * @throws SessionException
      */
-    #[\ReturnTypeWillChange]
     public function read($sessionId)
     {
-        $result = false;
-
         try {
-            $result = $this->getConnection()->read($sessionId);
+            return $this->getConnection()->read($sessionId);
         } catch (ConcurrentConnectionsExceededException $e) {
             require $this->filesystem->getDirectoryRead(DirectoryList::PUB)->getAbsolutePath('errors/503.php');
         }
-
-        return $result;
     }
 
     /**
@@ -111,7 +108,6 @@ class Redis implements \SessionHandlerInterface
      * @return boolean
      * @throws SessionException
      */
-    #[\ReturnTypeWillChange]
     public function write($sessionId, $sessionData)
     {
         return $this->getConnection()->write($sessionId, $sessionData);
@@ -124,7 +120,6 @@ class Redis implements \SessionHandlerInterface
      * @return boolean
      * @throws SessionException
      */
-    #[\ReturnTypeWillChange]
     public function destroy($sessionId)
     {
         return $this->getConnection()->destroy($sessionId);
@@ -136,7 +131,6 @@ class Redis implements \SessionHandlerInterface
      * @return bool
      * @throws SessionException
      */
-    #[\ReturnTypeWillChange]
     public function close()
     {
         return $this->getConnection()->close();
@@ -150,7 +144,6 @@ class Redis implements \SessionHandlerInterface
      * @throws SessionException
      * @SuppressWarnings(PHPMD.ShortMethodName)
      */
-    #[\ReturnTypeWillChange]
     public function gc($maxLifeTime)
     {
         return $this->getConnection()->gc($maxLifeTime);

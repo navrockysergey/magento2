@@ -589,7 +589,7 @@ class Rule extends \Magento\Rule\Model\AbstractModel implements RuleInterface, I
      */
     public function afterSave()
     {
-        if (!$this->getIsActive() && !$this->getOrigData(self::IS_ACTIVE)) {
+        if (!$this->getIsActive()) {
             return parent::afterSave();
         }
 
@@ -601,7 +601,6 @@ class Rule extends \Magento\Rule\Model\AbstractModel implements RuleInterface, I
         } else {
             $this->_ruleProductProcessor->getIndexer()->invalidate();
         }
-
         return parent::afterSave();
     }
 
@@ -895,15 +894,5 @@ class Rule extends \Magento\Rule\Model\AbstractModel implements RuleInterface, I
     public function getIdentities()
     {
         return ['price'];
-    }
-
-    /**
-     * Clear price rules cache.
-     *
-     * @return void;
-     */
-    public function clearPriceRulesData(): void
-    {
-        self::$_priceRulesData = [];
     }
 }

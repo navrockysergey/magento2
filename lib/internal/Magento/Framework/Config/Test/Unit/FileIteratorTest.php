@@ -3,17 +3,14 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Framework\Config\Test\Unit;
 
-use Magento\Framework\Config\FileIterator;
-use Magento\Framework\Filesystem\File\Read;
-use Magento\Framework\Filesystem\File\ReadFactory;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use \Magento\Framework\Config\FileIterator;
 
-class FileIteratorTest extends TestCase
+/**
+ * Class FileIteratorTest
+ */
+class FileIteratorTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var FileIterator
@@ -21,7 +18,7 @@ class FileIteratorTest extends TestCase
     protected $fileIterator;
 
     /**
-     * @var Read|MockObject
+     * @var \Magento\Framework\Filesystem\File\Read|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $fileRead;
 
@@ -33,81 +30,58 @@ class FileIteratorTest extends TestCase
     protected $filePaths;
 
     /**
-     * @var ReadFactory|MockObject
+     * @var \Magento\Framework\Filesystem\File\ReadFactory|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $fileReadFactory;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
         $this->filePaths = ['/file1', '/file2'];
-        $this->fileReadFactory = $this->createMock(ReadFactory::class);
-        $this->fileRead = $this->createMock(Read::class);
+        $this->fileReadFactory = $this->createMock(\Magento\Framework\Filesystem\File\ReadFactory::class);
+        $this->fileRead = $this->createMock(\Magento\Framework\Filesystem\File\Read::class);
         $this->fileIterator = new FileIterator($this->fileReadFactory, $this->filePaths);
     }
 
-    /**
-     * @inheritDoc
-     */
     protected function tearDown(): void
     {
         $this->fileIterator = null;
         $this->filePaths = null;
     }
 
-    /**
-     * @return void
-     */
-    public function testIterator(): void
+    public function testIterator()
     {
         $contents = ['content1', 'content2'];
-        $createWithArgs = $createWillReturnArgs = $readAllWillReturnArgs = [];
         $index = 0;
-
         foreach ($this->filePaths as $filePath) {
-            $createWithArgs[] = [$filePath];
-            $createWillReturnArgs[] = $this->fileRead;
-            $readAllWillReturnArgs[] = $contents[$index++];
+            $this->fileReadFactory->expects($this->at($index))
+                ->method('create')
+                ->with($filePath)
+                ->willReturn($this->fileRead);
+            $this->fileRead->expects($this->at($index))
+                ->method('readAll')
+                ->willReturn($contents[$index++]);
         }
-        $this->fileReadFactory
-            ->method('create')
-            ->withConsecutive(...$createWithArgs)
-            ->willReturnOnConsecutiveCalls(...$createWillReturnArgs);
-        $this->fileRead
-            ->method('readAll')
-            ->willReturnOnConsecutiveCalls(...$readAllWillReturnArgs);
         $index = 0;
-
         foreach ($this->fileIterator as $fileContent) {
             $this->assertEquals($contents[$index++], $fileContent);
         }
     }
 
-    /**
-     * @return void
-     */
-    public function testToArray(): void
+    public function testToArray()
     {
         $contents = ['content1', 'content2'];
         $expectedArray = [];
-        $createWithArgs = $createWillReturnArgs = $readAllWillReturnArgs = [];
         $index = 0;
         foreach ($this->filePaths as $filePath) {
             $expectedArray[$filePath] = $contents[$index];
-            $createWithArgs[] = [$filePath];
-            $createWillReturnArgs[] = $this->fileRead;
-            $readAllWillReturnArgs[] = $contents[$index++];
+            $this->fileReadFactory->expects($this->at($index))
+                ->method('create')
+                ->with($filePath)
+                ->willReturn($this->fileRead);
+            $this->fileRead->expects($this->at($index))
+                ->method('readAll')
+                ->willReturn($contents[$index++]);
         }
-        $this->fileReadFactory
-            ->method('create')
-            ->withConsecutive(...$createWithArgs)
-            ->willReturnOnConsecutiveCalls(...$createWillReturnArgs);
-        $this->fileRead
-            ->method('readAll')
-            ->willReturnOnConsecutiveCalls(...$readAllWillReturnArgs);
-
         $this->assertEquals($expectedArray, $this->fileIterator->toArray());
     }
 }

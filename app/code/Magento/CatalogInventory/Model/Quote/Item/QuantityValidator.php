@@ -27,8 +27,8 @@ use Magento\Quote\Model\Quote\Item;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
  * @deprecated 100.3.0 Replaced with Multi Source Inventory
- * @link https://devdocs.magento.com/guides/v2.4/inventory/index.html
- * @link https://devdocs.magento.com/guides/v2.4/inventory/inventory-api-reference.html
+ * @link https://devdocs.magento.com/guides/v2.3/inventory/index.html
+ * @link https://devdocs.magento.com/guides/v2.3/inventory/catalog-inventory-replacements.html
  */
 class QuantityValidator
 {
@@ -157,17 +157,11 @@ class QuantityValidator
             if ($stockStatus->getStockStatus() === Stock::STOCK_OUT_OF_STOCK
                     || $parentStockStatus && $parentStockStatus->getStockStatus() == Stock::STOCK_OUT_OF_STOCK
             ) {
-                $hasError = $quoteItem->getStockStateResult()
-                    ? $quoteItem->getStockStateResult()->getHasError() : false;
-                if (!$hasError) {
-                    $quoteItem->addErrorInfo(
-                        'cataloginventory',
-                        Data::ERROR_QTY,
-                        __('This product is out of stock.')
-                    );
-                } else {
-                    $quoteItem->addErrorInfo(null, Data::ERROR_QTY);
-                }
+                $quoteItem->addErrorInfo(
+                    'cataloginventory',
+                    Data::ERROR_QTY,
+                    __('This product is out of stock.')
+                );
                 $quoteItem->getQuote()->addErrorInfo(
                     'stock',
                     'cataloginventory',
@@ -199,7 +193,7 @@ class QuantityValidator
                     $option->setHasError(true);
                     //Setting this to false, so no error statuses are cleared
                     $removeError = false;
-                    $this->addErrorInfoToQuote($result, $quoteItem);
+                    $this->addErrorInfoToQuote($result, $quoteItem, $removeError);
                 }
             }
             if ($removeError) {

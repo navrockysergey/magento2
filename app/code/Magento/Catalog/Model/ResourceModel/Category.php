@@ -13,13 +13,13 @@ declare(strict_types=1);
 
 namespace Magento\Catalog\Model\ResourceModel;
 
-use Magento\Catalog\Api\Data\CategoryInterface;
 use Magento\Catalog\Model\Indexer\Category\Product\Processor;
-use Magento\Catalog\Setup\CategorySetup;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\DataObject;
 use Magento\Framework\EntityManager\EntityManager;
+use Magento\Catalog\Setup\CategorySetup;
 use Magento\Framework\EntityManager\MetadataPool;
+use Magento\Catalog\Api\Data\ProductInterface;
 
 /**
  * Resource model for category entity
@@ -55,7 +55,7 @@ class Category extends AbstractResource
     protected $_isActiveAttributeId = null;
 
     /**
-     * Id of store
+     * Store id
      *
      * @var int
      */
@@ -69,14 +69,14 @@ class Category extends AbstractResource
     protected $_eventManager = null;
 
     /**
-     * Collection factory of category
+     * Category collection factory
      *
      * @var \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory
      */
     protected $_categoryCollectionFactory;
 
     /**
-     * Tree factory of category
+     * Category tree factory
      *
      * @var \Magento\Catalog\Model\ResourceModel\Category\TreeFactory
      */
@@ -103,6 +103,7 @@ class Category extends AbstractResource
     private $metadataPool;
 
     /**
+     * Category constructor.
      * @param \Magento\Eav\Model\Entity\Context $context
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Catalog\Model\Factory $modelFactory
@@ -113,8 +114,6 @@ class Category extends AbstractResource
      * @param array $data
      * @param \Magento\Framework\Serialize\Serializer\Json|null $serializer
      * @param MetadataPool|null $metadataPool
-     * @param EntityManager|null $entityManager
-     * @param Category\AggregateCount|null $aggregateCount
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
@@ -127,9 +126,7 @@ class Category extends AbstractResource
         Processor $indexerProcessor,
         $data = [],
         \Magento\Framework\Serialize\Serializer\Json $serializer = null,
-        MetadataPool $metadataPool = null,
-        \Magento\Framework\EntityManager\EntityManager $entityManager = null,
-        \Magento\Catalog\Model\ResourceModel\Category\AggregateCount $aggregateCount = null
+        MetadataPool $metadataPool = null
     ) {
         parent::__construct(
             $context,
@@ -145,10 +142,6 @@ class Category extends AbstractResource
         $this->serializer = $serializer ?: ObjectManager::getInstance()
             ->get(\Magento\Framework\Serialize\Serializer\Json::class);
         $this->metadataPool = $metadataPool ?: ObjectManager::getInstance()->get(MetadataPool::class);
-        $this->entityManager = $entityManager ?: ObjectManager::getInstance()
-            ->get(\Magento\Framework\EntityManager\EntityManager::class);
-        $this->aggregateCount = $aggregateCount ?: ObjectManager::getInstance()
-            ->get(\Magento\Catalog\Model\ResourceModel\Category\AggregateCount::class);
     }
 
     /**
@@ -227,7 +220,7 @@ class Category extends AbstractResource
     protected function _beforeDelete(\Magento\Framework\DataObject $object)
     {
         parent::_beforeDelete($object);
-        $this->aggregateCount->processDelete($object);
+        $this->getAggregateCount()->processDelete($object);
         $this->deleteChildren($object);
     }
 
@@ -239,10 +232,7 @@ class Category extends AbstractResource
      */
     protected function _afterDelete(DataObject $object)
     {
-        if ($object->getIsActive() || $object->getDeletedChildrenIds()) {
-            $this->indexerProcessor->markIndexerAsInvalid();
-        }
-
+        $this->indexerProcessor->markIndexerAsInvalid();
         return parent::_afterDelete($object);
     }
 
@@ -294,6 +284,9 @@ class Category extends AbstractResource
         $object->setAttributeSetId(
             $object->getAttributeSetId() ?: $this->getEntityType()->getDefaultAttributeSetId()
         );
+
+        $this->castPathIdsToInt($object);
+
         if ($object->isObjectNew()) {
             if ($object->getPosition() === null) {
                 $object->setPosition($this->_getMaxPosition($object->getPath()) + 1);
@@ -479,6 +472,10 @@ class Category extends AbstractResource
 
         if (!empty($insert) || !empty($delete)) {
             $productIds = array_unique(array_merge(array_keys($insert), array_keys($delete)));
+            $this->_eventManager->dispatch(
+                'catalog_category_change_products',
+                ['category' => $category, 'product_ids' => $productIds]
+            );
 
             $category->setChangedProductIds($productIds);
         }
@@ -490,10 +487,6 @@ class Category extends AbstractResource
              * Setting affected products to category for third party engine index refresh
              */
             $productIds = array_keys($insert + $delete + $update);
-            $this->_eventManager->dispatch(
-                'catalog_category_change_products',
-                ['category' => $category, 'product_ids' => $productIds]
-            );
             $category->setAffectedProductIds($productIds);
         }
         return $this;
@@ -525,8 +518,9 @@ class Category extends AbstractResource
                 $websiteId
             );
         }
+        $bind = ['category_id' => (int)$category->getId()];
 
-        return $this->getConnection()->fetchPairs($select);
+        return $this->getConnection()->fetchPairs($select, $bind);
     }
 
     /**
@@ -584,8 +578,7 @@ class Category extends AbstractResource
             'entity_id'
         )->where(
             'entity_id IN(?)',
-            $ids,
-            \Zend_Db::INT_TYPE
+            $ids
         );
 
         return $this->getConnection()->fetchCol($select);
@@ -676,8 +669,7 @@ class Category extends AbstractResource
                 'ci.value = :value'
             )->where(
                 'ce.entity_id IN (?)',
-                $entityIdsFilter,
-                \Zend_Db::INT_TYPE
+                $entityIdsFilter
             );
             $this->entitiesWhereAttributesIs[$entityIdsFilterHash][$attribute->getId()][$expectedValue] =
                 $this->getConnection()->fetchCol($selectEntities, $bind);
@@ -1099,8 +1091,8 @@ class Category extends AbstractResource
         }
 
         $this->loadAttributesForObject($attributes, $object);
-        $object = $this->entityManager->load($object, $entityId);
-        if (!$this->entityManager->has($object)) {
+        $object = $this->getEntityManager()->load($object, $entityId);
+        if (!$this->getEntityManager()->has($object)) {
             $object->isObjectNew(true);
         }
         return $this;
@@ -1111,7 +1103,7 @@ class Category extends AbstractResource
      */
     public function delete($object)
     {
-        $this->entityManager->delete($object);
+        $this->getEntityManager()->delete($object);
         $this->_eventManager->dispatch(
             'catalog_category_delete_after_done',
             ['product' => $object, 'category' => $object]
@@ -1128,8 +1120,36 @@ class Category extends AbstractResource
      */
     public function save(\Magento\Framework\Model\AbstractModel $object)
     {
-        $this->entityManager->save($object);
+        $this->getEntityManager()->save($object);
         return $this;
+    }
+
+    /**
+     * Returns EntityManager object
+     *
+     * @return EntityManager
+     */
+    private function getEntityManager()
+    {
+        if (null === $this->entityManager) {
+            $this->entityManager = \Magento\Framework\App\ObjectManager::getInstance()
+                ->get(\Magento\Framework\EntityManager\EntityManager::class);
+        }
+        return $this->entityManager;
+    }
+
+    /**
+     * Returns AggregateCount object
+     *
+     * @return Category\AggregateCount
+     */
+    private function getAggregateCount()
+    {
+        if (null === $this->aggregateCount) {
+            $this->aggregateCount = \Magento\Framework\App\ObjectManager::getInstance()
+                ->get(\Magento\Catalog\Model\ResourceModel\Category\AggregateCount::class);
+        }
+        return $this->aggregateCount;
     }
 
     /**
@@ -1154,11 +1174,11 @@ class Category extends AbstractResource
             return [];
         }
 
-        $linkField = $this->metadataPool->getMetadata(CategoryInterface::class)->getLinkField();
+        $linkField = $this->metadataPool->getMetadata(ProductInterface::class)->getLinkField();
         $select = $connection->select()
             ->from(
                 ['cce' => $this->getTable('catalog_category_entity')],
-                [$linkField, 'entity_id', 'parent_id', 'path']
+                [$linkField, 'parent_id', 'path']
             )->join(
                 ['cce_int' => $this->getTable('catalog_category_entity_int')],
                 'cce.' . $linkField . ' = cce_int.' . $linkField,
@@ -1171,5 +1191,26 @@ class Category extends AbstractResource
             )->order('path');
 
         return $connection->fetchAll($select);
+    }
+
+    /**
+     * Cast category path ids to int.
+     *
+     * @param DataObject $object
+     * @return void
+     */
+    private function castPathIdsToInt(DataObject $object): void
+    {
+        if (is_string($object->getPath())) {
+            $pathIds = explode('/', $object->getPath());
+
+            array_walk(
+                $pathIds,
+                function (&$pathId) {
+                    $pathId = (int)$pathId;
+                }
+            );
+            $object->setPath(implode('/', $pathIds));
+        }
     }
 }

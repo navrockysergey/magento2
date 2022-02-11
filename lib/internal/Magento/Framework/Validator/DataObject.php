@@ -24,6 +24,8 @@ class DataObject implements \Zend_Validate_Interface
     private $_rules = [];
 
     /**
+     * Validation error messages
+     *
      * @var array
      */
     private $_messages = [];
@@ -34,6 +36,7 @@ class DataObject implements \Zend_Validate_Interface
      * @param \Zend_Validate_Interface $validator
      * @param string $fieldName Field name to apply validation to, or empty value to validate entity as a whole
      * @return \Magento\Framework\Validator\DataObject
+     * @api
      */
     public function addRule(\Zend_Validate_Interface $validator, $fieldName = '')
     {
@@ -58,6 +61,7 @@ class DataObject implements \Zend_Validate_Interface
      * @return bool
      *
      * @throws \Exception
+     * @api
      */
     public function isValid($entity)
     {
@@ -66,10 +70,9 @@ class DataObject implements \Zend_Validate_Interface
         foreach ($this->_rules as $fieldName => $validator) {
             $value = $fieldName ? $entity->getDataUsingMethod($fieldName) : $entity;
             if (!$validator->isValid($value)) {
-                $this->_messages[] =  array_values($validator->getMessages());
+                $this->_messages = array_merge($this->_messages, array_values($validator->getMessages()));
             }
         }
-        $this->_messages = array_merge([], ...$this->_messages);
         return empty($this->_messages);
     }
 

@@ -5,7 +5,6 @@
  */
 namespace Magento\Sales\Block\Order;
 
-use Magento\Framework\DataObject;
 use Magento\Sales\Model\Order;
 
 /**
@@ -32,7 +31,7 @@ class Totals extends \Magento\Framework\View\Element\Template
     protected $_order = null;
 
     /**
-     * Core registry object
+     * Core registry
      *
      * @var \Magento\Framework\Registry
      */
@@ -142,7 +141,24 @@ class Totals extends \Magento\Framework\View\Element\Template
             );
         }
 
-        $this->addShippingTotal($source);
+        /**
+         * Add shipping
+         */
+        if (!$source->getIsVirtual() && ((double)$source->getShippingAmount() || $source->getShippingDescription())) {
+            $label = __('Shipping & Handling');
+            if ($this->getSource()->getCouponCode() && !isset($this->_totals['discount'])) {
+                $label = __('Shipping & Handling (%1)', $this->getSource()->getCouponCode());
+            }
+
+            $this->_totals['shipping'] = new \Magento\Framework\DataObject(
+                [
+                    'code' => 'shipping',
+                    'field' => 'shipping_amount',
+                    'value' => $this->getSource()->getShippingAmount(),
+                    'label' => $label,
+                ]
+            );
+        }
 
         $this->_totals['grand_total'] = new \Magento\Framework\DataObject(
             [
@@ -168,38 +184,6 @@ class Totals extends \Magento\Framework\View\Element\Template
             );
         }
         return $this;
-    }
-
-    /**
-     * Add shipping total
-     *
-     * @param Order|Order\Invoice $source
-     * @retrurn void
-     */
-    private function addShippingTotal($source)
-    {
-        if (!$source->getIsVirtual()
-            && ($source->getShippingAmount() !== null
-                || $source->getShippingDescription())
-        ) {
-            $shippingLabel = __('Shipping & Handling');
-
-            if (!isset($this->_totals['discount'])) {
-                if ($source->getCouponCode()) {
-                    $shippingLabel .= " ({$source->getCouponCode()})";
-                } elseif ($source->getDiscountDescription()) {
-                    $shippingLabel .= " ({$source->getDiscountDescription()})";
-                }
-            }
-            $this->_totals['shipping'] = new DataObject(
-                [
-                    'code' => 'shipping',
-                    'field' => 'shipping_amount',
-                    'value' => $source->getShippingAmount(),
-                    'label' => $shippingLabel,
-                ]
-            );
-        }
     }
 
     /**

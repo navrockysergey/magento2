@@ -153,38 +153,27 @@ class StaticResource implements \Magento\Framework\AppInterface
             )
         ) {
             $this->response->setHttpResponseCode(404);
-            return $this->response;
-        }
-
-        $path = $this->request->get('resource');
-        try {
+        } else {
+            $path = $this->request->get('resource');
             $params = $this->parsePath($path);
-        } catch (\InvalidArgumentException $e) {
-            if ($appMode == \Magento\Framework\App\State::MODE_PRODUCTION) {
-                $this->response->setHttpResponseCode(404);
-                return $this->response;
+            if (!($this->isThemeAllowed($params['area'] . DIRECTORY_SEPARATOR . $params['theme'])
+                && $this->localeValidator->isValid($params['locale']))
+            ) {
+                if ($appMode == \Magento\Framework\App\State::MODE_PRODUCTION) {
+                    $this->response->setHttpResponseCode(404);
+                    return $this->response;
+                }
+                throw new \InvalidArgumentException('Requested path ' . $path . ' is wrong.');
             }
-            throw $e;
+
+            $this->state->setAreaCode($params['area']);
+            $this->objectManager->configure($this->configLoader->load($params['area']));
+            $file = $params['file'];
+            unset($params['file']);
+            $asset = $this->assetRepo->createAsset($file, $params);
+            $this->response->setFilePath($asset->getSourceFile());
+            $this->publisher->publish($asset);
         }
-
-        if (!($this->isThemeAllowed($params['area'] . DIRECTORY_SEPARATOR . $params['theme'])
-            && $this->localeValidator->isValid($params['locale']))
-        ) {
-            if ($appMode == \Magento\Framework\App\State::MODE_PRODUCTION) {
-                $this->response->setHttpResponseCode(404);
-                return $this->response;
-            }
-            throw new \InvalidArgumentException('Requested path ' . $path . ' is wrong.');
-        }
-
-        $this->state->setAreaCode($params['area']);
-        $this->objectManager->configure($this->configLoader->load($params['area']));
-        $file = $params['file'];
-        unset($params['file']);
-        $asset = $this->assetRepo->createAsset($file, $params);
-        $this->response->setFilePath($asset->getSourceFile());
-        $this->publisher->publish($asset);
-
         return $this->response;
     }
 
@@ -276,6 +265,12 @@ class StaticResource implements \Magento\Framework\AppInterface
         return $this->logger;
     }
 
+    /**
+     * Check that theme is available.
+     *
+     * @param string $theme
+     * @return bool
+     */
     private function isThemeAllowed(string $theme): bool
     {
         return in_array($theme, array_keys($this->themePackageList->getThemes()));

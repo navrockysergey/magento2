@@ -9,6 +9,7 @@ namespace Magento\Paypal\Controller\Express;
 
 use Magento\Authorization\Model\UserContextInterface;
 use Magento\Framework\App\Action\HttpGetActionInterface as HttpGetActionInterface;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Exception\LocalizedException;
@@ -125,7 +126,7 @@ class GetTokenData extends AbstractExpress implements HttpGetActionInterface
         $this->customerRepository = $customerRepository;
         $this->cartRepository = $cartRepository;
         $this->guestCartRepository = $guestCartRepository;
-        $this->userContext = $userContext;
+        $this->userContext = $userContext ?? ObjectManager::getInstance()->get(UserContextInterface::class);
     }
 
     /**
@@ -161,32 +162,9 @@ class GetTokenData extends AbstractExpress implements HttpGetActionInterface
             $responseContent['error_message'] = __('Sorry, but something went wrong');
         }
 
-        if (!$responseContent['success']) {
-            $this->messageManager->addErrorMessage($responseContent['error_message']);
-        }
-
         return $controllerResult->setData($responseContent);
     }
 
-    /**
-     * Prepare quote specified for checkout.
-     *
-     * @return \Magento\Quote\Api\Data\CartInterface
-     * @throws LocalizedException
-     */
-    private function prepareQuote()
-    {
-        $quoteId = $this->getRequest()->getParam('quote_id');
-        if ($quoteId) {
-            $quote = $this->userContext->getUserId()
-                ? $this->cartRepository->get($quoteId)
-                : $this->guestCartRepository->get($quoteId);
-            if ((int)$quote->getCustomer()->getId() === (int)$this->userContext->getUserId()) {
-                return $quote;
-            }
-        }
-        return $this->_getQuote();
-    }
     /**
      * Get paypal token
      *
@@ -195,7 +173,7 @@ class GetTokenData extends AbstractExpress implements HttpGetActionInterface
      */
     private function getToken(): ?string
     {
-        $quote = $this->prepareQuote();
+        $quote = $this->_getQuote();
         $this->_initCheckout($quote);
 
         if ($quote->getIsMultiShipping()) {

@@ -28,27 +28,16 @@ class TermBucket implements BucketInterface
     protected $metrics;
 
     /**
-     * @var array
-     */
-    private $parameters;
-
-    /**
      * @param string $name
      * @param string $field
      * @param array $metrics
-     * @param array $parameters
      * @codeCoverageIgnore
      */
-    public function __construct(
-        $name,
-        $field,
-        array $metrics,
-        array $parameters = []
-    ) {
+    public function __construct($name, $field, array $metrics)
+    {
         $this->name = $name;
         $this->field = $field;
         $this->metrics = $metrics;
-        $this->parameters = $parameters;
     }
 
     /**
@@ -84,13 +73,5 @@ class TermBucket implements BucketInterface
     public function getMetrics()
     {
         return $this->metrics;
-    }
-
-    /**
-     * @return array
-     */
-    public function getParameters(): array
-    {
-        return $this->parameters;
     }
 }

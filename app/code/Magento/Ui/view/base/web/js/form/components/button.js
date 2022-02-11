@@ -25,9 +25,7 @@ define([
             template: 'ui/form/components/button/simple',
             visible: true,
             disabled: false,
-            title: '',
-            buttonTextId: '',
-            ariLabelledby: ''
+            title: ''
         },
 
         /**

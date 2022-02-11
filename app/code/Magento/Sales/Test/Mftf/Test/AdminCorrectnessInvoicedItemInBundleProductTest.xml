@@ -20,7 +20,7 @@
             <group value="sales"/>
         </annotations>
         <before>
-            <actionGroup ref="AdminLoginActionGroup" stepKey="loginAsAdmin"/>
+            <actionGroup ref="LoginAsAdmin" stepKey="loginAsAdmin"/>
 
             <!--Create category and simple product-->
             <createData entity="SimpleSubCategory" stepKey="createCategory"/>
@@ -48,22 +48,21 @@
             <deleteData createDataKey="createSimpleProduct" stepKey="deleteSimpleProduct"/>
             <deleteData createDataKey="createBundleProduct" stepKey="deleteBundleProduct"/>
 
-            <actionGroup ref="AdminLogoutActionGroup" stepKey="logOut"/>
+            <actionGroup ref="logout" stepKey="logOut"/>
         </after>
 
         <!--Complete Bundle product creation-->
-        <actionGroup ref="AdminProductPageOpenByIdActionGroup" stepKey="goToProductEditPage">
-            <argument name="productId" value="$$createBundleProduct.id$$"/>
-        </actionGroup>
-        <actionGroup ref="SaveProductFormActionGroup" stepKey="saveProduct"/>
+        <amOnPage url="{{AdminProductEditPage.url($$createBundleProduct.id$$)}}" stepKey="goToProductEditPage"/>
+        <actionGroup ref="saveProductForm" stepKey="saveProduct"/>
 
-        <comment userInput="Adding the comment to replace CliIndexerReindexActionGroup action group ('indexer:reindex' commands) for preserving Backward Compatibility" stepKey="reindex"/>
+        <!--Run re-index task-->
+        <magentoCLI command="indexer:reindex" stepKey="reindex"/>
 
         <!--Go to bundle product page-->
-        <amOnPage url="{{StorefrontProductPage.url($$createCategory.custom_attributes[url_key]$$)}}" stepKey="navigateToBundleProductPage"/>
+        <amOnPage url="{{StorefrontProductPage.url($$createCategory.name$$)}}" stepKey="navigateToBundleProductPage"/>
 
         <!--Place order bundle product with 10 options-->
-        <actionGroup ref="StorefrontAddCategoryBundleProductWithSingleChoiceToCartActionGroup" stepKey="addBundleProductToCart">
+        <actionGroup ref="StorefrontAddCategoryBundleProductToCartActionGroup" stepKey="addBundleProductToCart">
             <argument name="product" value="$$createBundleProduct$$"/>
             <argument name="quantity" value="10"/>
         </actionGroup>
@@ -76,23 +75,21 @@
 
         <!--Go to order page submit invoice-->
         <grabTextFrom selector="{{CheckoutSuccessMainSection.orderNumber}}" stepKey="grabOrderNumber"/>
-        <actionGroup ref="AdminOrdersPageOpenActionGroup" stepKey="onOrdersPage"/>
-        <actionGroup ref="FilterOrderGridByIdActionGroup" stepKey="filterOrderGridById">
+        <amOnPage url="{{AdminOrdersPage.url}}" stepKey="onOrdersPage"/>
+        <actionGroup ref="filterOrderGridById" stepKey="filterOrderGridById">
             <argument name="orderId" value="$grabOrderNumber"/>
         </actionGroup>
-        <actionGroup ref="AdminOrderGridClickFirstRowActionGroup" stepKey="clickOrderRow"/>
-        <actionGroup ref="GoToInvoiceIntoOrderActionGroup" stepKey="goToInvoiceIntoOrderPage"/>
+        <click selector="{{AdminOrdersGridSection.firstRow}}" stepKey="clickOrderRow"/>
+        <waitForPageLoad stepKey="waitForCreatedOrderPageOpened"/>
+        <actionGroup ref="goToInvoiceIntoOrder" stepKey="goToInvoiceIntoOrderPage"/>
         <fillField selector="{{AdminInvoiceItemsSection.qtyToInvoiceColumn}}" userInput="5" stepKey="ChangeQtyToInvoice"/>
-        <click selector="{{AdminInvoiceItemsSection.updateQty}}" stepKey="updateQuantity"/>
+        <click selector="{{AdminInvoiceItemsSection.updateQty}}" stepKey="updateQunatity"/>
         <waitForPageLoad stepKey="waitPageToBeLoaded"/>
-        <actionGroup ref="SubmitInvoiceActionGroup" stepKey="submitInvoice"/>
+        <actionGroup ref="SubmitInvoice" stepKey="submitInvoice"/>
 
         <!--Verify invoiced items qty in ship tab-->
-        <actionGroup ref="GoToShipmentIntoOrderActionGroup" stepKey="goToShipment"/>
+        <actionGroup ref="goToShipmentIntoOrder" stepKey="goToShipment"/>
         <grabTextFrom selector="{{AdminShipmentItemsSection.itemQtyInvoiced('1')}}" stepKey="grabInvoicedItemQty"/>
-        <assertEquals stepKey="assertInvoicedItemsQty">
-			<actualResult type="const">$grabInvoicedItemQty</actualResult>
-			<expectedResult type="string">5</expectedResult>
-        </assertEquals>
+        <assertEquals expected="5" expectedType="string" actual="$grabInvoicedItemQty" stepKey="assertInvoicedItemsQty"/>
     </test>
 </tests>

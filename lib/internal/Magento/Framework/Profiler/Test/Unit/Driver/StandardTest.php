@@ -5,80 +5,58 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Framework\Profiler\Test\Unit\Driver;
 
-use Magento\Framework\Profiler;
-use Magento\Framework\Profiler\Driver\Standard;
-use Magento\Framework\Profiler\Driver\Standard\Output\Factory;
-use Magento\Framework\Profiler\Driver\Standard\OutputInterface;
-use Magento\Framework\Profiler\Driver\Standard\Stat;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
-
-class StandardTest extends TestCase
+class StandardTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var Stat|MockObject
+     * @var \Magento\Framework\Profiler\Driver\Standard\Stat|\PHPUnit\Framework\MockObject\MockObject
      */
-    private $stat;
+    protected $_stat;
 
     /**
-     * @var Standard
+     * @var \Magento\Framework\Profiler\Driver\Standard
      */
-    private $driver;
+    protected $_driver;
 
-    /**
-     * @inheritdoc
-     */
     protected function setUp(): void
     {
-        $this->stat = $this->createMock(Stat::class);
-        $this->driver = new Standard(['stat' => $this->stat]);
+        $this->_stat = $this->createMock(\Magento\Framework\Profiler\Driver\Standard\Stat::class);
+        $this->_driver = new \Magento\Framework\Profiler\Driver\Standard(['stat' => $this->_stat]);
     }
 
-    /**
-     * @inheritdoc
-     */
     protected function tearDown(): void
     {
-        Profiler::reset();
+        \Magento\Framework\Profiler::reset();
     }
 
     /**
-     * Test __construct method with no arguments.
-     *
-     * @return void
+     * Test __construct method with no arguments
+     * @SuppressWarnings(PHPMD.UnusedLocalVariable)
      */
-    public function testDefaultConstructor(): void
+    public function testDefaultConstructor()
     {
         $this->markTestSkipped('Skipped in #27500 due to testing protected/private methods and properties');
 
-        $driver = new Standard();
-        $this->assertAttributeInstanceOf(Stat::class, '_stat', $driver);
+        $driver = new \Magento\Framework\Profiler\Driver\Standard();
+        //$this->assertAttributeInstanceOf(\Magento\Framework\Profiler\Driver\Standard\Stat::class, '_stat', $driver);
     }
 
     /**
-     * Test clear method.
-     *
-     * @return void
+     * Test clear method
      */
-    public function testClear(): void
+    public function testClear()
     {
-        $this->stat->expects($this->once())->method('clear')->with('timer_id');
-        $this->driver->clear('timer_id');
+        $this->_stat->expects($this->once())->method('clear')->with('timer_id');
+        $this->_driver->clear('timer_id');
     }
 
     /**
-     * Test start method.
-     *
-     * @return void
+     * Test start method
      */
-    public function testStart(): void
+    public function testStart()
     {
-        $this->stat->expects(
+        $this->_stat->expects(
             $this->once()
         )->method(
             'start'
@@ -88,17 +66,15 @@ class StandardTest extends TestCase
             $this->greaterThanOrEqual(0),
             $this->greaterThanOrEqual(0)
         );
-        $this->driver->start('timer_id');
+        $this->_driver->start('timer_id');
     }
 
     /**
-     * Test stop method.
-     *
-     * @return void
+     * Test stop method
      */
-    public function testStop(): void
+    public function testStop()
     {
-        $this->stat->expects(
+        $this->_stat->expects(
             $this->once()
         )->method(
             'stop'
@@ -108,75 +84,83 @@ class StandardTest extends TestCase
             $this->greaterThanOrEqual(0),
             $this->greaterThanOrEqual(0)
         );
-        $this->driver->stop('timer_id');
+        $this->_driver->stop('timer_id');
     }
 
     /**
-     * Test _initOutputs method.
-     *
-     * @return void
+     * Test _initOutputs method
+     * @SuppressWarnings(PHPMD.UnusedLocalVariable)
      */
-    public function testInitOutputs(): void
+    public function testInitOutputs()
     {
         $this->markTestSkipped('Skipped in #27500 due to testing protected/private methods and properties');
 
-        $outputFactory = $this->createMock(Factory::class);
+        $outputFactory = $this->createMock(\Magento\Framework\Profiler\Driver\Standard\Output\Factory::class);
         $config = [
             'outputs' => [
                 'outputTypeOne' => ['baseDir' => '/custom/base/dir'],
-                'outputTypeTwo' => ['type' => 'specificOutputTypeTwo']
+                'outputTypeTwo' => ['type' => 'specificOutputTypeTwo'],
             ],
             'baseDir' => '/base/dir',
-            'outputFactory' => $outputFactory
+            'outputFactory' => $outputFactory,
         ];
 
-        $outputOne = $this->getMockForAbstractClass(OutputInterface::class);
-        $outputTwo = $this->getMockForAbstractClass(OutputInterface::class);
+        $outputOne = $this->createMock(\Magento\Framework\Profiler\Driver\Standard\OutputInterface::class);
+        $outputTwo = $this->createMock(\Magento\Framework\Profiler\Driver\Standard\OutputInterface::class);
 
-        $outputFactory->method('create')
-            ->withConsecutive(
-                [['baseDir' => '/custom/base/dir', 'type' => 'outputTypeOne']],
-                [['type' => 'specificOutputTypeTwo', 'baseDir' => '/base/dir']]
-            )
-            ->willReturnOnConsecutiveCalls($outputOne, $outputTwo);
+        $outputFactory->expects(
+            $this->at(0)
+        )->method(
+            'create'
+        )->with(
+            ['baseDir' => '/custom/base/dir', 'type' => 'outputTypeOne']
+        )->willReturn(
+            $outputOne
+        );
 
-        $driver = new Standard($config);
-        $this->assertAttributeCount(2, '_outputs', $driver);
-        $this->assertAttributeEquals([$outputOne, $outputTwo], '_outputs', $driver);
+        $outputFactory->expects(
+            $this->at(1)
+        )->method(
+            'create'
+        )->with(
+            ['type' => 'specificOutputTypeTwo', 'baseDir' => '/base/dir']
+        )->willReturn(
+            $outputTwo
+        );
+
+        $driver = new \Magento\Framework\Profiler\Driver\Standard($config);
+        //$this->assertAttributeCount(2, '_outputs', $driver);
+        //$this->assertAttributeEquals([$outputOne, $outputTwo], '_outputs', $driver);
     }
 
     /**
-     * Test display method.
-     *
-     * @return void
+     * Test display method
      */
-    public function testDisplayAndRegisterOutput(): void
+    public function testDisplayAndRegisterOutput()
     {
-        $outputOne = $this->getMockForAbstractClass(OutputInterface::class);
-        $outputOne->expects($this->once())->method('display')->with($this->stat);
-        $outputTwo = $this->getMockForAbstractClass(OutputInterface::class);
-        $outputTwo->expects($this->once())->method('display')->with($this->stat);
+        $outputOne = $this->createMock(\Magento\Framework\Profiler\Driver\Standard\OutputInterface::class);
+        $outputOne->expects($this->once())->method('display')->with($this->_stat);
+        $outputTwo = $this->createMock(\Magento\Framework\Profiler\Driver\Standard\OutputInterface::class);
+        $outputTwo->expects($this->once())->method('display')->with($this->_stat);
 
-        $this->driver->registerOutput($outputOne);
-        $this->driver->registerOutput($outputTwo);
-        Profiler::enable();
-        $this->driver->display();
-        Profiler::disable();
-        $this->driver->display();
+        $this->_driver->registerOutput($outputOne);
+        $this->_driver->registerOutput($outputTwo);
+        \Magento\Framework\Profiler::enable();
+        $this->_driver->display();
+        \Magento\Framework\Profiler::disable();
+        $this->_driver->display();
     }
 
     /**
-     * Test _getOutputFactory method creating new object by default.
-     *
-     * @return void
+     * Test _getOutputFactory method creating new object by default
      */
-    public function testDefaultOutputFactory(): void
+    public function testDefaultOutputFactory()
     {
-        $method = new ReflectionMethod($this->driver, '_getOutputFactory');
+        $method = new \ReflectionMethod($this->_driver, '_getOutputFactory');
         $method->setAccessible(true);
         $this->assertInstanceOf(
-            Factory::class,
-            $method->invoke($this->driver)
+            \Magento\Framework\Profiler\Driver\Standard\Output\Factory::class,
+            $method->invoke($this->_driver)
         );
     }
 }

@@ -3,6 +3,8 @@
  * See COPYING.txt for license details.
  */
 
+/* global $break $ $$ */
+
 /**
  *  @api
  */
@@ -212,7 +214,7 @@ define([
             });
         }
 
-        jQuery(function () {
+        jQuery(document).ready(function () {
             if (jQuery('#frontend_input').val() !== 'swatch_text') {
                 jQuery('.swatch-text-field-0').removeClass('required-option');
             }

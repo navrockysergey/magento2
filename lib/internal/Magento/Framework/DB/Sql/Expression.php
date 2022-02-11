@@ -13,7 +13,6 @@ class Expression extends \Zend_Db_Expr implements ExpressionInterface, \JsonSeri
     /**
      * @inheritdoc
      */
-    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return [

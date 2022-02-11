@@ -8,12 +8,12 @@
      class="items payment-methods">
     <div repeat="foreach: paymentGroupsList, item: '$group'"
          class="payment-group">
-        <div if="regionHasElements($group().displayArea)"
+        <div if="getRegion($group().displayArea)().length"
              translate="getGroupTitle($group)"
              class="step-title"
              data-role="title">
         </div>
-        <each args="data: getRegion($group().displayArea), as: 'method'" render=""></each>
+        <each args="data: getRegion($group().displayArea), as: 'method'" render=""/>
     </div>
 </div>
 <div ifnot="isPaymentMethodsAvailable()"

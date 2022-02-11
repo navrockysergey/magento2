@@ -3,7 +3,6 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
 
 return [
     'ex01--amqp' => [
@@ -46,8 +45,16 @@ return [
         'autoDelete' => false,
         'internal' => false,
         'bindings' => [
-            'queue--queue01--top01' => [
-                'id' => 'queue--queue01--top01',
+            'bind01' => [
+                'id' => 'bind01',
+                'destinationType' => 'queue',
+                'destination' => 'queue01',
+                'disabled' => true,
+                'topic' => 'top01',
+                'arguments' => []
+            ],
+            'bind02' => [
+                'id' => 'bind02',
                 'destinationType' => 'queue',
                 'destination' => 'queue01',
                 'disabled' => false,

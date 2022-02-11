@@ -50,22 +50,20 @@ class DownloadableTest extends AbstractProductExportImportTestCase
     }
 
     /**
-     * Run import/export test with pagination.
-     *
      * @magentoAppArea adminhtml
-     * @magentoDbIsolation disabled
+     * @magentoDbIsolation enabled
      * @magentoAppIsolation enabled
      *
      * @param array $fixtures
      * @param string[] $skus
      * @param string[] $skippedAttributes
-     * @dataProvider exportImportDataProvider
+     * @dataProvider importReplaceDataProvider
+     *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function testImportExportWithPagination(array $fixtures, array $skus, array $skippedAttributes = [])
+    public function testImportReplaceWithPagination(array $fixtures, array $skus, array $skippedAttributes = [])
     {
-        $skippedAttributes = array_merge(self::$skippedAttributes, ['downloadable_links']);
-        parent::testImportExportWithPagination($fixtures, $skus, $skippedAttributes);
+        $this->markTestSkipped('Uncomment after MAGETWO-38240 resolved');
     }
 
     /**

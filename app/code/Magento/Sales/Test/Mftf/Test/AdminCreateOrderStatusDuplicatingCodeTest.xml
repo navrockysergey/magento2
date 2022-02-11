@@ -19,15 +19,15 @@
             <group value="mtf_migrated"/>
         </annotations>
         <before>
-            <actionGroup ref="AdminLoginActionGroup" stepKey="loginAsAdmin"/>
+            <actionGroup ref="LoginAsAdmin" stepKey="loginAsAdmin"/>
         </before>
         <after>
-            <actionGroup ref="AdminLogoutActionGroup" stepKey="logout"/>
+            <actionGroup ref="logout" stepKey="logout"/>
         </after>
 
         <!-- Go to new order status page -->
-        <actionGroup ref="AdminGoToOrderStatusPageActionGroup" stepKey="goToOrderStatusPage"/>
-        <actionGroup ref="AdminClickCreateNewStatusButtonOnOrderStatusPageActionGroup" stepKey="clickCreateNewStatus"/>
+        <amOnPage url="{{AdminOrderStatusPage.url}}" stepKey="goToOrderStatusPage"/>
+        <click selector="{{AdminMainActionsSection.add}}" stepKey="clickCreateNewStatus"/>
 
         <!-- Fill the form and validate message -->
         <actionGroup ref="AdminOrderStatusFormFillAndSave" stepKey="fillFormAndClickSave">

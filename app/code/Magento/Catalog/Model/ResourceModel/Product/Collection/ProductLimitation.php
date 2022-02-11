@@ -6,6 +6,8 @@
 namespace Magento\Catalog\Model\ResourceModel\Product\Collection;
 
 /**
+ * Class ProductLimitation
+ *
  * @api
  * @since 101.0.0
  */
@@ -29,61 +31,47 @@ class ProductLimitation implements \ArrayAccess
     private $productLimitationFilters = [];
 
     /**
-     * Check if the value is set for the given offset.
-     *
      * @param string $offset
      * @return bool
      * @since 101.0.0
      */
-    #[\ReturnTypeWillChange]
     public function offsetExists($offset)
     {
         return array_key_exists($offset, $this->productLimitationFilters);
     }
 
     /**
-     * Get the value by provided offset.
-     *
      * @param string $offset
      * @return mixed
      * @since 101.0.0
      */
-    #[\ReturnTypeWillChange]
     public function offsetGet($offset)
     {
         return $this->productLimitationFilters[$offset];
     }
 
     /**
-     * Set the given offset to filters.
-     *
      * @param string $offset
      * @param mixed $value
      * @return void
      * @since 101.0.0
      */
-    #[\ReturnTypeWillChange]
     public function offsetSet($offset, $value)
     {
         $this->productLimitationFilters[$offset] = $value;
     }
 
     /**
-     * Unset the given offset from filters.
-     *
      * @param string $offset
      * @return void
      * @since 101.0.0
      */
-    #[\ReturnTypeWillChange]
     public function offsetUnset($offset)
     {
         unset($this->productLimitationFilters[$offset]);
     }
 
     /**
-     * Returns store ID.
-     *
      * @return int|null
      * @since 101.0.0
      */
@@ -93,8 +81,6 @@ class ProductLimitation implements \ArrayAccess
     }
 
     /**
-     * Returns category ID.
-     *
      * @return int|null
      * @since 101.0.0
      */
@@ -104,8 +90,6 @@ class ProductLimitation implements \ArrayAccess
     }
 
     /**
-     * Check if the category is an anchor.
-     *
      * @return int|null
      * @since 101.0.0
      */
@@ -115,8 +99,6 @@ class ProductLimitation implements \ArrayAccess
     }
 
     /**
-     * Returns visibility value.
-     *
      * @return array|int|null
      * @since 101.0.0
      */
@@ -126,8 +108,6 @@ class ProductLimitation implements \ArrayAccess
     }
 
     /**
-     * Returns website IDs.
-     *
      * @return array|int|null
      * @since 101.0.0
      */
@@ -137,8 +117,6 @@ class ProductLimitation implements \ArrayAccess
     }
 
     /**
-     * Returns Store table.
-     *
      * @return string|null
      * @since 101.0.0
      */
@@ -159,15 +137,13 @@ class ProductLimitation implements \ArrayAccess
     }
 
     /**
-     * Set 'use price index' offset.
-     *
      * @param bool $value
      * @return void
      * @since 101.0.0
      */
     public function setUsePriceIndex($value)
     {
-        $this->offsetSet('use_price_index', (bool) $value);
+        $this->offsetSet('use_price_index', (bool)$value);
     }
 
     /**

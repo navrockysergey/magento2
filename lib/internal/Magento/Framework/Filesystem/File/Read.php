@@ -124,7 +124,7 @@ class Read implements ReadInterface
      * @param string $escape [optional]
      * @return array|bool|null
      */
-    public function readCsv($length = 0, $delimiter = ',', $enclosure = '"', $escape = "\0")
+    public function readCsv($length = 0, $delimiter = ',', $enclosure = '"', $escape = '\\')
     {
         return $this->driver->fileGetCsv($this->resource, $length, $delimiter, $enclosure, $escape);
     }

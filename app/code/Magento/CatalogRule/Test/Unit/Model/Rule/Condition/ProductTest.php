@@ -3,99 +3,74 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
 
 namespace Magento\CatalogRule\Test\Unit\Model\Rule\Condition;
 
-use Magento\Catalog\Model\ProductCategoryList;
-use Magento\Catalog\Model\ResourceModel\Eav\Attribute;
-use Magento\CatalogRule\Model\Rule\Condition\Product;
-use Magento\Eav\Model\Config;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManagerHelper;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class ProductTest extends TestCase
+class ProductTest extends \PHPUnit\Framework\TestCase
 {
-    /**
-     * @var Product
-     */
+    /** @var \Magento\CatalogRule\Model\Rule\Condition\Product */
     protected $product;
 
-    /**
-     * @var ObjectManagerHelper
-     */
+    /** @var ObjectManagerHelper */
     protected $objectManagerHelper;
 
-    /**
-     * @var Config|MockObject
-     */
+    /** @var \Magento\Eav\Model\Config|\PHPUnit\Framework\MockObject\MockObject */
     protected $config;
 
-    /**
-     * @var \Magento\Catalog\Model\Product|MockObject
-     */
+    /** @var \Magento\Catalog\Model\Product|\PHPUnit\Framework\MockObject\MockObject */
     protected $productModel;
 
-    /**
-     * @var \Magento\Catalog\Model\ResourceModel\Product|MockObject
-     */
+    /** @var \Magento\Catalog\Model\ResourceModel\Product|\PHPUnit\Framework\MockObject\MockObject */
     protected $productResource;
 
-    /**
-     * @var Attribute|MockObject
-     */
+    /** @var \Magento\Catalog\Model\ResourceModel\Eav\Attribute|\PHPUnit\Framework\MockObject\MockObject */
     protected $eavAttributeResource;
 
-    /**
-     * @var ProductCategoryList|MockObject
-     */
+    /** @var \Magento\Catalog\Model\ProductCategoryList|\PHPUnit\Framework\MockObject\MockObject */
     private $productCategoryList;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
-        $this->config = $this->createPartialMock(Config::class, ['getAttribute']);
-        $this->productModel = $this->getMockBuilder(\Magento\Catalog\Model\Product::class)
-            ->addMethods(['addAttributeToSelect', 'getAttributesByCode'])
-            ->onlyMethods(['__wakeup', 'hasData', 'getData', 'getId', 'getStoreId', 'getResource'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        $this->config = $this->createPartialMock(\Magento\Eav\Model\Config::class, ['getAttribute']);
+        $this->productModel = $this->createPartialMock(\Magento\Catalog\Model\Product::class, [
+                '__wakeup',
+                'hasData',
+                'getData',
+                'getId',
+                'getStoreId',
+                'getResource',
+                'addAttributeToSelect',
+                'getAttributesByCode'
+            ]);
 
-        $this->productCategoryList = $this->getMockBuilder(ProductCategoryList::class)
+        $this->productCategoryList = $this->getMockBuilder(\Magento\Catalog\Model\ProductCategoryList::class)
             ->disableOriginalConstructor()
             ->getMock();
 
         $this->productResource = $this->getMockBuilder(\Magento\Catalog\Model\ResourceModel\Product::class)
-            ->onlyMethods(
-                [
-                    'loadAllAttributes',
-                    'getAttributesByCode',
-                    'getAttribute',
-                    'getConnection',
-                    'getTable'
-                ]
-            )
+            ->setMethods(['loadAllAttributes', 'getAttributesByCode', 'getAttribute', 'getConnection', 'getTable'])
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->eavAttributeResource = $this->getMockBuilder(Attribute::class)
-            ->addMethods(['getFrontendLabel', 'getAttributesByCode'])
-            ->onlyMethods([
+        $this->eavAttributeResource = $this->createPartialMock(
+            \Magento\Catalog\Model\ResourceModel\Eav\Attribute::class,
+            [
                 '__wakeup',
                 'isAllowedForRuleCondition',
                 'getDataUsingMethod',
                 'getAttributeCode',
+                'getFrontendLabel',
                 'isScopeGlobal',
                 'getBackendType',
-                'getFrontendInput'
-            ])
-            ->disableOriginalConstructor()
-            ->getMock();
+                'getFrontendInput',
+                'getAttributesByCode'
+            ]
+        );
 
-        $this->productResource->expects($this->any())->method('loadAllAttributes')->willReturnSelf();
+        $this->productResource->expects($this->any())->method('loadAllAttributes')
+            ->willReturnSelf();
         $this->productResource->expects($this->any())->method('getAttributesByCode')
             ->willReturn([$this->eavAttributeResource]);
         $this->eavAttributeResource->expects($this->any())->method('isAllowedForRuleCondition')
@@ -109,7 +84,7 @@ class ProductTest extends TestCase
 
         $this->objectManagerHelper = new ObjectManagerHelper($this);
         $this->product = $this->objectManagerHelper->getObject(
-            Product::class,
+            \Magento\CatalogRule\Model\Rule\Condition\Product::class,
             [
                 'config' => $this->config,
                 'product' => $this->productModel,
@@ -122,7 +97,7 @@ class ProductTest extends TestCase
     /**
      * @return void
      */
-    public function testValidateMeetsCategory(): void
+    public function testValidateMeetsCategory()
     {
         $categoryIdList = [1, 2, 3];
 
@@ -135,16 +110,16 @@ class ProductTest extends TestCase
     }
 
     /**
+     * @dataProvider validateDataProvider
+     *
      * @param string $attributeValue
      * @param string|array $parsedValue
      * @param string $newValue
      * @param string $operator
      * @param array $input
-     *
      * @return void
-     * @dataProvider validateDataProvider
      */
-    public function testValidateWithDatetimeValue($attributeValue, $parsedValue, $newValue, $operator, $input): void
+    public function testValidateWithDatetimeValue($attributeValue, $parsedValue, $newValue, $operator, $input)
     {
         $this->product->setData('attribute', 'attribute_key');
         $this->product->setData('value_parsed', $parsedValue);
@@ -160,9 +135,10 @@ class ProductTest extends TestCase
 
         $this->productModel->expects($this->any())->method('hasData')
             ->willReturn(true);
-        $this->productModel
-            ->method('getData')
-            ->willReturnOnConsecutiveCalls(['1' => ['1' => $attributeValue]], $newValue, $newValue);
+        $this->productModel->expects($this->at(0))->method('getData')
+            ->willReturn(['1' => ['1' => $attributeValue]]);
+        $this->productModel->expects($this->any())->method('getData')
+            ->willReturn($newValue);
         $this->productModel->expects($this->any())->method('getId')
             ->willReturn('1');
         $this->productModel->expects($this->once())->method('getStoreId')
@@ -180,7 +156,7 @@ class ProductTest extends TestCase
     /**
      * @return void
      */
-    public function testValidateWithNoValue(): void
+    public function testValidateWithNoValue()
     {
         $this->product->setData('attribute', 'color');
         $this->product->setData('value_parsed', '1');
@@ -196,7 +172,7 @@ class ProductTest extends TestCase
     /**
      * @return array
      */
-    public function validateDataProvider(): array
+    public function validateDataProvider()
     {
         return [
             [
@@ -204,7 +180,7 @@ class ProductTest extends TestCase
                 'parsed_value' => '12:12',
                 'new_value' => '12:13',
                 'operator' => '>=',
-                'input' => ['method' => 'getBackendType', 'type' => 'input_type']
+                'input' => ['method' => 'getBackendType', 'type' => 'input_type'],
             ],
             [
                 'attribute_value' => '1',

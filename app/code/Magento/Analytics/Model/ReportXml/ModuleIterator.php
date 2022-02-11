@@ -34,7 +34,6 @@ class ModuleIterator extends \IteratorIterator
      *
      * @return array
      */
-    #[\ReturnTypeWillChange]
     public function current()
     {
         $current = parent::current();

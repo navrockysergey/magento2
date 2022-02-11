@@ -5,8 +5,8 @@
  */
 namespace Magento\Webapi\Model\Soap\Wsdl;
 
-use Laminas\Soap\Wsdl;
-use Laminas\Soap\Wsdl\ComplexTypeStrategy\AbstractComplexTypeStrategy;
+use Zend\Soap\Wsdl;
+use Zend\Soap\Wsdl\ComplexTypeStrategy\AbstractComplexTypeStrategy;
 
 /**
  * Magento-specific Complex type strategy for WSDL auto discovery.
@@ -16,12 +16,12 @@ class ComplexTypeStrategy extends AbstractComplexTypeStrategy
     /**
      *  Array item key value for element.
      */
-    public const ARRAY_ITEM_KEY_NAME = 'item';
+    const ARRAY_ITEM_KEY_NAME = 'item';
 
     /**
      * Appinfo nodes namespace.
      */
-    public const APP_INF_NS = 'inf';
+    const APP_INF_NS = 'inf';
 
     /**
      * @var \Magento\Framework\Reflection\TypeProcessor
@@ -119,9 +119,7 @@ class ComplexTypeStrategy extends AbstractComplexTypeStrategy
                 $this->_processParameter($element, $isRequired, $parameterData, $parameterType, $callInfo);
             }
 
-            if (isset($parameterData['documentation'])) {
-                $this->addAnnotation($element, $parameterData['documentation'], $default, $callInfo);
-            }
+            $this->addAnnotation($element, $parameterData['documentation'], $default, $callInfo);
             $sequence->appendChild($element);
         }
 
@@ -186,7 +184,7 @@ class ComplexTypeStrategy extends AbstractComplexTypeStrategy
      * Revert required call info data if needed.
      *
      * @param bool $isRequired
-     * @param array $callInfo
+     * @param array &$callInfo
      * @return void
      */
     protected function _revertRequiredCallInfo($isRequired, &$callInfo)
@@ -224,13 +222,13 @@ class ComplexTypeStrategy extends AbstractComplexTypeStrategy
         $appInfoNode->setAttributeNS(
             Wsdl::XML_NS_URI,
             Wsdl::XML_NS . ':' . self::APP_INF_NS,
-            (string) $this->getContext()->getTargetNamespace()
+            $this->getContext()->getTargetNamespace()
         );
 
         $this->_processDefaultValueAnnotation($elementType, $default, $appInfoNode);
         $this->_processElementType($elementType, $documentation, $appInfoNode);
 
-        if ($documentation && preg_match_all('/{([a-z]+):(.+)}/Ui', $documentation, $matches)) {
+        if (preg_match_all('/{([a-z]+):(.+)}/Ui', $documentation, $matches)) {
             $count = count($matches[0]);
             for ($i = 0; $i < $count; $i++) {
                 $appinfoTag = $matches[0][$i];
@@ -238,7 +236,19 @@ class ComplexTypeStrategy extends AbstractComplexTypeStrategy
                 $tagValue = $matches[2][$i];
                 switch ($tagName) {
                     case 'callInfo':
-                        $this->processCallInfo($callInfo, $tagValue);
+                        $callInfoRegExp = '/([a-z].+):(returned|requiredInput):(yes|no|always|conditionally)/i';
+                        if (preg_match($callInfoRegExp, $tagValue)) {
+                            list($callName, $direction, $condition) = explode(':', $tagValue);
+                            $condition = strtolower($condition);
+                            if (preg_match('/allCallsExcept\(([a-zA-Z].+)\)/', $callName, $calls)) {
+                                $callInfo[$direction][$condition] = [
+                                    'allCallsExcept' => $calls[1],
+                                ];
+                            } elseif (!isset($callInfo[$direction][$condition]['allCallsExcept'])) {
+                                $this->_overrideCallInfoName($callInfo, $callName);
+                                $callInfo[$direction][$condition]['calls'][] = $callName;
+                            }
+                        }
                         break;
                     case 'seeLink':
                         $this->_processSeeLink($appInfoNode, $tagValue);
@@ -258,7 +268,7 @@ class ComplexTypeStrategy extends AbstractComplexTypeStrategy
         }
         $this->_processCallInfo($appInfoNode, $callInfo);
         $documentationNode = $this->_getDom()->createElement(Wsdl::XSD_NS . ':documentation');
-        $documentationText = $documentation ? trim($documentation) : '';
+        $documentationText = trim($documentation);
         $documentationNode->appendChild($this->_getDom()->createTextNode($documentationText));
         $annotationNode->appendChild($documentationNode);
         $annotationNode->appendChild($appInfoNode);
@@ -438,29 +448,6 @@ class ComplexTypeStrategy extends AbstractComplexTypeStrategy
                         break;
                     }
                 }
-            }
-        }
-    }
-
-    /**
-     * Process CallInfo data
-     *
-     * @param array $callInfo
-     * @param string $tagValue
-     */
-    private function processCallInfo(array &$callInfo, string $tagValue): void
-    {
-        $callInfoRegExp = '/([a-z].+):(returned|requiredInput):(yes|no|always|conditionally)/i';
-        if (preg_match($callInfoRegExp, $tagValue)) {
-            list($callName, $direction, $condition) = explode(':', $tagValue);
-            $condition = strtolower($condition);
-            if (preg_match('/allCallsExcept\(([a-zA-Z].+)\)/', $callName, $calls)) {
-                $callInfo[$direction][$condition] = [
-                    'allCallsExcept' => $calls[1],
-                ];
-            } elseif (!isset($callInfo[$direction][$condition]['allCallsExcept'])) {
-                $this->_overrideCallInfoName($callInfo, $callName);
-                $callInfo[$direction][$condition]['calls'][] = $callName;
             }
         }
     }

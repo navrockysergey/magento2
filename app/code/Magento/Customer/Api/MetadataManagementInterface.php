@@ -17,6 +17,7 @@ interface MetadataManagementInterface
     /**
      * Check whether attribute is searchable in admin grid and it is allowed
      *
+     * @api
      * @param AttributeMetadataInterface $attribute
      * @return bool
      * @throws \Magento\Framework\Exception\NoSuchEntityException
@@ -26,6 +27,7 @@ interface MetadataManagementInterface
     /**
      * Check whether attribute is filterable in admin grid and it is allowed
      *
+     * @api
      * @param AttributeMetadataInterface $attribute
      * @return bool
      * @throws \Magento\Framework\Exception\NoSuchEntityException

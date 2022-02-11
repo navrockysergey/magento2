@@ -11,9 +11,8 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\DataObject;
 use Magento\Framework\Filesystem;
-use Magento\Framework\Filesystem\Driver\File;
-use Magento\Framework\Filesystem\DriverInterface;
 use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Framework\Filesystem\DriverInterface;
 
 /**
  * Test methods of class Storage
@@ -77,8 +76,7 @@ class StorageTest extends \PHPUnit\Framework\TestCase
         $this->filesystem = $this->objectManager->get(Filesystem::class);
         $this->imagesHelper = $this->objectManager->get(\Magento\Cms\Helper\Wysiwyg\Images::class);
         $this->mediaDirectory = $this->filesystem->getDirectoryWrite(DirectoryList::MEDIA);
-        $this->fullDirectoryPath = rtrim($this->imagesHelper->getStorageRoot(), '/')
-            . '/MagentoCmsModelWysiwygImagesStorageTest';
+        $this->fullDirectoryPath = $this->imagesHelper->getStorageRoot() . '/MagentoCmsModelWysiwygImagesStorageTest';
         $this->mediaDirectory->create($this->mediaDirectory->getRelativePath($this->fullDirectoryPath));
         $config = $this->objectManager->get(ScopeConfigInterface::class);
         $this->origConfigValue = $config->getValue(
@@ -91,7 +89,7 @@ class StorageTest extends \PHPUnit\Framework\TestCase
             array_merge($this->origConfigValue, ['MagentoCmsModelWysiwygImagesStorageTest']),
         );
         $this->storage = $this->objectManager->create(Storage::class);
-        $this->driver = $this->mediaDirectory->getDriver();
+        $this->driver = Bootstrap::getObjectManager()->get(DriverInterface::class);
     }
 
     protected function tearDown(): void
@@ -103,6 +101,7 @@ class StorageTest extends \PHPUnit\Framework\TestCase
             $this->origConfigValue
         );
     }
+
     /**
      * @magentoAppIsolation enabled
      * @return void
@@ -127,7 +126,7 @@ class StorageTest extends \PHPUnit\Framework\TestCase
             $this->assertInstanceOf(DataObject::class, $item);
             $this->assertStringEndsWith('/' . $fileName, $item->getUrl());
             $this->assertEquals(
-                '/media/.thumbsMagentoCmsModelWysiwygImagesStorageTest/magento_image.jpg',
+                '/pub/media/.thumbsMagentoCmsModelWysiwygImagesStorageTest/magento_image.jpg',
                 $thumbUrl,
                 "Check if Thumbnail URL is equal to the generated URL"
             );
@@ -161,7 +160,7 @@ class StorageTest extends \PHPUnit\Framework\TestCase
         $dir = 'MagentoCmsModelWysiwygImagesStorageTest/testDeleteDirectory';
         $fullPath = $path . $dir;
         $this->storage->createDirectory('testDeleteDirectory', $path . '/MagentoCmsModelWysiwygImagesStorageTest');
-        $this->assertTrue($this->mediaDirectory->isExist($fullPath));
+        $this->assertFileExists($fullPath);
         $this->storage->deleteDirectory($fullPath);
         $this->assertFileDoesNotExist($fullPath);
     }
@@ -199,7 +198,7 @@ class StorageTest extends \PHPUnit\Framework\TestCase
         ];
 
         $this->storage->uploadFile($this->fullDirectoryPath);
-        $this->assertTrue($this->mediaDirectory->isExist($this->fullDirectoryPath . DIRECTORY_SEPARATOR . $fileName));
+        $this->assertTrue(is_file($this->fullDirectoryPath . DIRECTORY_SEPARATOR . $fileName));
         // phpcs:enable
     }
 
@@ -313,53 +312,64 @@ class StorageTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * Verify thumbnail generation for diferent sizes
+     * Test that getThumbnailUrl() returns correct URL for root folder or sub-folders images
      *
-     * @param array $sizes
-     * @param bool $resized
-     * @dataProvider getThumbnailsSizes
+     * @param string $directory
+     * @param string $filename
+     * @param array $expectedUrls
+     * @return void
+     * @magentoAppIsolation enabled
+     * @magentoAppArea adminhtml
+     * @dataProvider getThumbnailUrlDataProvider
      */
-    public function testResizeFile(array $sizes, bool $resized): void
+    public function testGetThumbnailUrl(string $directory, string $filename, array $expectedUrls): void
     {
         $root = $this->storage->getCmsWysiwygImages()->getStorageRoot();
-        $path = rtrim($root, '/') . '/testfile.png';
-        $this->generateImage($path, $sizes['width'], $sizes['height']);
+        $directory = implode('/', array_filter([rtrim($root, '/'), trim($directory, '/')]));
+        $path = $directory . '/' . $filename;
+        $this->generateImage($path);
         $this->storage->resizeFile($path);
-
-        $thumbPath = $this->storage->getThumbnailPath($path);
-        list($imageWidth, $imageHeight) = getimagesizefromstring($this->driver->fileGetContents($thumbPath));
-
-        $this->assertEquals(
-            $resized ? $this->storage->getResizeWidth() : $sizes['width'],
-            $imageWidth
-        );
-        $this->assertLessThanOrEqual(
-            $resized ? $this->storage->getResizeHeight() : $sizes['height'],
-            $imageHeight
-        );
-
-        $this->driver->deleteFile($path);
+        $collection = $this->storage->getFilesCollection($directory, 'image');
+        $paths = [];
+        foreach ($collection as $item) {
+            $paths[] = parse_url($item->getThumbUrl(), PHP_URL_PATH);
+        }
+        $this->assertEquals($expectedUrls, $paths);
+        $this->mediaDirectory->delete($path);
     }
 
     /**
-     * Provide sizes for resizeFile test
+     * Provide scenarios for testing getThumbnailUrl()
+     *
+     * @return array
      */
-    public function getThumbnailsSizes(): array
+    public function getThumbnailUrlDataProvider(): array
     {
         return [
             [
-                [
-                    'width' => 1024,
-                    'height' => 768,
-                ],
-                true
+                '/',
+                'image1.png',
+                []
             ],
             [
-                [
-                    'width' => 20,
-                    'height' => 20,
-                ],
-                false
+                '/cms',
+                'image2.png',
+                []
+            ],
+            [
+                '/cms/pages',
+                'image3.png',
+                []
+            ],
+            [
+                '/MagentoCmsModelWysiwygImagesStorageTest',
+                'image2.png',
+                ['/pub/media/.thumbsMagentoCmsModelWysiwygImagesStorageTest/image2.png']
+            ],
+            [
+                '/MagentoCmsModelWysiwygImagesStorageTest/pages',
+                'image3.png',
+                ['/pub/media/.thumbsMagentoCmsModelWysiwygImagesStorageTest/pages/image3.png']
             ]
         ];
     }
@@ -374,21 +384,23 @@ class StorageTest extends \PHPUnit\Framework\TestCase
      */
     private function generateImage(string $path, int $width = 1024, int $height = 768)
     {
-        $this->mediaDirectory->create(dirname($this->mediaDirectory->getRelativePath($path)));
-
-        $extension = pathinfo($path, PATHINFO_EXTENSION);
+        $dir = dirname($path);
+        if (!file_exists($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        $file = fopen($path, 'wb');
+        $filename = basename($path);
         ob_start();
         $image = imagecreatetruecolor($width, $height);
-        switch ($extension) {
-            case 'jpeg':
+        switch (substr($filename, strrpos($filename, '.'))) {
+            case '.jpeg':
                 imagejpeg($image);
                 break;
-            case 'png':
+            case '.png':
                 imagepng($image);
                 break;
         }
-        $this->driver->filePutContents($path, ob_get_clean());
-
+        fwrite($file, ob_get_clean());
         return $path;
     }
 }

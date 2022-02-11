@@ -3,58 +3,41 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Sales\Test\Unit\Block\Adminhtml\Items;
 
-use Magento\Backend\Block\Template\Context;
-use Magento\CatalogInventory\Model\Configuration;
-use Magento\CatalogInventory\Model\Stock\Item;
-use Magento\CatalogInventory\Model\StockRegistry;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManagerHelper;
-use Magento\Framework\View\Layout;
-use Magento\Sales\Block\Adminhtml\Items\AbstractItems;
-use Magento\Sales\Block\Adminhtml\Order\View\Items\Renderer\DefaultRenderer;
-use Magento\Store\Model\Store;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
 /**
+ * Class AbstractItemsTest
+ * @package Magento\Sales\Block\Adminhtml\Items
  * TODO refactor me PLEASE
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class AbstractItemsTest extends TestCase
+class AbstractItemsTest extends \PHPUnit\Framework\TestCase
 {
-    /**
-     * @var ObjectManagerHelper
-     */
+    /** @var ObjectManagerHelper */
     protected $objectManagerHelper;
 
-    /**
-     * @var MockObject
-     */
+    /** @var \PHPUnit\Framework\MockObject\MockObject */
     protected $stockItemMock;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $stockRegistry;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
         $this->objectManagerHelper = new ObjectManagerHelper($this);
-        $this->stockRegistry = $this->getMockBuilder(StockRegistry::class)
+        $this->stockRegistry = $this->getMockBuilder(\Magento\CatalogInventory\Model\StockRegistry::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['getStockItem'])
+            ->setMethods(['getStockItem', '__wakeup'])
             ->getMock();
 
         $this->stockItemMock = $this->createPartialMock(
-            Item::class,
-            ['getManageStock']
+            \Magento\CatalogInventory\Model\Stock\Item::class,
+            ['getManageStock', '__wakeup']
         );
 
         $this->stockRegistry->expects($this->any())
@@ -62,13 +45,10 @@ class AbstractItemsTest extends TestCase
             ->willReturn($this->stockItemMock);
     }
 
-    /**
-     * @return void
-     */
-    public function testGetItemRenderer(): void
+    public function testGetItemRenderer()
     {
         $layout = $this->createPartialMock(
-            Layout::class,
+            \Magento\Framework\View\Layout::class,
             ['getChildName', 'getBlock', 'getGroupChildNames']
         );
         $layout->expects($this->any())
@@ -80,9 +60,9 @@ class AbstractItemsTest extends TestCase
             ->with(null, 'column')
             ->willReturn(['column_block-name']);
 
-        /** @var DefaultRenderer $renderer */
+        /** @var \Magento\Sales\Block\Adminhtml\Order\View\Items\Renderer\DefaultRenderer $renderer */
         $renderer = $this->objectManagerHelper
-            ->getObject(DefaultRenderer::class);
+            ->getObject(\Magento\Sales\Block\Adminhtml\Order\View\Items\Renderer\DefaultRenderer::class);
         $renderer->setLayout($layout);
 
         $layout->expects($this->any())
@@ -90,8 +70,8 @@ class AbstractItemsTest extends TestCase
             ->with('column_block-name')
             ->willReturn($renderer);
 
-        /** @var AbstractItems $block */
-        $block = $this->objectManagerHelper->getObject(AbstractItems::class);
+        /** @var \Magento\Sales\Block\Adminhtml\Items\AbstractItems $block */
+        $block = $this->objectManagerHelper->getObject(\Magento\Sales\Block\Adminhtml\Items\AbstractItems::class);
         $block->setLayout($layout);
 
         $this->assertSame($renderer, $block->getItemRenderer('some-type'));
@@ -99,30 +79,32 @@ class AbstractItemsTest extends TestCase
     }
 
     /**
-     * @return void
      */
-    public function testGetItemRendererThrowsExceptionForNonexistentRenderer(): void
+    public function testGetItemRendererThrowsExceptionForNonexistentRenderer()
     {
-        $this->expectException('RuntimeException');
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Renderer for type "some-type" does not exist.');
+
         $renderer = $this->createMock(\stdClass::class);
         $layout = $this->createPartialMock(
-            Layout::class,
-            ['getChildName', 'getBlock']
+            \Magento\Framework\View\Layout::class,
+            ['getChildName', 'getBlock', '__wakeup']
         );
-        $layout->method('getChildName')
+        $layout->expects($this->at(0))
+            ->method('getChildName')
             ->with(null, 'some-type')
             ->willReturn('some-block-name');
-        $layout->method('getBlock')
+        $layout->expects($this->at(1))
+            ->method('getBlock')
             ->with('some-block-name')
             ->willReturn($renderer);
 
-        /** @var \Magento\Sales\Block\Adminhtml\Items\AbstractItems $block */
+        /** @var $block \Magento\Sales\Block\Adminhtml\Items\AbstractItems */
         $block = $this->objectManagerHelper->getObject(
-            AbstractItems::class,
+            \Magento\Sales\Block\Adminhtml\Items\AbstractItems::class,
             [
                 'context' => $this->objectManagerHelper->getObject(
-                    Context::class,
+                    \Magento\Backend\Block\Template\Context::class,
                     ['layout' => $layout]
                 )
             ]
@@ -135,20 +117,16 @@ class AbstractItemsTest extends TestCase
      * @param bool $canReturnToStock
      * @param array $itemConfig
      * @param bool $result
-     *
-     * @return void
      * @dataProvider canReturnItemToStockDataProvider
      */
-    public function testCanReturnItemToStock(bool $canReturnToStock, array $itemConfig, bool $result): void
+    public function testCanReturnItemToStock($canReturnToStock, $itemConfig, $result)
     {
-        $productId = $itemConfig['product_id'] ?? null;
-        $manageStock = $itemConfig['manage_stock'] ?? false;
-        $item = $this->getMockBuilder(\Magento\Sales\Model\Order\Creditmemo\Item::class)->addMethods(
-            ['hasCanReturnToStock', 'setCanReturnToStock', 'getCanReturnToStock']
-        )
-            ->onlyMethods(['getOrderItem'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        $productId = isset($itemConfig['product_id']) ? $itemConfig['product_id'] : null;
+        $manageStock = isset($itemConfig['manage_stock']) ? $itemConfig['manage_stock'] : null;
+        $item = $this->createPartialMock(
+            \Magento\Sales\Model\Order\Creditmemo\Item::class,
+            ['hasCanReturnToStock', 'getOrderItem', 'setCanReturnToStock', 'getCanReturnToStock', '__wakeup']
+        );
         $dependencies = $this->prepareServiceMockDependency(
             $item,
             $canReturnToStock,
@@ -157,29 +135,24 @@ class AbstractItemsTest extends TestCase
             $itemConfig
         );
 
-        /** @var \Magento\Sales\Block\Adminhtml\Items\AbstractItems $block */
+        /** @var $block \Magento\Sales\Block\Adminhtml\Items\AbstractItems */
         $block = $this->objectManagerHelper->getObject(
-            AbstractItems::class,
+            \Magento\Sales\Block\Adminhtml\Items\AbstractItems::class,
             $dependencies
         );
         $this->assertSame($result, $block->canReturnItemToStock($item));
     }
 
     /**
-     * @param MockObject $item
+     * @param \PHPUnit\Framework\MockObject\MockObject $item
      * @param bool $canReturnToStock
      * @param int|null $productId
      * @param bool $manageStock
      * @param array $itemConfig
      * @return array
      */
-    protected function prepareServiceMockDependency(
-        MockObject $item,
-        bool $canReturnToStock,
-        ?int $productId,
-        bool $manageStock,
-        array $itemConfig
-    ): array {
+    protected function prepareServiceMockDependency($item, $canReturnToStock, $productId, $manageStock, $itemConfig)
+    {
         $dependencies = [];
 
         $this->stockItemMock->expects($this->any())
@@ -193,10 +166,10 @@ class AbstractItemsTest extends TestCase
         if (!$itemConfig['has_can_return_to_stock']) {
             $orderItem = $this->createPartialMock(
                 \Magento\Sales\Model\Order\Item::class,
-                ['getProductId', 'getStore']
+                ['getProductId', '__wakeup', 'getStore']
             );
 
-            $store = $this->createPartialMock(Store::class, ['getWebsiteId']);
+            $store = $this->createPartialMock(\Magento\Store\Model\Store::class, ['getWebsiteId']);
             $store->expects($this->once())
                 ->method('getWebsiteId')
                 ->willReturn(10);
@@ -217,7 +190,8 @@ class AbstractItemsTest extends TestCase
             }
             $item->expects($this->once())
                 ->method('setCanReturnToStock')
-                ->with($canReturn)->willReturnSelf();
+                ->with($this->equalTo($canReturn))
+                ->willReturnSelf();
         }
         $item->expects($this->once())
             ->method('getCanReturnToStock')
@@ -226,22 +200,19 @@ class AbstractItemsTest extends TestCase
         return $dependencies;
     }
 
-    /**
-     * @return void
-     */
-    public function testCanReturnItemToStockEmpty(): void
+    public function testCanReturnItemToStockEmpty()
     {
-        $stockConfiguration = $this->getMockBuilder(Configuration::class)
+        $stockConfiguration = $this->getMockBuilder(\Magento\CatalogInventory\Model\Configuration::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['canSubtractQty'])
+            ->setMethods(['canSubtractQty', '__wakeup'])
             ->getMock();
         $stockConfiguration->expects($this->once())
             ->method('canSubtractQty')
             ->willReturn(true);
 
-        /** @var \Magento\Sales\Block\Adminhtml\Items\AbstractItems $block */
+        /** @var $block \Magento\Sales\Block\Adminhtml\Items\AbstractItems */
         $block = $this->objectManagerHelper->getObject(
-            AbstractItems::class,
+            \Magento\Sales\Block\Adminhtml\Items\AbstractItems::class,
             [
                 'stockConfiguration' => $stockConfiguration
             ]
@@ -253,13 +224,13 @@ class AbstractItemsTest extends TestCase
     /**
      * @return array
      */
-    public function canReturnItemToStockDataProvider(): array
+    public function canReturnItemToStockDataProvider()
     {
         return [
             [true, ['has_can_return_to_stock' => true], true],
             [false, ['has_can_return_to_stock' => true], false],
             [false, ['has_can_return_to_stock' => false, 'product_id' => 2, 'manage_stock' => false], false],
-            [true, ['has_can_return_to_stock' => false, 'product_id' => 2, 'manage_stock' => true], true]
+            [true, ['has_can_return_to_stock' => false, 'product_id' => 2, 'manage_stock' => true], true],
         ];
     }
 }

@@ -12,42 +12,40 @@ use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\DB\Ddl\Table;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
 /**
  * Test for Magento\CatalogRule\Model\Indexer\IndexerTableSwapper class.
  */
-class IndexerTableSwapperTest extends TestCase
+class IndexerTableSwapperTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var ResourceConnection|MockObject
+     * @var ResourceConnection|PHPUnit\Framework\MockObject\MockObject
      */
     private $resourceConnectionMock;
 
     /**
-     * @var AdapterInterface|MockObject
+     * @var AdapterInterface|PHPUnit\Framework\MockObject\MockObject
      */
     private $adapterInterfaceMock;
 
     /**
-     * @var \Zend_Db_Statement_Interface|MockObject
+     * @var \Zend_Db_Statement_Interface|PHPUnit\Framework\MockObject\MockObject
      */
     private $statementInterfaceMock;
 
     /**
-     * @var Table|MockObject
+     * @var Table|PHPUnit\Framework\MockObject\MockObject
      */
     private $tableMock;
 
     /**
-     * @inheritDoc
+     * @inheritdoc
      */
     protected function setUp(): void
     {
         $this->resourceConnectionMock = $this->createMock(ResourceConnection::class);
 
-        $this->adapterInterfaceMock = $this->getMockBuilder(AdapterInterface::class)
-            ->getMockForAbstractClass();
+        $this->adapterInterfaceMock = $this->getMockBuilder(AdapterInterface::class)->getMockForAbstractClass();
         /** @var \Zend_Db_Statement_Interface $statementInterfaceMock */
         $this->statementInterfaceMock = $this->getMockBuilder(\Zend_Db_Statement_Interface::class)
             ->getMockForAbstractClass();
@@ -89,10 +87,14 @@ class IndexerTableSwapperTest extends TestCase
         $temporaryTableName = 'catalogrule_product__temp9604';
         $this->setObjectProperty($model, 'temporaryTables', []);
 
-        $this->resourceConnectionMock
+        $this->resourceConnectionMock->expects($this->at(0))
             ->method('getTableName')
-            ->withConsecutive([$originalTableName], [$this->stringStartsWith($originalTableName . '__temp')])
-            ->willReturnOnConsecutiveCalls($originalTableName, $temporaryTableName);
+            ->with($originalTableName)
+            ->willReturn($originalTableName);
+        $this->resourceConnectionMock->expects($this->at(1))
+            ->method('getTableName')
+            ->with($this->stringStartsWith($originalTableName . '__temp'))
+            ->willReturn($temporaryTableName);
 
         $this->assertEquals(
             $temporaryTableName,
@@ -123,7 +125,7 @@ class IndexerTableSwapperTest extends TestCase
     public function testSwapIndexTables(): void
     {
         $model = $this->getMockBuilder(IndexerTableSwapper::class)
-            ->onlyMethods(['getWorkingTableName'])
+            ->setMethods(['getWorkingTableName'])
             ->setConstructorArgs([$this->resourceConnectionMock])
             ->getMock();
         $originalTableName = 'catalogrule_product';
@@ -132,18 +134,22 @@ class IndexerTableSwapperTest extends TestCase
         $toRename = [
             [
                 'oldName' => $originalTableName,
-                'newName' => $temporaryOriginalTableName
+                'newName' => $temporaryOriginalTableName,
             ],
             [
                 'oldName' => $temporaryTableName,
-                'newName' => $originalTableName
-            ]
+                'newName' => $originalTableName,
+            ],
         ];
 
-        $this->resourceConnectionMock
+        $this->resourceConnectionMock->expects($this->at(0))
             ->method('getTableName')
-            ->withConsecutive([$originalTableName], [$this->stringStartsWith($originalTableName)])
-            ->willReturnOnConsecutiveCalls($originalTableName, $temporaryOriginalTableName);
+            ->with($originalTableName)
+            ->willReturn($originalTableName);
+        $this->resourceConnectionMock->expects($this->at(1))
+            ->method('getTableName')
+            ->with($this->stringStartsWith($originalTableName))
+            ->willReturn($temporaryOriginalTableName);
         $model->expects($this->once())
             ->method('getWorkingTableName')
             ->with($originalTableName)

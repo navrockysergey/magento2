@@ -15,18 +15,17 @@ use Magento\Framework\App\Area;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\NotFoundException;
 use Magento\Framework\Filesystem;
-use Magento\Framework\Filesystem\Directory\WriteInterface;
 use Magento\Framework\Image;
 use Magento\Framework\Image\Factory as ImageFactory;
 use Magento\Catalog\Model\Product\Media\ConfigInterface as MediaConfig;
 use Magento\Framework\App\State;
 use Magento\Framework\View\ConfigInterface as ViewConfig;
-use Magento\Catalog\Model\ResourceModel\Product\Image as ProductImage;
+use \Magento\Catalog\Model\ResourceModel\Product\Image as ProductImage;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Theme\Model\Config\Customization as ThemeCustomizationConfig;
-use Magento\Theme\Model\ResourceModel\Theme\Collection as ThemeCollection;
+use Magento\Theme\Model\ResourceModel\Theme\Collection;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\MediaStorage\Helper\File\Storage\Database as FileStorageDatabase;
+use Magento\MediaStorage\Helper\File\Storage\Database;
 use Magento\Theme\Model\Theme;
 
 /**
@@ -77,20 +76,24 @@ class ImageResize
     private $themeCustomizationConfig;
 
     /**
-     * @var ThemeCollection
+     * @var Collection
      */
     private $themeCollection;
 
     /**
-     * @var WriteInterface
+     * @var Filesystem
      */
     private $mediaDirectory;
 
     /**
-     * @var FileStorageDatabase
+     * @var Filesystem
+     */
+    private $filesystem;
+
+    /**
+     * @var Database
      */
     private $fileStorageDatabase;
-
     /**
      * @var StoreManagerInterface
      */
@@ -105,9 +108,9 @@ class ImageResize
      * @param ViewConfig $viewConfig
      * @param AssertImageFactory $assertImageFactory
      * @param ThemeCustomizationConfig $themeCustomizationConfig
-     * @param ThemeCollection $themeCollection
+     * @param Collection $themeCollection
      * @param Filesystem $filesystem
-     * @param FileStorageDatabase $fileStorageDatabase
+     * @param Database $fileStorageDatabase
      * @param StoreManagerInterface $storeManager
      * @throws \Magento\Framework\Exception\FileSystemException
      * @internal param ProductImage $gallery
@@ -122,9 +125,9 @@ class ImageResize
         ViewConfig $viewConfig,
         AssertImageFactory $assertImageFactory,
         ThemeCustomizationConfig $themeCustomizationConfig,
-        ThemeCollection $themeCollection,
+        Collection $themeCollection,
         Filesystem $filesystem,
-        FileStorageDatabase $fileStorageDatabase = null,
+        Database $fileStorageDatabase = null,
         StoreManagerInterface $storeManager = null
     ) {
         $this->appState = $appState;
@@ -137,8 +140,9 @@ class ImageResize
         $this->themeCustomizationConfig = $themeCustomizationConfig;
         $this->themeCollection = $themeCollection;
         $this->mediaDirectory = $filesystem->getDirectoryWrite(DirectoryList::MEDIA);
+        $this->filesystem = $filesystem;
         $this->fileStorageDatabase = $fileStorageDatabase ?:
-            ObjectManager::getInstance()->get(FileStorageDatabase::class);
+            ObjectManager::getInstance()->get(Database::class);
         $this->storeManager = $storeManager ?? ObjectManager::getInstance()->get(StoreManagerInterface::class);
     }
 
@@ -171,18 +175,17 @@ class ImageResize
      * Create resized images of different sizes from themes.
      *
      * @param array|null $themes
-     * @param bool $skipHiddenImages
      * @return Generator
      * @throws NotFoundException
      */
-    public function resizeFromThemes(array $themes = null, bool $skipHiddenImages = false): Generator
+    public function resizeFromThemes(array $themes = null): Generator
     {
-        $count = $this->getCountProductImages($skipHiddenImages);
+        $count = $this->productImage->getCountUsedProductImages();
         if (!$count) {
             throw new NotFoundException(__('Cannot resize images - product images not found'));
         }
 
-        $productImages = $this->getProductImages($skipHiddenImages);
+        $productImages = $this->productImage->getUsedProductImages();
         $viewImages = $this->getViewImages($themes ?? $this->getThemesInUse());
 
         foreach ($productImages as $image) {
@@ -196,39 +199,15 @@ class ImageResize
                 $this->fileStorageDatabase->saveFileToFilesystem($mediastoragefilename);
             }
             if ($this->mediaDirectory->isFile($originalImagePath)) {
-                try {
-                    foreach ($viewImages as $viewImage) {
-                        $this->resize($viewImage, $originalImagePath, $originalImageName);
-                    }
-                } catch (\Exception $e) {
-                    $error = $e->getMessage();
+                foreach ($viewImages as $viewImage) {
+                    $this->resize($viewImage, $originalImagePath, $originalImageName);
                 }
             } else {
                 $error = __('Cannot resize image "%1" - original image not found', $originalImagePath);
             }
 
-            yield ['filename' => $originalImageName, 'error' => (string) $error] => $count;
+            yield ['filename' => $originalImageName, 'error' => $error] => $count;
         }
-    }
-
-    /**
-     * @param bool $skipHiddenImages
-     * @return int
-     */
-    public function getCountProductImages(bool $skipHiddenImages = false): int
-    {
-        return $skipHiddenImages ?
-            $this->productImage->getCountUsedProductImages() : $this->productImage->getCountAllProductImages();
-    }
-
-    /**
-     * @param bool $skipHiddenImages
-     * @return Generator
-     */
-    public function getProductImages(bool $skipHiddenImages = false): \Generator
-    {
-        return $skipHiddenImages ?
-            $this->productImage->getUsedProductImages() : $this->productImage->getAllProductImages();
     }
 
     /**
@@ -301,7 +280,6 @@ class ImageResize
      * @param string $originalImagePath
      * @param array $imageParams
      * @return Image
-     * @throws \InvalidArgumentException
      */
     private function makeImage(string $originalImagePath, array $imageParams): Image
     {
@@ -316,7 +294,7 @@ class ImageResize
     }
 
     /**
-     * Resize image if not already resized before
+     * Resize image.
      *
      * @param array $imageParams
      * @param string $originalImagePath
@@ -325,48 +303,13 @@ class ImageResize
     private function resize(array $imageParams, string $originalImagePath, string $originalImageName)
     {
         unset($imageParams['id']);
+        $image = $this->makeImage($originalImagePath, $imageParams);
         $imageAsset = $this->assertImageFactory->create(
             [
                 'miscParams' => $imageParams,
                 'filePath' => $originalImageName,
             ]
         );
-        $imageAssetPath = $imageAsset->getPath();
-        $usingDbAsStorage = $this->fileStorageDatabase->checkDbUsage();
-        $mediaStorageFilename = $this->mediaDirectory->getRelativePath($imageAssetPath);
-
-        $alreadyResized = $usingDbAsStorage ?
-            $this->fileStorageDatabase->fileExists($mediaStorageFilename) :
-            $this->mediaDirectory->isFile($imageAssetPath);
-
-        if (!$alreadyResized) {
-            $this->generateResizedImage(
-                $imageParams,
-                $originalImagePath,
-                $imageAssetPath,
-                $usingDbAsStorage,
-                $mediaStorageFilename
-            );
-        }
-    }
-
-    /**
-     * Generate resized image
-     *
-     * @param array $imageParams
-     * @param string $originalImagePath
-     * @param string $imageAssetPath
-     * @param bool $usingDbAsStorage
-     * @param string $mediaStorageFilename
-     */
-    private function generateResizedImage(
-        array $imageParams,
-        string $originalImagePath,
-        string $imageAssetPath,
-        bool $usingDbAsStorage,
-        string $mediaStorageFilename
-    ) {
-        $image = $this->makeImage($originalImagePath, $imageParams);
 
         if ($imageParams['image_width'] !== null && $imageParams['image_height'] !== null) {
             $image->resize($imageParams['image_width'], $imageParams['image_height']);
@@ -392,10 +335,11 @@ class ImageResize
             $image->watermark($this->getWatermarkFilePath($imageParams['watermark_file']));
         }
 
-        $image->save($imageAssetPath);
+        $image->save($imageAsset->getPath());
 
-        if ($usingDbAsStorage) {
-            $this->fileStorageDatabase->saveFile($mediaStorageFilename);
+        if ($this->fileStorageDatabase->checkDbUsage()) {
+            $mediastoragefilename = $this->mediaDirectory->getRelativePath($imageAsset->getPath());
+            $this->fileStorageDatabase->saveFile($mediastoragefilename);
         }
     }
 

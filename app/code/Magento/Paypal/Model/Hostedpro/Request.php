@@ -25,14 +25,14 @@ class Request extends DataObject
     /**
      * Request's order model
      *
-     * @var Order
+     * @var \Magento\Sales\Model\Order
      */
     protected $order;
 
     /**
      * Request's Hosted Pro payment method model
      *
-     * @var Hostedpro
+     * @var \Magento\Paypal\Model\Hostedpro
      */
     protected $paymentMethod;
 
@@ -51,24 +51,30 @@ class Request extends DataObject
     protected $notButtonVars = ['METHOD', 'BUTTONCODE', 'BUTTONTYPE'];
 
     /**
-     * @var Address
+     * Customer address
+     *
+     * @var \Magento\Customer\Helper\Address
      */
     protected $customerAddress = null;
 
     /**
-     * @var Data
+     * Tax data
+     *
+     * @var \Magento\Tax\Helper\Data
      */
     protected $taxData;
 
     /**
-     * @var Resolver
+     * Locale Resolver
+     *
+     * @var \Magento\Framework\Locale\Resolver
      */
     protected $localeResolver;
 
     /**
-     * @param Resolver $localeResolver
-     * @param Address $customerAddress
-     * @param Data $taxData
+     * @param \Magento\Framework\Locale\Resolver $localeResolver
+     * @param \Magento\Customer\Helper\Address $customerAddress
+     * @param \Magento\Tax\Helper\Data $taxData
      * @param array $data
      */
     public function __construct(
@@ -112,7 +118,7 @@ class Request extends DataObject
     /**
      * Append payment data to request
      *
-     * @param Hostedpro $paymentMethod
+     * @param \Magento\Paypal\Model\Hostedpro $paymentMethod
      * @return $this
      */
     public function setPaymentMethod($paymentMethod)
@@ -127,7 +133,7 @@ class Request extends DataObject
     /**
      * Append order data to request
      *
-     * @param Order $order
+     * @param \Magento\Sales\Model\Order $order
      * @return $this
      */
     public function setOrder(Order $order)
@@ -143,7 +149,7 @@ class Request extends DataObject
      * Add amount data to request
      *
      * @access public
-     * @param Order $order
+     * @param \Magento\Sales\Model\Order $order
      * @return $this
      */
     public function setAmount(Order $order)
@@ -154,8 +160,7 @@ class Request extends DataObject
 
     /**
      * Calculate amount for order
-     *
-     * @param Order $order
+     * @param \Magento\Sales\Model\Order $order
      * @return array
      * @throws \Exception
      */
@@ -171,8 +176,7 @@ class Request extends DataObject
 
     /**
      * Get payment amount data with excluded tax
-     *
-     * @param Order $order
+     * @param \Magento\Sales\Model\Order $order
      * @return array
      */
     private function getNonTaxableAmount(Order $order)
@@ -185,14 +189,13 @@ class Request extends DataObject
             'total' => $this->formatPrice($order->getPayment()->getBaseAmountAuthorized()),
             'tax' => $this->formatPrice($order->getBaseTaxAmount()),
             'shipping' => $this->formatPrice($order->getBaseShippingAmount()),
-            'discount' => $this->formatPrice(abs((float) $order->getBaseDiscountAmount()))
+            'discount' => $this->formatPrice(abs($order->getBaseDiscountAmount()))
         ];
     }
 
     /**
      * Get order amount data with included tax
-     *
-     * @param Order $order
+     * @param \Magento\Sales\Model\Order $order
      * @return array
      */
     private function getTaxableAmount(Order $order)
@@ -208,7 +211,7 @@ class Request extends DataObject
     /**
      * Get payment request data as array
      *
-     * @param Hostedpro $paymentMethod
+     * @param \Magento\Paypal\Model\Hostedpro $paymentMethod
      * @return array
      */
     protected function getPaymentData(Hostedpro $paymentMethod)
@@ -235,7 +238,7 @@ class Request extends DataObject
     /**
      * Get order request data as array
      *
-     * @param Order $order
+     * @param \Magento\Sales\Model\Order $order
      * @return array
      */
     protected function getOrderData(Order $order)

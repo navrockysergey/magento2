@@ -3,57 +3,40 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Config\Test\Unit\Model\Config\Structure\Element;
 
-use Magento\Config\Model\Config\Structure\Element\Field;
-use Magento\Config\Model\Config\Structure\Element\Group;
-use Magento\Config\Model\Config\Structure\Element\Iterator;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-
-class IteratorTest extends TestCase
+class IteratorTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var Iterator
+     * @var \Magento\Config\Model\Config\Structure\Element\Iterator
      */
     protected $_model;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $_flyweightMock;
 
-    /**
-     * @inheritdoc
-     */
     protected function setUp(): void
     {
         $elementData = ['group1' => ['id' => 1], 'group2' => ['id' => 2], 'group3' => ['id' => 3]];
-        $this->_flyweightMock = $this->createMock(Group::class);
+        $this->_flyweightMock = $this->createMock(\Magento\Config\Model\Config\Structure\Element\Group::class);
 
-        $this->_model = new Iterator($this->_flyweightMock);
+        $this->_model = new \Magento\Config\Model\Config\Structure\Element\Iterator($this->_flyweightMock);
         $this->_model->setElements($elementData, 'scope');
     }
 
-    /**
-     * @inheritdoc
-     */
     protected function tearDown(): void
     {
         unset($this->_model);
         unset($this->_flyweightMock);
     }
 
-    /**
-     * @return void
-     */
-    public function testIteratorInitializesFlyweight(): void
+    public function testIteratorInitializesFlyweight()
     {
-        $this->_flyweightMock
-            ->method('setData')
-            ->withConsecutive([['id' => 1], 'scope'], [['id' => 2], 'scope'], [['id' => 3], 'scope']);
+        $this->_flyweightMock->expects($this->at(0))->method('setData')->with(['id' => 1], 'scope');
+        $this->_flyweightMock->expects($this->at(2))->method('setData')->with(['id' => 2], 'scope');
+        $this->_flyweightMock->expects($this->at(4))->method('setData')->with(['id' => 3], 'scope');
         $this->_flyweightMock->expects($this->any())->method('isVisible')->willReturn(true);
         $counter = 0;
         foreach ($this->_model as $item) {
@@ -63,7 +46,7 @@ class IteratorTest extends TestCase
         $this->assertEquals(3, $counter);
     }
 
-    public function testIteratorSkipsNonValidElements(): void
+    public function testIteratorSkipsNonValidElements()
     {
         $this->_flyweightMock->expects($this->exactly(3))->method('isVisible')->willReturn(false);
         $this->_flyweightMock->expects($this->exactly(3))->method('setData');
@@ -78,9 +61,9 @@ class IteratorTest extends TestCase
      * @param bool $result
      * @dataProvider isLastDataProvider
      */
-    public function testIsLast($elementId, $result): void
+    public function testIsLast($elementId, $result)
     {
-        $elementMock = $this->createMock(Field::class);
+        $elementMock = $this->createMock(\Magento\Config\Model\Config\Structure\Element\Field::class);
         $elementMock->expects($this->once())->method('getId')->willReturn($elementId);
         $this->assertEquals($result, $this->_model->isLast($elementMock));
     }
@@ -88,7 +71,7 @@ class IteratorTest extends TestCase
     /**
      * @return array
      */
-    public function isLastDataProvider(): array
+    public function isLastDataProvider()
     {
         return [[1, false], [2, false], [3, true]];
     }

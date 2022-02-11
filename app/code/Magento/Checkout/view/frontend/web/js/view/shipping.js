@@ -60,10 +60,7 @@ define([
             template: 'Magento_Checkout/shipping',
             shippingFormTemplate: 'Magento_Checkout/shipping-address/form',
             shippingMethodListTemplate: 'Magento_Checkout/shipping-address/shipping-method-list',
-            shippingMethodItemTemplate: 'Magento_Checkout/shipping-address/shipping-method-item',
-            imports: {
-                countryOptions: '${ $.parentName }.shippingAddress.shipping-address-fieldset.country_id:indexedOptions'
-            }
+            shippingMethodItemTemplate: 'Magento_Checkout/shipping-address/shipping-method-item'
         },
         visible: ko.observable(!quote.isVirtual()),
         errorValidationMessage: ko.observable(false),
@@ -120,38 +117,8 @@ define([
                         $.extend(true, {}, checkoutProvider.get('shippingAddress'), shippingAddressData)
                     );
                 }
-                checkoutProvider.on('shippingAddress', function (shippingAddrsData, changes) {
-                    var isStreetAddressDeleted, isStreetAddressNotEmpty;
-
-                    /**
-                     * In last modifying operation street address was deleted.
-                     * @return {Boolean}
-                     */
-                    isStreetAddressDeleted = function () {
-                        var change;
-
-                        if (!changes || changes.length === 0) {
-                            return false;
-                        }
-
-                        change = changes.pop();
-
-                        if (_.isUndefined(change.value) || _.isUndefined(change.oldValue)) {
-                            return false;
-                        }
-
-                        if (!change.path.startsWith('shippingAddress.street')) {
-                            return false;
-                        }
-
-                        return change.value.length === 0 && change.oldValue.length > 0;
-                    };
-
-                    isStreetAddressNotEmpty = shippingAddrsData.street && !_.isEmpty(shippingAddrsData.street[0]);
-
-                    if (isStreetAddressNotEmpty || isStreetAddressDeleted()) {
-                        checkoutData.setShippingAddressFromData(shippingAddrsData);
-                    }
+                checkoutProvider.on('shippingAddress', function (shippingAddrsData) {
+                    checkoutData.setShippingAddressFromData(shippingAddrsData);
                 });
                 shippingRatesValidator.initFields(fieldsetName);
             });
@@ -309,7 +276,9 @@ define([
                 loginFormSelector = 'form[data-role=email-with-possible-login]',
                 emailValidationResult = customer.isLoggedIn(),
                 field,
-                option = _.isObject(this.countryOptions) && this.countryOptions[quote.shippingAddress().countryId],
+                country = registry.get(this.parentName + '.shippingAddress.shipping-address-fieldset.country_id'),
+                countryIndexedOptions = country.indexedOptions,
+                option = countryIndexedOptions[quote.shippingAddress().countryId],
                 messageContainer = registry.get('checkout.errors').messageContainer;
 
             if (!quote.shippingMethod()) {
@@ -328,12 +297,6 @@ define([
             if (this.isFormInline) {
                 this.source.set('params.invalid', false);
                 this.triggerShippingDataValidateEvent();
-
-                if (!quote.shippingMethod()['method_code']) {
-                    this.errorValidationMessage(
-                        $t('The shipping method is missing. Select the shipping method and try again.')
-                    );
-                }
 
                 if (emailValidationResult &&
                     this.source.get('params.invalid') ||
@@ -382,7 +345,7 @@ define([
             }
 
             if (!emailValidationResult) {
-                $(loginFormSelector + ' input[name=username]').trigger('focus');
+                $(loginFormSelector + ' input[name=username]').focus();
 
                 return false;
             }

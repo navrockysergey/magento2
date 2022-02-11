@@ -224,15 +224,7 @@ class ShippingMethodManagement implements
             $this->quoteAddressResource->delete($shippingAddress);
             throw new StateException(__('The shipping address is missing. Set the address and try again.'));
         }
-        $shippingMethod = $carrierCode . '_' . $methodCode;
-        $shippingAddress->setShippingMethod($shippingMethod);
-        $shippingAssignments = $quote->getExtensionAttributes()->getShippingAssignments();
-        if (!empty($shippingAssignments)) {
-            $shippingAssignment = $shippingAssignments[0];
-            $shipping = $shippingAssignment->getShipping();
-            $shipping->setMethod($shippingMethod);
-            $shippingAssignment->setShipping($shipping);
-        }
+        $shippingAddress->setShippingMethod($carrierCode . '_' . $methodCode);
     }
 
     /**
@@ -349,7 +341,7 @@ class ShippingMethodManagement implements
     /**
      * Get transform address interface into Array
      *
-     * @param ExtensibleDataInterface $address
+     * @param ExtensibleDataInterface  $address
      * @return array
      */
     private function extractAddressData($address)
@@ -360,7 +352,6 @@ class ShippingMethodManagement implements
         } elseif ($address instanceof EstimateAddressInterface) {
             $className = EstimateAddressInterface::class;
         }
-
         $addressData = $this->getDataObjectProcessor()->buildOutputDataArray(
             $address,
             $className

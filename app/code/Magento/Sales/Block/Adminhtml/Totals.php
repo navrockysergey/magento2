@@ -13,7 +13,7 @@ use Magento\Framework\DataObject;
 class Totals extends \Magento\Sales\Block\Order\Totals
 {
     /**
-     * Sales admin helper object
+     * Admin helper
      *
      * @var \Magento\Sales\Helper\Admin
      */
@@ -91,17 +91,13 @@ class Totals extends \Magento\Sales\Block\Order\Totals
          * Add shipping
          */
         if (!$order->getIsVirtual()
-            && ($order->getShippingAmount() !== null
+            && ((double)$order->getShippingAmount()
             || $order->getShippingDescription())
         ) {
             $shippingLabel = __('Shipping & Handling');
 
-            if (!isset($this->_totals['discount'])) {
-                if ($order->getCouponCode()) {
-                    $shippingLabel .= " ({$order->getCouponCode()})";
-                } elseif ($order->getDiscountDescription()) {
-                    $shippingLabel .= " ({$order->getDiscountDescription()})";
-                }
+            if ($order->getCouponCode() && !isset($this->_totals['discount'])) {
+                $shippingLabel .= " ({$order->getCouponCode()})";
             }
 
             $this->_totals['shipping'] = new DataObject(

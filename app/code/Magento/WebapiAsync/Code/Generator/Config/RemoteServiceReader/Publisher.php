@@ -15,6 +15,7 @@ use Magento\AsynchronousOperations\Model\ConfigInterface as WebApiAsyncConfig;
  */
 class Publisher implements \Magento\Framework\Config\ReaderInterface
 {
+
     /**
      * @var WebApiAsyncConfig
      */

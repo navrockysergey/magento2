@@ -24,6 +24,7 @@ interface BookmarkSearchResultsInterface extends \Magento\Framework\Api\SearchRe
     /**
      * Set customers list
      *
+     * @api
      * @param \Magento\Ui\Api\Data\BookmarkInterface[] $items
      * @return $this
      */

@@ -3,7 +3,7 @@
  * See COPYING.txt for license details.
  */
 
-/* global FORM_KEY */
+/* global $break $ $$ FORM_KEY */
 
 /**
  * @api
@@ -318,12 +318,12 @@ define([
                         display: 'none'
                     }).appendTo($('body'));
 
-                    this.iframe = $('<iframe></iframe>', {
+                    this.iframe = $('<iframe />', {
                         id:  'upload_iframe',
                         name: 'upload_iframe'
                     }).appendTo(this.wrapper);
 
-                    this.form = $('<form></form>', {
+                    this.form = $('<form />', {
                         id: 'swatch_form_image_upload',
                         name: 'swatch_form_image_upload',
                         target: 'upload_iframe',
@@ -384,7 +384,7 @@ define([
              */
             $(document).on('click', '.btn_choose_file_upload', function () {
                 swatchComponents.inputFile.attr('data-called-by', $(this).attr('id'));
-                swatchComponents.inputFile.trigger('click');
+                swatchComponents.inputFile.click();
             });
 
             /**
@@ -404,11 +404,8 @@ define([
             /**
              * Toggle color upload chooser
              */
-            $(document).on('click', '.swatches-visual-col', function () {
-                var currentElement = $(this).find('.swatch_sub-menu_container');
-
-                jQuery('.swatch_sub-menu_container').not(currentElement).hide();
-                currentElement.toggle();
+            $(document).on('click', '.swatch_window', function () {
+                $(this).next('div').toggle();
             });
         });
     };

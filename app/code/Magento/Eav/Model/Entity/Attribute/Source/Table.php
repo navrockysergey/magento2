@@ -149,7 +149,7 @@ class Table extends \Magento\Eav\Model\Entity\Attribute\Source\AbstractSource
     public function getOptionText($value)
     {
         $isMultiple = false;
-        if (is_string($value) && strpos($value, ',') !== false) {
+        if (strpos($value, ',') !== false) {
             $isMultiple = true;
             $value = explode(',', $value);
         }
@@ -211,13 +211,9 @@ class Table extends \Magento\Eav\Model\Entity\Attribute\Source\AbstractSource
             $collection,
             $attribute,
             $valueExpr
-        )->addOptionToCollection(
-            $collection,
-            $attribute,
-            $valueExpr
         );
 
-        $collection->getSelect()->order("{$attribute->getAttributeCode()}_order {$dir}");
+        $collection->getSelect()->order("{$attribute->getAttributeCode()}_value {$dir}");
 
         return $this;
     }

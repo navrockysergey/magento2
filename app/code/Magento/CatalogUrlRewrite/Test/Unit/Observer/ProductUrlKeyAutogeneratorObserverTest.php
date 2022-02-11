@@ -7,33 +7,21 @@ declare(strict_types=1);
 
 namespace Magento\CatalogUrlRewrite\Test\Unit\Observer;
 
-use Magento\Catalog\Model\Product;
-use Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator;
-use Magento\CatalogUrlRewrite\Observer\ProductUrlKeyAutogeneratorObserver;
-use Magento\Framework\Event;
-use Magento\Framework\Event\Observer;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManagerHelper;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-use Magento\Backend\Model\Validator\UrlKey\CompositeUrlKey;
+use \Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator;
 
 /**
  * Unit tests for \Magento\CatalogUrlRewrite\Observer\ProductUrlKeyAutogeneratorObserver class
  */
-class ProductUrlKeyAutogeneratorObserverTest extends TestCase
+class ProductUrlKeyAutogeneratorObserverTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var ProductUrlPathGenerator|MockObject
+     * @var \Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator|\PHPUnit\Framework\MockObject\MockObject
      */
     private $productUrlPathGenerator;
 
-    /** @var ProductUrlKeyAutogeneratorObserver */
+    /** @var \Magento\CatalogUrlRewrite\Observer\ProductUrlKeyAutogeneratorObserver */
     private $productUrlKeyAutogeneratorObserver;
-
-    /**
-     * @var CompositeUrlKey|MockObject
-     */
-    private $compositeUrlValidator;
 
     /**
      * @inheritdoc
@@ -45,16 +33,10 @@ class ProductUrlKeyAutogeneratorObserverTest extends TestCase
             ->setMethods(['getUrlKey'])
             ->getMock();
 
-        $this->compositeUrlValidator = $this->getMockBuilder(CompositeUrlKey::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['validate'])
-            ->getMock();
-
         $this->productUrlKeyAutogeneratorObserver = (new ObjectManagerHelper($this))->getObject(
-            ProductUrlKeyAutogeneratorObserver::class,
+            \Magento\CatalogUrlRewrite\Observer\ProductUrlKeyAutogeneratorObserver::class,
             [
-                'productUrlPathGenerator' => $this->productUrlPathGenerator,
-                'compositeUrlValidator' => $this->compositeUrlValidator
+                'productUrlPathGenerator' => $this->productUrlPathGenerator
             ]
         );
     }
@@ -66,26 +48,24 @@ class ProductUrlKeyAutogeneratorObserverTest extends TestCase
     {
         $urlKey = 'product_url_key';
 
-        $product = $this->getMockBuilder(Product::class)
+        $product = $this->getMockBuilder(\Magento\Catalog\Model\Product::class)
             ->disableOriginalConstructor()
             ->setMethods(['setUrlKey'])
             ->getMock();
         $product->expects($this->atLeastOnce())->method('setUrlKey')->with($urlKey);
-        $event = $this->getMockBuilder(Event::class)
+        $event = $this->getMockBuilder(\Magento\Framework\Event::class)
             ->disableOriginalConstructor()
             ->setMethods(['getProduct'])
             ->getMock();
         $event->expects($this->atLeastOnce())->method('getProduct')->willReturn($product);
-        /** @var Observer|MockObject $observer */
-        $observer = $this->getMockBuilder(Observer::class)
+        /** @var \Magento\Framework\Event\Observer|\PHPUnit\Framework\MockObject\MockObject $observer */
+        $observer = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
             ->disableOriginalConstructor()
             ->setMethods(['getEvent'])
             ->getMock();
         $observer->expects($this->atLeastOnce())->method('getEvent')->willReturn($event);
         $this->productUrlPathGenerator->expects($this->atLeastOnce())->method('getUrlKey')->with($product)
             ->willReturn($urlKey);
-
-        $this->compositeUrlValidator->expects($this->once())->method('validate')->with($urlKey)->willReturn([]);
 
         $this->productUrlKeyAutogeneratorObserver->execute($observer);
     }
@@ -95,18 +75,18 @@ class ProductUrlKeyAutogeneratorObserverTest extends TestCase
      */
     public function testExecuteWithEmptyUrlKey(): void
     {
-        $product = $this->getMockBuilder(Product::class)
+        $product = $this->getMockBuilder(\Magento\Catalog\Model\Product::class)
             ->disableOriginalConstructor()
             ->setMethods(['setUrlKey'])
             ->getMock();
         $product->expects($this->never())->method('setUrlKey');
-        $event = $this->getMockBuilder(Event::class)
+        $event = $this->getMockBuilder(\Magento\Framework\Event::class)
             ->disableOriginalConstructor()
             ->setMethods(['getProduct'])
             ->getMock();
         $event->expects($this->atLeastOnce())->method('getProduct')->willReturn($product);
-        /** @var Observer|MockObject $observer */
-        $observer = $this->getMockBuilder(Observer::class)
+        /** @var \Magento\Framework\Event\Observer|\PHPUnit\Framework\MockObject\MockObject $observer */
+        $observer = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
             ->disableOriginalConstructor()
             ->setMethods(['getEvent'])
             ->getMock();

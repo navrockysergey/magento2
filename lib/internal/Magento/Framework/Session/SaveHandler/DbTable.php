@@ -83,7 +83,6 @@ class DbTable extends \SessionHandler
      * @return bool
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    #[\ReturnTypeWillChange]
     public function open($savePath, $sessionName)
     {
         return true;
@@ -94,7 +93,6 @@ class DbTable extends \SessionHandler
      *
      * @return bool
      */
-    #[\ReturnTypeWillChange]
     public function close()
     {
         return true;
@@ -106,7 +104,6 @@ class DbTable extends \SessionHandler
      * @param string $sessionId
      * @return string
      */
-    #[\ReturnTypeWillChange]
     public function read($sessionId)
     {
         // need to use write connection to get the most fresh DB sessions
@@ -134,7 +131,6 @@ class DbTable extends \SessionHandler
      * @param string $sessionData
      * @return bool
      */
-    #[\ReturnTypeWillChange]
     public function write($sessionId, $sessionData)
     {
         $hashedSessionId = $this->encryptor->hash($sessionId);
@@ -162,7 +158,6 @@ class DbTable extends \SessionHandler
      * @param string $sessionId
      * @return bool
      */
-    #[\ReturnTypeWillChange]
     public function destroy($sessionId)
     {
         $where = ['session_id = ?' => $this->encryptor->hash($sessionId)];
@@ -177,7 +172,6 @@ class DbTable extends \SessionHandler
      * @return bool
      * @SuppressWarnings(PHPMD.ShortMethodName)
      */
-    #[\ReturnTypeWillChange]
     public function gc($maxLifeTime)
     {
         $where = ['session_expires < ?' => time() - $maxLifeTime];

@@ -3,26 +3,20 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
 
 namespace Magento\Rule\Test\Unit\Model\Condition;
 
-use Magento\Framework\Model\AbstractModel;
-use Magento\Rule\Model\Condition\AbstractCondition;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-
-class AbstractConditionTest extends TestCase
+class AbstractConditionTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var AbstractCondition|MockObject
+     * @var AbstractCondition|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $_condition;
 
     protected function setUp(): void
     {
         $this->_condition = $this->getMockForAbstractClass(
-            AbstractCondition::class,
+            \Magento\Rule\Model\Condition\AbstractCondition::class,
             [],
             '',
             false,
@@ -91,10 +85,6 @@ class AbstractConditionTest extends TestCase
             [1, '>=', '1', true],
             [1, '>=', 0, false],
             [0, '<', [1], false],
-
-            [[1], '!{}', [], false],
-            [[1], '!{}', [1], false],
-            [[1], '!{}', [0], false],
         ];
     }
 
@@ -131,7 +121,7 @@ class AbstractConditionTest extends TestCase
     public function testValidate($existingValue, $operator, $valueForValidate, $expectedResult)
     {
         $objectMock = $this->createPartialMock(
-            AbstractModel::class,
+            \Magento\Framework\Model\AbstractModel::class,
             ['hasData', 'load', 'getId', 'getData']
         );
         $objectMock->expects($this->once())
@@ -180,8 +170,6 @@ class AbstractConditionTest extends TestCase
             [[3], '{}', [], false, 'grid'],
             [1, '{}', 1, false, 'grid'],
             [1, '!{}', [1, 2, 3], false, 'grid'],
-            [1, '!{}', [], false, 'grid'],
-            [[1], '!{}', [], false, 'grid'],
             [[1], '{}', null, false, 'grid'],
             [null, '{}', null, true, 'input'],
             [null, '!{}', null, false, 'input'],

@@ -26,6 +26,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 /**
+ * Class TransportBuilderTest
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
@@ -42,32 +43,32 @@ class TransportBuilderTest extends TestCase
     protected $builder;
 
     /**
-     * @var FactoryInterface|MockObject
+     * @var FactoryInterface | \PHPUnit\Framework\MockObject\MockObject
      */
     protected $templateFactoryMock;
 
     /**
-     * @var Message|MockObject
+     * @var Message | \PHPUnit\Framework\MockObject\MockObject
      */
     protected $messageMock;
 
     /**
-     * @var ObjectManagerInterface|MockObject
+     * @var ObjectManagerInterface | \PHPUnit\Framework\MockObject\MockObject
      */
     protected $objectManagerMock;
 
     /**
-     * @var SenderResolverInterface|MockObject
+     * @var SenderResolverInterface | \PHPUnit\Framework\MockObject\MockObject
      */
     protected $senderResolverMock;
 
     /**
-     * @var MessageInterfaceFactory|MockObject
+     * @var MessageInterfaceFactory| \PHPUnit\Framework\MockObject\MockObject
      */
     private $messageFactoryMock;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $mailTransportFactoryMock;
 
@@ -82,7 +83,7 @@ class TransportBuilderTest extends TestCase
     private $emailMessageInterfaceFactoryMock;
 
     /**
-     * @inheritdoc
+     * @return void
      */
     protected function setUp(): void
     {
@@ -91,13 +92,14 @@ class TransportBuilderTest extends TestCase
         $this->messageMock = $this->createMock(Message::class);
         $this->objectManagerMock = $this->getMockForAbstractClass(ObjectManagerInterface::class);
         $this->senderResolverMock = $this->getMockForAbstractClass(SenderResolverInterface::class);
-        $this->mailTransportFactoryMock = $this->getMockBuilder(TransportInterfaceFactory::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['create'])
+        $this->mailTransportFactoryMock = $this->getMockBuilder(
+            TransportInterfaceFactory::class
+        )->disableOriginalConstructor()
+            ->setMethods(['create'])
             ->getMockForAbstractClass();
         $this->messageFactoryMock = $this->getMockBuilder(MessageInterfaceFactory::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['create'])
+            ->setMethods(['create'])
             ->getMockForAbstractClass();
 
         $this->emailMessageInterfaceFactoryMock = $this->createMock(EmailMessageInterfaceFactory::class);
@@ -113,20 +115,19 @@ class TransportBuilderTest extends TestCase
                 'mailTransportFactory' => $this->mailTransportFactoryMock,
                 'messageFactory' => $this->messageFactoryMock,
                 'emailMessageInterfaceFactory' => $this->emailMessageInterfaceFactoryMock,
-                'mimePartInterfaceFactory' => $this->mimePartFactoryMock
+                'mimePartInterfaceFactory' => $this->mimePartFactoryMock,
             ]
         );
     }
 
     /**
+     * @dataProvider getTransportDataProvider
      * @param int $templateType
      * @param string $bodyText
      * @param string $templateNamespace
-     *
      * @return void
-     * @dataProvider getTransportDataProvider
      */
-    public function testGetTransport($templateType, $bodyText, $templateNamespace): void
+    public function testGetTransport($templateType, $bodyText, $templateNamespace)
     {
         $this->builder->setTemplateModel($templateNamespace);
 
@@ -148,20 +149,20 @@ class TransportBuilderTest extends TestCase
             ->willReturn($emailMessage);
 
         $template = $this->getMockForAbstractClass(TemplateInterface::class);
-        $template->expects($this->once())->method('setVars')->with($vars)->willReturnSelf();
-        $template->expects($this->once())->method('setOptions')->with($options)->willReturnSelf();
+        $template->expects($this->once())->method('setVars')->with($this->equalTo($vars))->willReturnSelf();
+        $template->expects($this->once())->method('setOptions')->with($this->equalTo($options))->willReturnSelf();
         $template->expects($this->once())->method('getSubject')->willReturn('Email Subject');
         $template->expects($this->once())->method('getType')->willReturn($templateType);
         $template->expects($this->once())->method('processTemplate')->willReturn($bodyText);
 
         $this->templateFactoryMock->expects($this->once())
             ->method('get')
-            ->with('identifier', $templateNamespace)
+            ->with($this->equalTo('identifier'), $this->equalTo($templateNamespace))
             ->willReturn($template);
 
         $transport = $this->getMockForAbstractClass(TransportInterface::class);
 
-        $this->mailTransportFactoryMock
+        $this->mailTransportFactoryMock->expects($this->at(0))
             ->method('create')
             ->willReturn($transport);
 
@@ -172,26 +173,26 @@ class TransportBuilderTest extends TestCase
     }
 
     /**
-     * Test get transport with exception.
+     * Test get transport with exception
      *
-     * @return void
      */
-    public function testGetTransportWithException(): void
+    public function testGetTransportWithException()
     {
-        $this->expectException('Magento\Framework\Exception\LocalizedException');
+        $this->expectException(\Magento\Framework\Exception\LocalizedException::class);
         $this->expectExceptionMessage('Unknown template type');
+
         $this->builder->setTemplateModel('Test\Namespace\Template');
 
         $vars = ['reason' => 'Reason', 'customer' => 'Customer'];
         $options = ['area' => 'frontend', 'store' => 1];
 
         $template = $this->getMockForAbstractClass(TemplateInterface::class);
-        $template->expects($this->once())->method('setVars')->with($vars)->willReturnSelf();
-        $template->expects($this->once())->method('setOptions')->with($options)->willReturnSelf();
+        $template->expects($this->once())->method('setVars')->with($this->equalTo($vars))->willReturnSelf();
+        $template->expects($this->once())->method('setOptions')->with($this->equalTo($options))->willReturnSelf();
         $template->expects($this->once())->method('getType')->willReturn('Unknown');
         $this->templateFactoryMock->expects($this->once())
             ->method('get')
-            ->with('identifier', 'Test\Namespace\Template')
+            ->with($this->equalTo('identifier'), $this->equalTo('Test\Namespace\Template'))
             ->willReturn($template);
 
         $this->builder->setTemplateIdentifier('identifier')->setTemplateVars($vars)->setTemplateOptions($options);
@@ -202,7 +203,7 @@ class TransportBuilderTest extends TestCase
     /**
      * @return array
      */
-    public function getTransportDataProvider(): array
+    public function getTransportDataProvider()
     {
         return [
             [
@@ -221,7 +222,7 @@ class TransportBuilderTest extends TestCase
     /**
      * @return void
      */
-    public function testSetFromByScope(): void
+    public function testSetFromByScope()
     {
         $sender = ['email' => 'from@example.com', 'name' => 'name'];
         $scopeId = 1;

@@ -23,7 +23,6 @@ use Magento\TestFramework\Helper\CacheCleaner;
  * @magentoDataFixture Magento/Catalog/_files/dropdown_attribute.php
  * @magentoDataFixture Magento/Catalog/_files/multiselect_attribute.php
  * @magentoDataFixture Magento/Catalog/_files/product_without_options.php
- * @magentoDbIsolation enabled
  */
 class AttributeTest extends \PHPUnit\Framework\TestCase
 {
@@ -52,6 +51,7 @@ class AttributeTest extends \PHPUnit\Framework\TestCase
      */
     protected function setUp(): void
     {
+        CacheCleaner::cleanAll();
         $this->objectManager = Bootstrap::getObjectManager();
         $this->productRepository = $this->objectManager->get(ProductRepositoryInterface::class);
         $this->attributeRepository = $this->objectManager->get(AttributeRepository::class);

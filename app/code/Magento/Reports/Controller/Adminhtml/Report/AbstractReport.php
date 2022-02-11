@@ -18,7 +18,6 @@ use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 /**
  * Reports api controller
  *
- * phpcs:disable Magento2.Classes.AbstractApi
  * @api
  * @since 100.0.2
  * @SuppressWarnings(PHPMD.AllPurposeAction)
@@ -30,7 +29,7 @@ abstract class AbstractReport extends \Magento\Backend\App\Action
      *
      * @see _isAllowed()
      */
-    public const ADMIN_RESOURCE = 'Magento_Reports::report';
+    const ADMIN_RESOURCE = 'Magento_Reports::report';
 
     /**
      * @var \Magento\Framework\App\Response\Http\FileFactory
@@ -100,9 +99,7 @@ abstract class AbstractReport extends \Magento\Backend\App\Action
      */
     public function _initAction()
     {
-        // phpcs:ignore Magento2.Legacy.ObsoleteResponse
         $this->_view->loadLayout();
-        // phpcs:ignore Magento2.Legacy.ObsoleteResponse
         $this->_addBreadcrumb(__('Reports'), __('Reports'));
         return $this;
     }
@@ -143,7 +140,7 @@ abstract class AbstractReport extends \Magento\Backend\App\Action
         $flag = $this->_objectManager->create(\Magento\Reports\Model\Flag::class)
             ->setReportFlagCode($flagCode)
             ->loadSelf();
-        $updatedAt = __('Never');
+        $updatedAt = 'undefined';
         if ($flag->hasData()) {
             $updatedAt = $this->timezone->formatDate(
                 $flag->getLastUpdate(),
@@ -178,9 +175,10 @@ abstract class AbstractReport extends \Magento\Backend\App\Action
      */
     private function initFilterData(): \Magento\Framework\DataObject
     {
-        $requestData = $this->backendHelper->prepareFilterString(
-            $this->getRequest()->getParam('filter', ''),
-        );
+        $requestData = $this->backendHelper
+            ->prepareFilterString(
+                $this->getRequest()->getParam('filter')
+            );
 
         $filterRules = ['from' => $this->_dateFilter, 'to' => $this->_dateFilter];
         $inputFilter = new \Zend_Filter_Input($filterRules, [], $requestData);

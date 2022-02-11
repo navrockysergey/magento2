@@ -3,49 +3,42 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\SalesSequence\Test\Unit\Model\ResourceModel;
 
-use Magento\Framework\App\ResourceConnection;
-use Magento\Framework\DB\Adapter\AdapterInterface;
-use Magento\Framework\DB\Select;
-use Magento\Framework\Model\ResourceModel\Db\Context;
-use Magento\SalesSequence\Model\MetaFactory;
-use Magento\SalesSequence\Model\Profile;
 use Magento\SalesSequence\Model\ResourceModel\Meta;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class MetaTest extends TestCase
+/**
+ * Class MetaTest
+ */
+class MetaTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var AdapterInterface|MockObject
+     * @var \Magento\Framework\DB\Adapter\AdapterInterface | \PHPUnit\Framework\MockObject\MockObject
      */
     private $connectionMock;
 
     /**
-     * @var Context|MockObject
+     * @var \Magento\Framework\Model\ResourceModel\Db\Context | \PHPUnit\Framework\MockObject\MockObject
      */
     private $dbContext;
 
     /**
-     * @var MetaFactory|MockObject
+     * @var \Magento\SalesSequence\Model\MetaFactory | \PHPUnit\Framework\MockObject\MockObject
      */
     private $metaFactory;
 
     /**
-     * @var \Magento\SalesSequence\Model\Meta|MockObject
+     * @var \Magento\SalesSequence\Model\Meta | \PHPUnit\Framework\MockObject\MockObject
      */
     private $meta;
 
     /**
-     * @var Profile|MockObject
+     * @var \Magento\SalesSequence\Model\Profile | \PHPUnit\Framework\MockObject\MockObject
      */
     private $profile;
 
     /**
-     * @var \Magento\SalesSequence\Model\ResourceModel\Profile|MockObject
+     * @var \Magento\SalesSequence\Model\ResourceModel\Profile | \PHPUnit\Framework\MockObject\MockObject
      */
     private $resourceProfile;
 
@@ -55,22 +48,22 @@ class MetaTest extends TestCase
     private $resource;
 
     /**
-     * @var Resource|MockObject
+     * @var Resource | \PHPUnit\Framework\MockObject\MockObject
      */
     protected $resourceMock;
 
     /**
-     * @var Select|MockObject
+     * @var \Magento\Framework\DB\Select | \PHPUnit\Framework\MockObject\MockObject
      */
     private $select;
 
     /**
-     * @inheritDoc
+     * Initialization
      */
     protected function setUp(): void
     {
         $this->connectionMock = $this->getMockForAbstractClass(
-            AdapterInterface::class,
+            \Magento\Framework\DB\Adapter\AdapterInterface::class,
             [],
             '',
             false,
@@ -78,20 +71,20 @@ class MetaTest extends TestCase
             true,
             ['query']
         );
-        $this->dbContext = $this->createMock(Context::class);
-        $this->metaFactory = $this->createPartialMock(MetaFactory::class, ['create']);
+        $this->dbContext = $this->createMock(\Magento\Framework\Model\ResourceModel\Db\Context::class);
+        $this->metaFactory = $this->createPartialMock(\Magento\SalesSequence\Model\MetaFactory::class, ['create']);
         $this->resourceProfile = $this->createPartialMock(
             \Magento\SalesSequence\Model\ResourceModel\Profile::class,
             ['loadActiveProfile', 'save']
         );
         $this->resourceMock = $this->createPartialMock(
-            ResourceConnection::class,
+            \Magento\Framework\App\ResourceConnection::class,
             ['getConnection', 'getTableName']
         );
         $this->dbContext->expects($this->once())->method('getResources')->willReturn($this->resourceMock);
-        $this->select = $this->createMock(Select::class);
+        $this->select = $this->createMock(\Magento\Framework\DB\Select::class);
         $this->meta = $this->createMock(\Magento\SalesSequence\Model\Meta::class);
-        $this->profile = $this->createMock(Profile::class);
+        $this->profile = $this->createMock(\Magento\SalesSequence\Model\Profile::class);
         $this->resource = new Meta(
             $this->dbContext,
             $this->metaFactory,
@@ -99,10 +92,7 @@ class MetaTest extends TestCase
         );
     }
 
-    /**
-     * @return void
-     */
-    public function testLoadBy(): void
+    public function testLoadBy()
     {
         $metaTableName = 'sequence_meta';
         $metaIdFieldName = 'meta_id';
@@ -120,29 +110,36 @@ class MetaTest extends TestCase
             ->method('getTableName')
             ->willReturn($metaTableName);
         $this->connectionMock->expects($this->any())->method('select')->willReturn($this->select);
-
-        $this->select
+        $this->select->expects($this->at(0))
+            ->method('from')
+            ->with($metaTableName, [$metaIdFieldName])
+            ->willReturn($this->select);
+        $this->select->expects($this->at(1))
             ->method('where')
-            ->withConsecutive(['entity_type = :entity_type AND store_id = :store_id'])
+            ->with('entity_type = :entity_type AND store_id = :store_id')
             ->willReturn($this->select);
         $this->connectionMock->expects($this->once())
             ->method('fetchOne')
             ->with($this->select, ['entity_type' => $entityType, 'store_id' => $storeId])
             ->willReturn($metaId);
         $this->metaFactory->expects($this->once())->method('create')->willReturn($this->meta);
+        $this->stepCheckSaveWithActiveProfile($metaData);
+        $this->meta->expects($this->once())->method('beforeLoad');
+        $this->assertEquals($this->meta, $this->resource->loadByEntityTypeAndStore($entityType, $storeId));
+    }
 
-        $this->select
+    /**
+     * @param $metaData
+     */
+    private function stepCheckSaveWithActiveProfile($metaData)
+    {
+        $this->select->expects($this->at(2))
             ->method('from')
-            ->withConsecutive([$metaTableName, [$metaIdFieldName]], ['sequence_meta', '*', null])
-            ->willReturnOnConsecutiveCalls($this->select, $this->select);
-
-        // Check Save with Active Profile
+            ->with('sequence_meta', '*', null)
+            ->willReturn($this->select);
         $this->connectionMock->expects($this->any())
             ->method('quoteIdentifier');
         $this->connectionMock->expects($this->once())->method('fetchRow')->willReturn($metaData);
         $this->resourceProfile->expects($this->once())->method('loadActiveProfile')->willReturn($this->profile);
-
-        $this->meta->expects($this->once())->method('beforeLoad');
-        $this->assertEquals($this->meta, $this->resource->loadByEntityTypeAndStore($entityType, $storeId));
     }
 }

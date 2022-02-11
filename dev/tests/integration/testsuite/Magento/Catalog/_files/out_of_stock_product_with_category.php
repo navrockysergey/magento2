@@ -12,9 +12,8 @@ use Magento\Catalog\Model\Product\Type;
 use Magento\Catalog\Model\Product\Visibility;
 use Magento\Catalog\Model\ProductFactory;
 use Magento\TestFramework\Helper\Bootstrap;
-use Magento\TestFramework\Workaround\Override\Fixture\Resolver;
 
-Resolver::getInstance()->requireDataFixture('Magento/Catalog/_files/category.php');
+require __DIR__ . '/category.php';
 
 $objectManager = Bootstrap::getObjectManager();
 /** @var ProductFactory $productFactory */
@@ -26,7 +25,7 @@ $product->isObjectNew(true);
 $product->setTypeId(Type::TYPE_SIMPLE)
     ->setAttributeSetId($product->getDefaultAttributeSetId())
     ->setWebsiteIds([1])
-    ->setName('Simple Product Out Of Stock With Category')
+    ->setName('Simple Product Out Of Stock')
     ->setSku('out-of-stock-product')
     ->setPrice(10)
     ->setWeight(1)
@@ -50,5 +49,5 @@ $product->setTypeId(Type::TYPE_SIMPLE)
     ->setCanSaveCustomOptions(true)
     ->setHasOptions(true);
 /** @var ProductRepositoryInterface $productRepositoryFactory */
-$productRepository = $objectManager->get(ProductRepositoryInterface::class);
+$productRepository = $objectManager->create(ProductRepositoryInterface::class);
 $productRepository->save($product);

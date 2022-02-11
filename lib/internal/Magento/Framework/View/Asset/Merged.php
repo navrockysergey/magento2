@@ -15,7 +15,7 @@ class Merged implements \Iterator
     /**
      * Directory for dynamically generated public view files, relative to STATIC_VIEW
      */
-    public const CACHE_VIEW_REL = '_cache';
+    const CACHE_VIEW_REL = '_cache';
 
     /**
      * @var \Psr\Log\LoggerInterface
@@ -136,18 +136,15 @@ class Merged implements \Iterator
             $paths[] = $version;
         }
 
-        // md5() here is not for cryptographic use.
-        // phpcs:ignore Magento2.Security.InsecureFunction
         $filePath = md5(implode('|', $paths)) . '.' . $this->contentType;
         return $this->assetRepo->createArbitrary($filePath, self::getRelativeDir());
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      *
      * @return AssetInterface
      */
-    #[\ReturnTypeWillChange]
     public function current()
     {
         $this->initialize();
@@ -155,9 +152,8 @@ class Merged implements \Iterator
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
-    #[\ReturnTypeWillChange]
     public function key()
     {
         $this->initialize();
@@ -165,9 +161,8 @@ class Merged implements \Iterator
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
-    #[\ReturnTypeWillChange]
     public function next()
     {
         $this->initialize();
@@ -175,9 +170,8 @@ class Merged implements \Iterator
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
-    #[\ReturnTypeWillChange]
     public function rewind()
     {
         $this->initialize();
@@ -185,9 +179,8 @@ class Merged implements \Iterator
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
-    #[\ReturnTypeWillChange]
     public function valid()
     {
         $this->initialize();

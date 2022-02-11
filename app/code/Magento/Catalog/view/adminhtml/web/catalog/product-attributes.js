@@ -26,7 +26,7 @@ define([
         _initModal: function () {
             var self = this;
 
-            this.modal = $('<div id="create_new_attribute"></div>').modal({
+            this.modal = $('<div id="create_new_attribute"/>').modal({
                 title: $.mage.__('New Attribute'),
                 type: 'slide',
                 buttons: [],
@@ -34,7 +34,7 @@ define([
                 /** @inheritdoc */
                 opened: function () {
                     $(this).parent().addClass('modal-content-new-attribute');
-                    self.iframe = $('<iframe id="create_new_attribute_container"></iframe>').attr({
+                    self.iframe = $('<iframe id="create_new_attribute_container">').attr({
                         src: self._prepareUrl(),
                         frameborder: 0
                     });
@@ -47,12 +47,12 @@ define([
                 closed: function () {
                     var doc = self.iframe.get(0).document;
 
-                    if (doc && typeof doc.execCommand === 'function') {
+                    if (doc && $.isFunction(doc.execCommand)) {
                         //IE9 break script loading but not execution on iframe removing
                         doc.execCommand('stop');
                         self.iframe.remove();
                     }
-                    self.modal.data('mageModal').modal.remove();
+                    self.modal.data('modal').modal.remove();
                     $(window).off('resize.modal');
                 }
             });
@@ -63,7 +63,7 @@ define([
          * @private
          */
         _getHeight: function () {
-            var modal = this.modal.data('mageModal').modal,
+            var modal = this.modal.data('modal').modal,
                 modalHead = modal.find('header'),
                 modalHeadHeight = modalHead.outerHeight(),
                 modalHeight = modal.outerHeight(),

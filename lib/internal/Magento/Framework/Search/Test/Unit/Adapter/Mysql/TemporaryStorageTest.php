@@ -3,26 +3,16 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Framework\Search\Test\Unit\Adapter\Mysql;
 
-use Magento\Framework\Api\AttributeValue;
-use Magento\Framework\Api\Search\Document;
-use Magento\Framework\App\DeploymentConfig;
-use Magento\Framework\App\ResourceConnection;
-use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\DB\Ddl\Table;
-use Magento\Framework\DB\Select;
 use Magento\Framework\Search\Adapter\Mysql\TemporaryStorage;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class TemporaryStorageTest extends TestCase
+class TemporaryStorageTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var AdapterInterface|MockObject
+     * @var \Magento\Framework\DB\Adapter\AdapterInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $adapter;
 
@@ -37,22 +27,19 @@ class TemporaryStorageTest extends TestCase
     private $model;
 
     /**
-     * @var DeploymentConfig|MockObject
+     * @var \Magento\Framework\App\DeploymentConfig|\PHPUnit\Framework\MockObject\MockObject
      */
     private $config;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
         $this->tableName = 'some_table_name';
 
-        $this->adapter = $this->getMockBuilder(AdapterInterface::class)
+        $this->adapter = $this->getMockBuilder(\Magento\Framework\DB\Adapter\AdapterInterface::class)
             ->disableOriginalConstructor()
             ->getMockForAbstractClass();
 
-        $resource = $this->getMockBuilder(ResourceConnection::class)
+        $resource = $this->getMockBuilder(\Magento\Framework\App\ResourceConnection::class)
             ->disableOriginalConstructor()
             ->getMock();
         $resource->expects($this->any())
@@ -62,25 +49,22 @@ class TemporaryStorageTest extends TestCase
             ->method('getTableName')
             ->willReturn($this->tableName);
 
-        $this->config = $this->getMockBuilder(DeploymentConfig::class)
+        $this->config = $this->getMockBuilder(\Magento\Framework\App\DeploymentConfig::class)
             ->disableOriginalConstructor()
             ->getMock();
 
         $this->model = (new ObjectManager($this))->getObject(
-            TemporaryStorage::class,
+            \Magento\Framework\Search\Adapter\Mysql\TemporaryStorage::class,
             ['resource' => $resource, 'config' => $this->config]
         );
     }
 
-    /**
-     * @return void
-     */
-    public function testStoreDocumentsFromSelect(): void
+    public function testStoreDocumentsFromSelect()
     {
         $sql = 'some SQL query';
 
-        /** @var Select|MockObject $select */
-        $select = $this->getMockBuilder(Select::class)
+        /** @var \Magento\Framework\DB\Select|\PHPUnit\Framework\MockObject\MockObject $select */
+        $select = $this->getMockBuilder(\Magento\Framework\DB\Select::class)
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -103,22 +87,19 @@ class TemporaryStorageTest extends TestCase
         $this->assertEquals($table, $result);
     }
 
-    /**
-     * @return void
-     */
-    public function testStoreDocuments(): void
+    public function testStoreDocuments()
     {
         $documentId = 312432;
         $documentValue = 1.235123;
 
-        $attributeValue = $this->getMockBuilder(AttributeValue::class)
+        $attributeValue = $this->getMockBuilder(\Magento\Framework\Api\AttributeValue::class)
             ->disableOriginalConstructor()
             ->getMock();
         $attributeValue->expects($this->once())
             ->method('getValue')
             ->willReturn($documentValue);
 
-        $document = $this->getMockBuilder(Document::class)
+        $document = $this->getMockBuilder(\Magento\Framework\Api\Search\Document::class)
             ->disableOriginalConstructor()
             ->getMock();
         $document->expects($this->once())
@@ -136,22 +117,19 @@ class TemporaryStorageTest extends TestCase
         $this->assertEquals($result, $table);
     }
 
-    /**
-     * @return void
-     */
-    public function testStoreApiDocuments(): void
+    public function testStoreApiDocuments()
     {
         $documentId = 312432;
         $documentValue = 1.235123;
 
-        $attributeValue = $this->getMockBuilder(AttributeValue::class)
+        $attributeValue = $this->getMockBuilder(\Magento\Framework\Api\AttributeValue::class)
             ->disableOriginalConstructor()
             ->getMock();
         $attributeValue->expects($this->once())
             ->method('getValue')
             ->willReturn($documentValue);
 
-        $document = $this->getMockBuilder(Document::class)
+        $document = $this->getMockBuilder(\Magento\Framework\Api\Search\Document::class)
             ->disableOriginalConstructor()
             ->getMock();
         $document->expects($this->once())
@@ -169,10 +147,7 @@ class TemporaryStorageTest extends TestCase
         $this->assertEquals($result, $table);
     }
 
-    /**
-     * @return void
-     */
-    public function testNoDropIfNotPersistent(): void
+    public function testNoDropIfNotPersistent()
     {
         $this->createTemporaryTable(false);
 
@@ -184,40 +159,43 @@ class TemporaryStorageTest extends TestCase
     }
 
     /**
-     * @return Table|MockObject
+     * @return \Magento\Framework\DB\Ddl\Table|\PHPUnit\Framework\MockObject\MockObject
      */
-    private function createTemporaryTable($persistentConnection = true): MockObject
+    private function createTemporaryTable($persistentConnection = true)
     {
         $this->config->expects($this->any())
             ->method('get')
             ->with('db/connection/indexer/persistent')
             ->willReturn($persistentConnection);
 
-        $table = $this->getMockBuilder(Table::class)
+        $table = $this->getMockBuilder(\Magento\Framework\DB\Ddl\Table::class)
             ->disableOriginalConstructor()
             ->getMock();
 
+        $tableInteractionCount = 0;
         if ($persistentConnection) {
             $this->adapter->expects($this->once())
                 ->method('dropTemporaryTable');
+            $tableInteractionCount++;
         }
-        $table
+        $table->expects($this->at($tableInteractionCount))
             ->method('addColumn')
-            ->withConsecutive(
-                [
-                    TemporaryStorage::FIELD_ENTITY_ID,
-                    Table::TYPE_INTEGER,
-                    10,
-                    ['unsigned' => true, 'nullable' => false, 'primary' => true],
-                    'Entity ID'
-                ],
-                [
-                    'score',
-                    Table::TYPE_DECIMAL,
-                    [32, 16],
-                    ['unsigned' => true, 'nullable' => true],
-                    'Score'
-                ]
+            ->with(
+                TemporaryStorage::FIELD_ENTITY_ID,
+                Table::TYPE_INTEGER,
+                10,
+                ['unsigned' => true, 'nullable' => false, 'primary' => true],
+                'Entity ID'
+            );
+        $tableInteractionCount++;
+        $table->expects($this->at($tableInteractionCount))
+            ->method('addColumn')
+            ->with(
+                'score',
+                Table::TYPE_DECIMAL,
+                [32, 16],
+                ['unsigned' => true, 'nullable' => true],
+                'Score'
             );
         $table->expects($this->once())
             ->method('setOption')

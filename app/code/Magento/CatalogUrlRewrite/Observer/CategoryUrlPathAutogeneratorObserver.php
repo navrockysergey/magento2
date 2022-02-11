@@ -7,18 +7,13 @@ declare(strict_types=1);
 
 namespace Magento\CatalogUrlRewrite\Observer;
 
-use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Catalog\Model\Category;
-use Magento\CatalogUrlRewrite\Model\Category\ChildrenCategoriesProvider;
 use Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator;
-use Magento\CatalogUrlRewrite\Model\ResourceModel\Category\GetDefaultUrlKey;
 use Magento\CatalogUrlRewrite\Service\V1\StoreViewService;
-use Magento\Framework\Event\Observer;
+use Magento\Catalog\Api\CategoryRepositoryInterface;
+use Magento\CatalogUrlRewrite\Model\Category\ChildrenCategoriesProvider;
 use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Store\Model\Store;
-use Magento\Backend\Model\Validator\UrlKey\CompositeUrlKey;
 
 /**
  * Class for set or update url path.
@@ -27,17 +22,24 @@ class CategoryUrlPathAutogeneratorObserver implements ObserverInterface
 {
 
     /**
-     * @var CategoryUrlPathGenerator
+     * Reserved endpoint names.
+     *
+     * @var string[]
+     */
+    private $invalidValues = [];
+
+    /**
+     * @var \Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator
      */
     protected $categoryUrlPathGenerator;
 
     /**
-     * @var ChildrenCategoriesProvider
+     * @var \Magento\CatalogUrlRewrite\Model\Category\ChildrenCategoriesProvider
      */
     protected $childrenCategoriesProvider;
 
     /**
-     * @var StoreViewService
+     * @var \Magento\CatalogUrlRewrite\Service\V1\StoreViewService
      */
     protected $storeViewService;
 
@@ -47,47 +49,43 @@ class CategoryUrlPathAutogeneratorObserver implements ObserverInterface
     private $categoryRepository;
 
     /**
-     * @var CompositeUrlKey
+     * @var \Magento\Backend\App\Area\FrontNameResolver
      */
-    private $compositeUrlValidator;
-
-    /**
-     * @var GetDefaultUrlKey
-     */
-    private $getDefaultUrlKey;
+    private $frontNameResolver;
 
     /**
      * @param CategoryUrlPathGenerator $categoryUrlPathGenerator
      * @param ChildrenCategoriesProvider $childrenCategoriesProvider
-     * @param StoreViewService $storeViewService
+     * @param \Magento\CatalogUrlRewrite\Service\V1\StoreViewService $storeViewService
      * @param CategoryRepositoryInterface $categoryRepository
-     * @param CompositeUrlKey $compositeUrlValidator
-     * @param GetDefaultUrlKey $getDefaultUrlKey
+     * @param \Magento\Backend\App\Area\FrontNameResolver $frontNameResolver
+     * @param string[] $invalidValues
      */
     public function __construct(
         CategoryUrlPathGenerator $categoryUrlPathGenerator,
         ChildrenCategoriesProvider $childrenCategoriesProvider,
         StoreViewService $storeViewService,
         CategoryRepositoryInterface $categoryRepository,
-        CompositeUrlKey $compositeUrlValidator,
-        GetDefaultUrlKey $getDefaultUrlKey
+        \Magento\Backend\App\Area\FrontNameResolver $frontNameResolver = null,
+        array $invalidValues = []
     ) {
         $this->categoryUrlPathGenerator = $categoryUrlPathGenerator;
         $this->childrenCategoriesProvider = $childrenCategoriesProvider;
         $this->storeViewService = $storeViewService;
         $this->categoryRepository = $categoryRepository;
-        $this->compositeUrlValidator = $compositeUrlValidator;
-        $this->getDefaultUrlKey = $getDefaultUrlKey;
+        $this->frontNameResolver = $frontNameResolver ?: \Magento\Framework\App\ObjectManager::getInstance()
+            ->get(\Magento\Backend\App\Area\FrontNameResolver::class);
+        $this->invalidValues = $invalidValues;
     }
 
     /**
      * Method for update/set url path.
      *
-     * @param Observer $observer
+     * @param \Magento\Framework\Event\Observer $observer
      * @return void
-     * @throws LocalizedException
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function execute(Observer $observer)
+    public function execute(\Magento\Framework\Event\Observer $observer)
     {
         /** @var Category $category */
         $category = $observer->getEvent()->getCategory();
@@ -100,12 +98,6 @@ class CategoryUrlPathAutogeneratorObserver implements ObserverInterface
                 $resultUrlKey = $category->formatUrlKey($category->getOrigData('name'));
                 $this->updateUrlKey($category, $resultUrlKey);
             }
-            if ($category->hasChildren()) {
-                $defaultUrlKey = $this->getDefaultUrlKey->execute((int)$category->getId());
-                if ($defaultUrlKey) {
-                    $this->updateUrlKey($category, $defaultUrlKey);
-                }
-            }
             $category->setUrlKey(null)->setUrlPath(null);
         }
     }
@@ -114,14 +106,26 @@ class CategoryUrlPathAutogeneratorObserver implements ObserverInterface
      * Update Url Key
      *
      * @param Category $category
-     * @param string|null $urlKey
-     * @return void
-     * @throws LocalizedException
-     * @throws NoSuchEntityException
+     * @param string $urlKey
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    private function updateUrlKey(Category $category, ?string $urlKey): void
+    private function updateUrlKey($category, $urlKey)
     {
-        $this->validateUrlKey($category, $urlKey);
+        if (empty($urlKey)) {
+            throw new \Magento\Framework\Exception\LocalizedException(__('Invalid URL key'));
+        }
+
+        if (in_array($urlKey, $this->getInvalidValues())) {
+            throw new \Magento\Framework\Exception\LocalizedException(
+                __(
+                    'URL key "%1" matches a reserved endpoint name (%2). Use another URL key.',
+                    $urlKey,
+                    implode(', ', $this->getInvalidValues())
+                )
+            );
+        }
+
         $category->setUrlKey($urlKey)
             ->setUrlPath($this->categoryUrlPathGenerator->getUrlPath($category));
         if (!$category->isObjectNew()) {
@@ -133,44 +137,13 @@ class CategoryUrlPathAutogeneratorObserver implements ObserverInterface
     }
 
     /**
-     * Validate URL key value
+     * Get reserved endpoint names.
      *
-     * @param Category $category
-     * @param string|null $urlKey
-     * @return void
-     * @throws LocalizedException
+     * @return array
      */
-    private function validateUrlKey(Category $category, ?string $urlKey): void
+    private function getInvalidValues()
     {
-        if (empty($urlKey) && !empty($category->getName()) && !empty($category->getUrlKey())) {
-            throw new LocalizedException(
-                __(
-                    'Invalid URL key. The "%1" URL key can not be used to generate Latin URL key. ' .
-                    'Please use Latin letters and numbers to avoid generating URL key issues.',
-                    $category->getUrlKey()
-                )
-            );
-        }
-
-        if (empty($urlKey) && !empty($category->getName())) {
-            throw new LocalizedException(
-                __(
-                    'Invalid URL key. The "%1" category name can not be used to generate Latin URL key. ' .
-                    'Please add URL key or change category name using Latin letters and numbers to avoid generating ' .
-                    'URL key issues.',
-                    $category->getName()
-                )
-            );
-        }
-
-        if (empty($urlKey)) {
-            throw new LocalizedException(__('Invalid URL key'));
-        }
-
-        $errors = $this->compositeUrlValidator->validate($urlKey);
-        if (!empty($errors)) {
-            throw new LocalizedException($errors[0]);
-        }
+        return array_unique(array_merge($this->invalidValues, [$this->frontNameResolver->getFrontName()]));
     }
 
     /**
@@ -226,7 +199,7 @@ class CategoryUrlPathAutogeneratorObserver implements ObserverInterface
      * @param Category $category
      * @param Category|null $parentCategory
      * @return void
-     * @throws NoSuchEntityException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     protected function updateUrlPathForCategory(Category $category, Category $parentCategory = null)
     {

@@ -5,11 +5,10 @@
  */
 
 declare(strict_types=1);
-use Magento\Customer\Api\CustomerRepositoryInterface;
 
 return [
     'services' => [
-        CustomerRepositoryInterface::class => [
+        \Magento\Customer\Api\CustomerRepositoryInterface::class => [
             'methods' => [
                 'getById' => [
                     'synchronousInvocationOnly' => true,
@@ -24,8 +23,8 @@ return [
         ],
     ],
     'routes' => [
-        'asyncProducts' => ['POST' => 'async/V1/products', 'input-array-size-limit' => 30],
-        'asyncBulkCmsBlocks' => ['POST' => 'async/bulk/V1/cmsBlock', 'input-array-size-limit' => null],
-        'asyncCustomers' => ['POST' => 'async/V1/customers', 'input-array-size-limit' => null]
+        'asyncProducts' => ['POST' => 'async/V1/products'],
+        'asyncBulkCmsBlocks' => ['POST' => 'async/bulk/V1/cmsBlock'],
+        'asyncCustomers' => ['POST' => 'async/V1/customers']
     ]
 ];

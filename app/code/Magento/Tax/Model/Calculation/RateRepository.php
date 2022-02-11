@@ -9,26 +9,19 @@ namespace Magento\Tax\Model\Calculation;
 
 use Magento\Directory\Model\CountryFactory;
 use Magento\Directory\Model\RegionFactory;
-use Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface;
 use Magento\Framework\Api\Search\FilterGroup;
 use Magento\Framework\Api\SearchCriteria\CollectionProcessorInterface;
-use Magento\Framework\Api\SearchCriteriaInterface;
-use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Tax\Api\Data\TaxRateInterface;
-use Magento\Tax\Api\Data\TaxRuleSearchResultsInterfaceFactory;
-use Magento\Tax\Api\TaxRateRepositoryInterface;
-use Magento\Tax\Model\Api\SearchCriteria\TaxRateCollectionProcessor;
 use Magento\Tax\Model\Calculation\Rate\Converter;
 use Magento\Tax\Model\ResourceModel\Calculation\Rate\Collection;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class RateRepository implements TaxRateRepositoryInterface
+class RateRepository implements \Magento\Tax\Api\TaxRateRepositoryInterface
 {
-    public const MESSAGE_TAX_RATE_ID_IS_NOT_ALLOWED = 'id is not expected for this request.';
+    const MESSAGE_TAX_RATE_ID_IS_NOT_ALLOWED = 'id is not expected for this request.';
 
     /**
      * Tax rate model and tax rate data object converter
@@ -45,7 +38,7 @@ class RateRepository implements TaxRateRepositoryInterface
     protected $rateRegistry;
 
     /**
-     * @var TaxRuleSearchResultsInterfaceFactory
+     * @var \Magento\Tax\Api\Data\TaxRuleSearchResultsInterfaceFactory
      */
     private $taxRateSearchResultsFactory;
 
@@ -70,7 +63,7 @@ class RateRepository implements TaxRateRepositoryInterface
     protected $resourceModel;
 
     /**
-     * @var JoinProcessorInterface
+     * @var \Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface
      */
     protected $joinProcessor;
 
@@ -82,23 +75,23 @@ class RateRepository implements TaxRateRepositoryInterface
     /**
      * @param Converter $converter
      * @param RateRegistry $rateRegistry
-     * @param TaxRuleSearchResultsInterfaceFactory $taxRateSearchResultsFactory
+     * @param \Magento\Tax\Api\Data\TaxRuleSearchResultsInterfaceFactory $taxRateSearchResultsFactory
      * @param RateFactory $rateFactory
      * @param CountryFactory $countryFactory
      * @param RegionFactory $regionFactory
      * @param \Magento\Tax\Model\ResourceModel\Calculation\Rate $rateResource
-     * @param JoinProcessorInterface $joinProcessor
-     * @param CollectionProcessorInterface|null $collectionProcessor
+     * @param \Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface $joinProcessor
+     * @param CollectionProcessorInterface $collectionProcessor
      */
     public function __construct(
         Converter $converter,
         RateRegistry $rateRegistry,
-        TaxRuleSearchResultsInterfaceFactory $taxRateSearchResultsFactory,
+        \Magento\Tax\Api\Data\TaxRuleSearchResultsInterfaceFactory $taxRateSearchResultsFactory,
         RateFactory $rateFactory,
         CountryFactory $countryFactory,
         RegionFactory $regionFactory,
         \Magento\Tax\Model\ResourceModel\Calculation\Rate $rateResource,
-        JoinProcessorInterface $joinProcessor,
+        \Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface $joinProcessor,
         CollectionProcessorInterface $collectionProcessor = null
     ) {
         $this->converter = $converter;
@@ -109,17 +102,13 @@ class RateRepository implements TaxRateRepositoryInterface
         $this->regionFactory = $regionFactory;
         $this->resourceModel = $rateResource;
         $this->joinProcessor = $joinProcessor;
-        $this->collectionProcessor = $collectionProcessor
-            ?? ObjectManager::getInstance()->get(
-                // phpcs:ignore Magento2.PHP.LiteralNamespaces
-                'Magento\Tax\Model\Api\SearchCriteria\TaxRateCollectionProcessor'
-            );
+        $this->collectionProcessor = $collectionProcessor ?: $this->getCollectionProcessor();
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
-    public function save(TaxRateInterface $taxRate)
+    public function save(\Magento\Tax\Api\Data\TaxRateInterface $taxRate)
     {
         if ($taxRate->getId()) {
             $this->rateRegistry->retrieveTaxRate($taxRate->getId());
@@ -137,7 +126,7 @@ class RateRepository implements TaxRateRepositoryInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function get($rateId)
     {
@@ -145,15 +134,15 @@ class RateRepository implements TaxRateRepositoryInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
-    public function delete(TaxRateInterface $taxRate)
+    public function delete(\Magento\Tax\Api\Data\TaxRateInterface $taxRate)
     {
         return $this->resourceModel->delete($taxRate);
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function deleteById($rateId)
     {
@@ -164,9 +153,9 @@ class RateRepository implements TaxRateRepositoryInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
-    public function getList(SearchCriteriaInterface $searchCriteria)
+    public function getList(\Magento\Framework\Api\SearchCriteriaInterface $searchCriteria)
     {
         /** @var \Magento\Tax\Model\ResourceModel\Calculation\Rate\Collection $collection */
         $collection = $this->rateFactory->create()->getCollection();
@@ -194,6 +183,7 @@ class RateRepository implements TaxRateRepositoryInterface
      * @param Collection $collection
      * @return void
      * @deprecated 100.2.0
+     * @throws \Magento\Framework\Exception\InputException
      */
     protected function addFilterGroupToCollection(FilterGroup $filterGroup, Collection $collection)
     {
@@ -229,14 +219,14 @@ class RateRepository implements TaxRateRepositoryInterface
     /**
      * Validate tax rate
      *
-     * @param TaxRateInterface $taxRate
+     * @param \Magento\Tax\Api\Data\TaxRateInterface $taxRate
      * @throws InputException
      * @return void
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
-    private function validate(TaxRateInterface $taxRate)
+    private function validate(\Magento\Tax\Api\Data\TaxRateInterface $taxRate)
     {
         $exception = new InputException();
 
@@ -247,28 +237,31 @@ class RateRepository implements TaxRateRepositoryInterface
             $this->countryFactory->create()->loadByCode($countryCode)->getId(),
             'NotEmpty'
         )) {
-            $exception->addError(__(
-                'Invalid value of "%value" provided for the %fieldName field.',
-                [
-                    'fieldName' => 'country_id',
-                    'value' => $countryCode
-                ]
-            ));
+            $exception->addError(
+                __(
+                    'Invalid value of "%value" provided for the %fieldName field.',
+                    [
+                        'fieldName' => 'country_id',
+                        'value' => $countryCode
+                    ]
+                )
+            );
         }
 
         $regionCode = $taxRate->getTaxRegionId();
         // if regionCode eq 0 (all regions *), do not validate with existing region list
-        if (\Zend_Validate::is($regionCode, 'NotEmpty')
-            && $regionCode != "0"
-            && !\Zend_Validate::is($this->regionFactory->create()->load($regionCode)->getId(), 'NotEmpty')
+        if (\Zend_Validate::is($regionCode, 'NotEmpty') &&
+            $regionCode != "0" && !\Zend_Validate::is(
+                $this->regionFactory->create()->load($regionCode)->getId(),
+                'NotEmpty'
+            )
         ) {
-            $exception->addError(__(
-                'Invalid value of "%value" provided for the %fieldName field.',
-                [
-                    'fieldName' => 'region_id',
-                    'value' => $regionCode
-                ]
-            ));
+            $exception->addError(
+                __(
+                    'Invalid value of "%value" provided for the %fieldName field.',
+                    ['fieldName' => 'region_id', 'value' => $regionCode]
+                )
+            );
         }
 
         if (!is_numeric($taxRate->getRate()) || $taxRate->getRate() < 0) {
@@ -277,9 +270,7 @@ class RateRepository implements TaxRateRepositoryInterface
             );
         }
 
-        if ($taxRate->getCode() === null
-            || !\Zend_Validate::is(trim($taxRate->getCode()), 'NotEmpty')
-        ) {
+        if (!\Zend_Validate::is(trim($taxRate->getCode()), 'NotEmpty')) {
             $exception->addError(__('"%fieldName" is required. Enter and try again.', ['fieldName' => 'code']));
         }
 
@@ -302,17 +293,29 @@ class RateRepository implements TaxRateRepositoryInterface
                 $exception->addError(__('Range To should be equal or greater than Range From.'));
             }
         } else {
-            if ($taxRate->getTaxPostcode() === null
-                || !\Zend_Validate::is(trim($taxRate->getTaxPostcode()), 'NotEmpty')
-            ) {
-                $exception->addError(
-                    __('"%fieldName" is required. Enter and try again.', ['fieldName' => 'postcode'])
-                );
+            if (!\Zend_Validate::is(trim($taxRate->getTaxPostcode()), 'NotEmpty')) {
+                $exception->addError(__('"%fieldName" is required. Enter and try again.', ['fieldName' => 'postcode']));
             }
         }
 
         if ($exception->wasErrorAdded()) {
             throw $exception;
         }
+    }
+
+    /**
+     * Retrieve collection processor
+     *
+     * @deprecated 100.2.0
+     * @return CollectionProcessorInterface
+     */
+    private function getCollectionProcessor()
+    {
+        if (!$this->collectionProcessor) {
+            $this->collectionProcessor = \Magento\Framework\App\ObjectManager::getInstance()->get(
+                'Magento\Tax\Model\Api\SearchCriteria\TaxRateCollectionProcessor'
+            );
+        }
+        return $this->collectionProcessor;
     }
 }

@@ -3,17 +3,13 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Framework\Test\Unit\DB\Query;
 
-use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\DB\Query\BatchIterator;
 use Magento\Framework\DB\Select;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Magento\Framework\DB\Adapter\AdapterInterface;
 
-class BatchIteratorTest extends TestCase
+class BatchIteratorTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var BatchIterator
@@ -21,17 +17,17 @@ class BatchIteratorTest extends TestCase
     private $model;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     private $selectMock;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     private $wrapperSelectMock;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     private $connectionMock;
 
@@ -88,10 +84,9 @@ class BatchIteratorTest extends TestCase
      * 1. $iterator->current();
      * 2. $iterator->current();
      * 3. $iterator->key();
-     *
      * @return void
      */
-    public function testCurrent(): void
+    public function testCurrent()
     {
         $filed = $this->correlationName . '.' . $this->rangeField;
 
@@ -142,21 +137,28 @@ class BatchIteratorTest extends TestCase
      *
      * 1. $iterator->next()
      * 2. $iterator->valid();
-     *
      * @return void
      */
-    public function testIterations(): void
+    public function testIterations()
     {
-        $willReturnArgs = [
-            ['max' => 10, 'cnt' => 10],
-            ['max' => 20, 'cnt' => 10],
-            ['max' => 25, 'cnt' => 5],
-            ['max' => null, 'cnt' => 0]
-        ];
+        $startCallIndex = 3;
+        $stepCall = 4;
 
-        $this->connectionMock
+        $this->connectionMock->expects($this->at($startCallIndex))
             ->method('fetchRow')
-            ->willReturnOnConsecutiveCalls(...$willReturnArgs);
+            ->willReturn(['max' => 10, 'cnt' => 10]);
+
+        $this->connectionMock->expects($this->at($startCallIndex += $stepCall))
+            ->method('fetchRow')
+            ->willReturn(['max' => 20, 'cnt' => 10]);
+
+        $this->connectionMock->expects($this->at($startCallIndex += $stepCall))
+            ->method('fetchRow')
+            ->willReturn(['max' => 25, 'cnt' => 5]);
+
+        $this->connectionMock->expects($this->at($startCallIndex += $stepCall))
+            ->method('fetchRow')
+            ->willReturn(['max' => null, 'cnt' => 0]);
 
         /**
          * Test 3 iterations
@@ -179,17 +181,15 @@ class BatchIteratorTest extends TestCase
      * 3. $iterator->next();
      * 4. $iterator->current()
      * 5. $iterator->key()
-     *
      * @return void
      */
-    public function testNext(): void
+    public function testNext()
     {
         $filed = $this->correlationName . '.' . $this->rangeField;
+        $this->selectMock->expects($this->at(0))->method('where')->with($filed . ' > ?', 0);
         $this->selectMock->expects($this->exactly(3))->method('limit')->with($this->batchSize);
         $this->selectMock->expects($this->exactly(3))->method('order')->with($filed . ' ASC');
-        $this->selectMock
-            ->method('where')
-            ->withConsecutive([$filed . ' > ?', 0], [$filed . ' > ?', 25]);
+        $this->selectMock->expects($this->at(3))->method('where')->with($filed . ' > ?', 25);
 
         $this->wrapperSelectMock->expects($this->exactly(3))->method('from')->with(
             $this->selectMock,

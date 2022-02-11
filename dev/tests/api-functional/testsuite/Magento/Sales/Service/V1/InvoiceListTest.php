@@ -9,7 +9,7 @@ use Magento\Framework\Api\SortOrderBuilder;
 use Magento\TestFramework\TestCase\WebapiAbstract;
 
 /**
- * Class InvoiceListTest
+ * Class InvoiceListTest for Magento sales webapi
  */
 class InvoiceListTest extends WebapiAbstract
 {

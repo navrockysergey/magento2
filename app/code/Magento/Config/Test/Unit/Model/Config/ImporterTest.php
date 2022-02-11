@@ -3,8 +3,6 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Config\Test\Unit\Model\Config;
 
 use Magento\Config\Model\Config\Importer;
@@ -19,7 +17,6 @@ use Magento\Framework\Flag;
 use Magento\Framework\FlagManager;
 use Magento\Framework\Stdlib\ArrayUtils;
 use PHPUnit\Framework\MockObject\MockObject as Mock;
-use PHPUnit\Framework\TestCase;
 
 /**
  * Test for Importer.
@@ -27,7 +24,7 @@ use PHPUnit\Framework\TestCase;
  * @see Importer
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class ImporterTest extends TestCase
+class ImporterTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var Importer
@@ -85,8 +82,7 @@ class ImporterTest extends TestCase
     protected function setUp(): void
     {
         $this->flagManagerMock = $this->getMockBuilder(FlagManager::class)
-            ->onlyMethods(['getFlagData', 'saveFlag'])
-            ->addMethods(['create'])
+            ->setMethods(['create', 'getFlagData', 'saveFlag'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->flagMock = $this->getMockBuilder(Flag::class)
@@ -126,10 +122,7 @@ class ImporterTest extends TestCase
         );
     }
 
-    /**
-     * @return void
-     */
-    public function testImport(): void
+    public function testImport()
     {
         $data = [];
         $currentData = ['current' => '2'];
@@ -157,9 +150,15 @@ class ImporterTest extends TestCase
         $this->saveProcessorMock->expects($this->once())
             ->method('process')
             ->with([]);
-        $this->scopeMock
+        $this->scopeMock->expects($this->at(1))
             ->method('setCurrentScope')
-            ->withConsecutive([Area::AREA_ADMINHTML], ['oldScope'], ['oldScope']);
+            ->with(Area::AREA_ADMINHTML);
+        $this->scopeMock->expects($this->at(2))
+            ->method('setCurrentScope')
+            ->with('oldScope');
+        $this->scopeMock->expects($this->at(3))
+            ->method('setCurrentScope')
+            ->with('oldScope');
         $this->flagManagerMock->expects($this->once())
             ->method('saveFlag')
             ->with(Importer::FLAG_CODE, $data);
@@ -168,12 +167,12 @@ class ImporterTest extends TestCase
     }
 
     /**
-     * @return void
      */
-    public function testImportWithException(): void
+    public function testImportWithException()
     {
-        $this->expectException('Magento\Framework\Exception\State\InvalidTransitionException');
+        $this->expectException(\Magento\Framework\Exception\State\InvalidTransitionException::class);
         $this->expectExceptionMessage('Some error');
+
         $data = [];
         $currentData = ['current' => '2'];
 

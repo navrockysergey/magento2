@@ -18,28 +18,20 @@
             <group value="Bundle"/>
         </annotations>
         <before>
-            <actionGroup ref="AdminLoginActionGroup" stepKey="loginAsAdmin"/>
+            <actionGroup ref="LoginAsAdmin" stepKey="loginAsAdmin"/>
         </before>
         <after>
-            <!-- Delete attribute sets -->
-            <actionGroup ref="DeleteAttributeSetByLabelActionGroup" stepKey="deleteAttributeSet">
-                <argument name="label" value="{{ProductAttributeFrontendLabel.label}}"/>
-            </actionGroup>
-            <actionGroup ref="DeleteAttributeSetByLabelActionGroup" stepKey="deleteAttributeSet2">
-                <argument name="label" value="{{ProductAttributeFrontendLabelTwo.label}}"/>
-            </actionGroup>
-            <actionGroup ref="AdminClearGridFiltersActionGroup" stepKey="clearGridFilters"/>
-            <actionGroup ref="AdminLogoutActionGroup" stepKey="amOnLogoutPage"/>
+            <amOnPage url="{{AdminLogoutPage.url}}" stepKey="amOnLogoutPage"/>
         </after>
         <!--Create attribute set-->
-        <actionGroup ref="CreateDefaultAttributeSetActionGroup" stepKey="createDefaultAttributeSet">
+        <actionGroup ref="CreateDefaultAttributeSet" stepKey="createDefaultAttributeSet">
             <argument name="label" value="{{ProductAttributeFrontendLabel.label}}"/>
         </actionGroup>
 
         <!--Go to product creation page-->
-        <actionGroup ref="AdminOpenCreateBundleProductPageActionGroup" stepKey="goToBundleProductCreationPage"/>
-        <comment userInput="Comment is added to preserve the step key for backward compatibility" stepKey="waitForBundleProductCreationPage"/>
-    
+        <amOnPage url="{{AdminProductCreatePage.url(BundleProduct.set, BundleProduct.type)}}" stepKey="goToBundleProductCreationPage"/>
+        <waitForPageLoad stepKey="waitForBundleProductCreationPage"/>
+
         <!--Enable/Disable Toggle-->
         <checkOption selector="{{AdminProductFormBundleSection.enableDisableToggle}}" stepKey="clickOnEnableDisableToggle"/>
 
@@ -99,13 +91,14 @@
         <seeOptionIsSelected selector="{{AdminProductFormBundleSection.countryOfManufactureDropDown}}" userInput="Italy" stepKey="seeCountryOfManufacture"/>
 
         <!--Create second attribute set for edit-->
-        <actionGroup ref="CreateDefaultAttributeSetActionGroup" stepKey="createSecondAttributeSet">
+        <actionGroup ref="CreateDefaultAttributeSet" stepKey="createSecondAttributeSet">
             <argument name="label" value="{{ProductAttributeFrontendLabelTwo.label}}"/>
         </actionGroup>
 
         <!--Filter catalog-->
-        <actionGroup ref="AdminOpenCatalogProductPageActionGroup" stepKey="goToCatalogProductPage"/>
-        <actionGroup ref="FilterProductGridByNameActionGroup" stepKey="filterBundleProductOptionsDownToName">
+        <amOnPage url="{{AdminCatalogProductPage.url}}" stepKey="goToCatalogProductPage"/>
+        <waitForPageLoad stepKey="WaitForPageToLoad"/>
+        <actionGroup ref="filterProductGridByName" stepKey="filterBundleProductOptionsDownToName">
             <argument name="product" value="BundleProduct"/>
         </actionGroup>
         <click selector="{{AdminProductFiltersSection.attributeSetOfFirstRow(ProductAttributeFrontendLabel.label)}}" stepKey="clickAttributeSet2"/>
@@ -117,11 +110,9 @@
         <checkOption selector="{{AdminProductFormBundleSection.enableDisableToggle}}" stepKey="clickOnEnableDisableToggleAgain"/>
 
         <!--Apply Attribute Set-->
-        <actionGroup ref="AdminSelectAttributeSetOnEditProductPageActionGroup" stepKey="startEditAttrSet">
-            <argument name="attributeSet" value="{{ProductAttributeFrontendLabelTwo.label}}"/>
-        </actionGroup>
-        <comment userInput="Comment is added to preserve the step key for backward compatibility" stepKey="searchForAttrSet"/>
-        <comment userInput="Comment is added to preserve the step key for backward compatibility" stepKey="selectAttrSet"/>
+        <click selector="{{AdminProductFormSection.attributeSet}}" stepKey="startEditAttrSet"/>
+        <fillField selector="{{AdminProductFormSection.attributeSetFilter}}" userInput="{{ProductAttributeFrontendLabelTwo.label}}" stepKey="searchForAttrSet"/>
+        <click selector="{{AdminProductFormSection.attributeSetFilterResultByName(ProductAttributeFrontendLabelTwo.label)}}" stepKey="selectAttrSet"/>
 
         <!--Product name and SKU-->
         <fillField selector="{{AdminProductFormBundleSection.productName}}" userInput="{{BundleProduct.name2}}" stepKey="fillProductName"/>
@@ -152,7 +143,7 @@
         <selectOption selector="{{AdminProductFormBundleSection.countryOfManufactureDropDown}}" userInput="France" stepKey="countryOfManufactureDropDown"/>
 
         <!--Save the product-->
-        <actionGroup ref="AdminProductFormSaveActionGroup" stepKey="clickSaveButton"/>
+        <click selector="{{AdminProductFormActionSection.saveButton}}" stepKey="clickSaveButton"/>
         <seeElement selector="{{AdminCategoryMessagesSection.SuccessMessage}}" stepKey="messageYouSavedTheProductIsShown"/>
 
         <!--Verify form was filled out correctly after edit-->

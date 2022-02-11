@@ -7,7 +7,6 @@ namespace Magento\Tax\Controller\Adminhtml\Rule;
 
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\Action\Action;
-use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Tax\Model\Rate\Provider as RatesProvider;
@@ -18,7 +17,7 @@ use Magento\Tax\Model\Calculation\Rate;
  * Class AjaxLoadRates is intended to load existing
  * Tax rates as options for a select element.
  */
-class AjaxLoadRates extends Action implements HttpGetActionInterface
+class AjaxLoadRates extends Action
 {
     /**
      * @var RatesProvider
@@ -54,7 +53,7 @@ class AjaxLoadRates extends Action implements HttpGetActionInterface
     public function execute()
     {
         $ratesPage = (int) $this->getRequest()->getParam('p');
-        $ratesFilter = trim($this->getRequest()->getParam('s', ''));
+        $ratesFilter = trim($this->getRequest()->getParam('s'));
 
         try {
             if (!empty($ratesFilter)) {

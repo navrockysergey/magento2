@@ -105,13 +105,12 @@ class Generator
         $resultEntityType = null;
         $sourceClassName = null;
         foreach ($this->_generatedEntities as $entityType => $generatorClass) {
-            $suffixLen = strlen($entityType);
             $entitySuffix = ucfirst($entityType);
             // If $className string ends with $entitySuffix substring
-            if (substr_compare($className, $entitySuffix, -$suffixLen, $suffixLen) == 0) {
+            if (strrpos($className, $entitySuffix) === strlen($className) - strlen($entitySuffix)) {
                 $resultEntityType = $entityType;
                 $sourceClassName = rtrim(
-                    substr($className, 0, -$suffixLen),
+                    substr($className, 0, -1 * strlen($entitySuffix)),
                     '\\'
                 );
                 break;

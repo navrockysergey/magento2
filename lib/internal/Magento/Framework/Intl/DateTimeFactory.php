@@ -5,6 +5,10 @@
  */
 namespace Magento\Framework\Intl;
 
+/**
+ * Class DateTimeFactory
+ * @package Magento\Framework
+ */
 class DateTimeFactory
 {
     /**

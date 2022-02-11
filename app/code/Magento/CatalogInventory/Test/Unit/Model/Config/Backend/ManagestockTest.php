@@ -3,45 +3,25 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\CatalogInventory\Test\Unit\Model\Config\Backend;
 
-use Magento\CatalogInventory\Model\Config\Backend\Managestock;
-use Magento\CatalogInventory\Model\Indexer\Stock\Processor;
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-
-class ManagestockTest extends TestCase
+class ManagestockTest extends \PHPUnit\Framework\TestCase
 {
-    /**
-     * @var ScopeConfigInterface|MockObject
-     */
-    private $configMock;
-
-    /** @var  Processor|MockObject */
+    /** @var  \Magento\CatalogInventory\Model\Indexer\Stock\Processor|\PHPUnit\Framework\MockObject\MockObject */
     protected $stockIndexerProcessor;
 
-    /** @var Managestock */
+    /** @var \Magento\CatalogInventory\Model\Config\Backend\Managestock */
     protected $model;
 
     protected function setUp(): void
     {
         $this->stockIndexerProcessor = $this->getMockBuilder(
-            Processor::class
-        )->disableOriginalConstructor()
-            ->getMock();
-        $this->configMock = $this->getMockBuilder(ScopeConfigInterface::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $this->model = (new ObjectManager($this))->getObject(
-            Managestock::class,
+            \Magento\CatalogInventory\Model\Indexer\Stock\Processor::class
+        )->disableOriginalConstructor()->getMock();
+        $this->model = (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this))->getObject(
+            \Magento\CatalogInventory\Model\Config\Backend\Managestock::class,
             [
-                'config' => $this->configMock,
-                'stockIndexerProcessor' => $this->stockIndexerProcessor
+                'stockIndexerProcessor' => $this->stockIndexerProcessor,
             ]
         );
     }
@@ -68,8 +48,6 @@ class ManagestockTest extends TestCase
     {
         $this->model->setValue($newStockValue);
         $this->stockIndexerProcessor->expects($this->exactly($callCount))->method('markIndexerAsInvalid');
-        $this->configMock->method('getValue')->willReturn(0);   // old value for stock status
-
         $this->model->afterSave();
     }
 }

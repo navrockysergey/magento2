@@ -111,7 +111,8 @@ class Loader
      * </code>
      *
      * @return \Traversable
-     * @throws \Magento\Framework\Exception\FileSystemException
+     *
+     * @author Josh Di Fabio <joshdifabio@gmail.com>
      */
     private function getModuleConfigs()
     {
@@ -133,10 +134,10 @@ class Loader
     {
         ksort($origList);
         $modules = $this->prearrangeModules($origList);
-        $sequenceCache = [];
+
         $expanded = [];
         foreach (array_keys($modules) as $moduleName) {
-            $sequence = $this->expandSequence($origList, $moduleName, $sequenceCache);
+            $sequence = $this->expandSequence($origList, $moduleName);
             asort($sequence);
 
             $expanded[] = [
@@ -189,46 +190,27 @@ class Loader
     /**
      * Accumulate information about all transitive "sequence" references
      *
-     * Added a sequence cache to avoid re-computing the sequences of dependencies over and over again.
-     *
      * @param array $list
      * @param string $name
-     * @param array $sequenceCache
      * @param array $accumulated
-     * @param string $parentName
      * @return array
      * @throws \Exception
      */
-    private function expandSequence(
-        array $list,
-        string $name,
-        array& $sequenceCache,
-        array $accumulated = [],
-        string $parentName = ''
-    ) {
-        // Making sure we haven't already called the method for this module higher in the stack
-        if (isset($accumulated[$name])) {
-            throw new \LogicException("Circular sequence reference from '{$parentName}' to '{$name}'.");
-        }
+    private function expandSequence($list, $name, $accumulated = [])
+    {
         $accumulated[$name] = true;
-
-        // Checking if we already computed the full sequence for this module
-        if (!isset($sequenceCache[$name])) {
-            $sequence = $list[$name]['sequence'] ?? [];
-            $allSequences = [];
-            // Going over all immediate dependencies to gather theirs recursively
-            foreach ($sequence as $relatedName) {
-                $relatedSequence = $this->expandSequence($list, $relatedName, $sequenceCache, $accumulated, $name);
-                $allSequences[] = $relatedSequence;
+        $result = $list[$name]['sequence'];
+        $allResults = [];
+        foreach ($result as $relatedName) {
+            if (isset($accumulated[$relatedName])) {
+                throw new \LogicException("Circular sequence reference from '{$name}' to '{$relatedName}'.");
             }
-            $allSequences[] = $sequence;
-
-            // Caching the full sequence list
-            if (!empty($allSequences)) {
-                $sequenceCache[$name] = array_unique(array_merge(...$allSequences));
+            if (!isset($list[$relatedName])) {
+                continue;
             }
+            $allResults[] = $this->expandSequence($list, $relatedName, $accumulated);
         }
-
-        return $sequenceCache[$name] ?? [];
+        $allResults[] = $result;
+        return array_unique(array_merge(...$allResults));
     }
 }

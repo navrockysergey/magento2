@@ -3,49 +3,35 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\GroupedProduct\Test\Unit\Model\Product\Type\Grouped;
 
-use Magento\Catalog\Model\Product;
-use Magento\Catalog\Model\Product\Option;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use Magento\GroupedProduct\Model\Product\Type\Grouped;
-use Magento\GroupedProduct\Model\Product\Type\Grouped\Price;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-
-class PriceTest extends TestCase
+class PriceTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var Price
+     * @var \Magento\GroupedProduct\Model\Product\Type\Grouped\Price
      */
     protected $finalPriceModel;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $productMock;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
-        $this->productMock = $this->createMock(Product::class);
+        $this->productMock = $this->createMock(\Magento\Catalog\Model\Product::class);
 
-        $helper = new ObjectManager($this);
+        $helper = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
         $this->finalPriceModel = $helper->getObject(
-            Price::class,
+            \Magento\GroupedProduct\Model\Product\Type\Grouped\Price::class,
             []
         );
     }
 
     /**
-     * @return void
      * @covers \Magento\GroupedProduct\Model\Product\Type\Grouped\Price::getFinalPrice
      */
-    public function testGetFinalPriceIfQtyIsNullAndFinalPriceExist(): void
+    public function testGetFinalPriceIfQtyIsNullAndFinalPriceExist()
     {
         $finalPrice = 15;
 
@@ -68,7 +54,6 @@ class PriceTest extends TestCase
      * @param $expectedPriceCall
      * @param $expectedFinalPrice
      *
-     * @return void
      * @dataProvider getFinalPriceDataProvider
      * @covers \Magento\GroupedProduct\Model\Product\Type\Grouped\Price::getFinalPrice
      */
@@ -77,8 +62,9 @@ class PriceTest extends TestCase
         array $options,
         $expectedPriceCall,
         $expectedFinalPrice
-    ): void {
+    ) {
         $rawFinalPrice = 10;
+        $rawPriceCheckStep = 5;
 
         $this->productMock->expects(
             $this->any()
@@ -91,21 +77,17 @@ class PriceTest extends TestCase
         //mock for parent::getFinal price call
         $this->productMock->expects($this->any())->method('getPrice')->willReturn($rawFinalPrice);
 
-        $this->productMock
-            ->method('setFinalPrice')
-            ->withConsecutive([], [], [], [], [], [$rawFinalPrice])
-            ->willReturnOnConsecutiveCalls(null, null, null, null, null, $this->productMock);
+        $this->productMock->expects(
+            $this->at($rawPriceCheckStep)
+        )->method(
+            'setFinalPrice'
+        )->with(
+            $rawFinalPrice
+        )->willReturn(
+            $this->productMock
+        );
 
-        $expectedPriceCallWithArgs = [];
-
-        for ($index = 0; $index < $expectedPriceCall; $index++) {
-            $expectedPriceCallWithArgs[] = [];
-        }
-        $expectedPriceCallWithArgs[] = [$expectedFinalPrice];
-
-        $this->productMock
-            ->method('setFinalPrice')
-            ->withConsecutive(...$expectedPriceCallWithArgs);
+        $this->productMock->expects($this->at($expectedPriceCall))->method('setFinalPrice')->with($expectedFinalPrice);
 
         $this->productMock->expects(
             $this->any()
@@ -120,7 +102,7 @@ class PriceTest extends TestCase
         //test method
         $this->productMock->expects($this->once())->method('hasCustomOptions')->willReturn(true);
 
-        $productTypeMock = $this->createMock(Grouped::class);
+        $productTypeMock = $this->createMock(\Magento\GroupedProduct\Model\Product\Type\Grouped::class);
 
         $this->productMock->expects(
             $this->once()
@@ -159,17 +141,13 @@ class PriceTest extends TestCase
     }
 
     /**
-     * Data provider for testGetFinalPrice.
+     * Data provider for testGetFinalPrice
      *
      * @return array
      */
-    public function getFinalPriceDataProvider(): array
+    public function getFinalPriceDataProvider()
     {
-        $optionMock = $this->getMockBuilder(Option::class)
-            ->addMethods(['getValue'])
-            ->onlyMethods(['__wakeup'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        $optionMock = $this->createPartialMock(\Magento\Catalog\Model\Product\Option::class, ['getValue', '__wakeup']);
         /* quantity of options */
         $optionMock->expects($this->any())->method('getValue')->willReturn(5);
 
@@ -178,36 +156,35 @@ class PriceTest extends TestCase
                 'associatedProducts' => [],
                 'options' => [[], []],
                 'expectedPriceCall' => 5, /* product call number to check final price formed correctly */
-                'expectedFinalPrice' => 10 /* 10(product price) + 2(options count) * 5(qty) * 5(option price) */
+                'expectedFinalPrice' => 10, /* 10(product price) + 2(options count) * 5(qty) * 5(option price) */
             ],
             'custom_option_exist' => [
                 'associatedProducts' => $this->generateAssociatedProducts(),
                 'options' => [
                     ['associated_product_1', false],
                     ['associated_product_2', $optionMock],
-                    ['associated_product_3', $optionMock]
+                    ['associated_product_3', $optionMock],
                 ],
                 'expectedPriceCall' => 15, /* product call number to check final price formed correctly */
-                'expectedFinalPrice' => 35 /* 10(product price) + 2(options count) * 5(qty) * 5(option price) */
+                'expectedFinalPrice' => 35, /* 10(product price) + 2(options count) * 5(qty) * 5(option price) */
             ]
         ];
     }
 
     /**
-     * Generate associated product for every custom option.
+     * Generate associated product for every custom option
      *
      * @return array
      */
-    protected function generateAssociatedProducts(): array
+    protected function generateAssociatedProducts()
     {
         $childProductMock = $this->createPartialMock(
-            Product::class,
+            \Magento\Catalog\Model\Product::class,
             ['getId', 'getFinalPrice', '__wakeup']
         );
         /* price for option taking into account quantity discounts */
         $childProductMock->expects($this->any())->method('getFinalPrice')->with(5)->willReturn(5);
 
-        $associatedProducts = [];
         for ($i = 0; $i <= 2; $i++) {
             $childProduct = clone $childProductMock;
             $childProduct->expects($this->once())->method('getId')->willReturn($i);

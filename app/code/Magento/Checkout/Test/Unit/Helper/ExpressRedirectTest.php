@@ -3,100 +3,84 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Checkout\Test\Unit\Helper;
 
-use Magento\Checkout\Controller\Express\RedirectLoginInterface;
-use Magento\Checkout\Helper\ExpressRedirect;
-use Magento\Customer\Model\Session;
-use Magento\Framework\App\ActionFlag;
-use Magento\Framework\App\Helper\Context;
-use Magento\Framework\App\Response\Http;
-use Magento\Framework\ObjectManagerInterface;
-use Magento\Framework\Url\Helper\Data;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-
-class ExpressRedirectTest extends TestCase
+class ExpressRedirectTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
-    protected $actionFlag;
+    protected $_actionFlag;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
-    protected $objectManager;
+    protected $_objectManager;
 
     /**
-     * @var MockObject
+     * Customer session
+     *
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
-    protected $customerSession;
+    protected $_customerSession;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
-    protected $context;
+    protected $_context;
 
     /**
-     * @var ExpressRedirect
+     * @var \Magento\Checkout\Helper\ExpressRedirect
      */
-    protected $helper;
+    protected $_helper;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
-        $this->actionFlag = $this->getMockBuilder(ActionFlag::class)
+        $this->_actionFlag = $this->getMockBuilder(
+            \Magento\Framework\App\ActionFlag::class
+        )->disableOriginalConstructor()->setMethods(
+            ['set']
+        )->getMock();
+
+        $this->_objectManager = $this->createMock(\Magento\Framework\ObjectManagerInterface::class);
+
+        $this->_customerSession = $this->getMockBuilder(
+            \Magento\Customer\Model\Session::class
+        )->disableOriginalConstructor()->setMethods(
+            ['setBeforeAuthUrl']
+        )->getMock();
+
+        $this->_context = $this->getMockBuilder(\Magento\Framework\App\Helper\Context::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['set'])
             ->getMock();
 
-        $this->objectManager = $this->getMockForAbstractClass(ObjectManagerInterface::class);
-
-        $this->customerSession = $this->getMockBuilder(Session::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['setBeforeAuthUrl'])->getMock();
-
-        $this->context = $this->getMockBuilder(Context::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $this->helper = new ExpressRedirect(
-            $this->actionFlag,
-            $this->objectManager,
-            $this->customerSession,
-            $this->context
+        $this->_helper = new \Magento\Checkout\Helper\ExpressRedirect(
+            $this->_actionFlag,
+            $this->_objectManager,
+            $this->_customerSession,
+            $this->_context
         );
     }
 
     /**
+     * @dataProvider redirectLoginDataProvider
      * @param array $actionFlagList
      * @param string|null $customerBeforeAuthUrl
      * @param string|null $customerBeforeAuthUrlDefault
-     *
-     * @return void
-     * @dataProvider redirectLoginDataProvider
      */
-    public function testRedirectLogin(
-        array $actionFlagList,
-        ?string $customerBeforeAuthUrl,
-        ?string $customerBeforeAuthUrlDefault
-    ): void {
-        $expressRedirectMock = $this->getMockBuilder(RedirectLoginInterface::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(
-                [
-                    'getActionFlagList',
-                    'getResponse',
-                    'getCustomerBeforeAuthUrl',
-                    'getLoginUrl',
-                    'getRedirectActionName'
-                ]
-            )->getMock();
+    public function testRedirectLogin($actionFlagList, $customerBeforeAuthUrl, $customerBeforeAuthUrlDefault)
+    {
+        $expressRedirectMock = $this->getMockBuilder(
+            \Magento\Checkout\Controller\Express\RedirectLoginInterface::class
+        )->disableOriginalConstructor()->setMethods(
+            [
+                'getActionFlagList',
+                'getResponse',
+                'getCustomerBeforeAuthUrl',
+                'getLoginUrl',
+                'getRedirectActionName',
+            ]
+        )->getMock();
         $expressRedirectMock->expects(
             $this->any()
         )->method(
@@ -104,15 +88,13 @@ class ExpressRedirectTest extends TestCase
         )->willReturn(
             $actionFlagList
         );
-        $actionFlagList = array_merge(['no-dispatch' => true], $actionFlagList);
-        $withArgs = [];
 
+        $atIndex = 0;
+        $actionFlagList = array_merge(['no-dispatch' => true], $actionFlagList);
         foreach ($actionFlagList as $actionKey => $actionFlag) {
-            $withArgs[] = ['', $actionKey, $actionFlag];
+            $this->_actionFlag->expects($this->at($atIndex))->method('set')->with('', $actionKey, $actionFlag);
+            $atIndex++;
         }
-        $this->actionFlag
-            ->method('set')
-            ->withConsecutive(...$withArgs);
 
         $expectedLoginUrl = 'loginURL';
         $expressRedirectMock->expects(
@@ -123,9 +105,11 @@ class ExpressRedirectTest extends TestCase
             $expectedLoginUrl
         );
 
-        $urlMock = $this->getMockBuilder(Data::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['addRequestParam'])->getMock();
+        $urlMock = $this->getMockBuilder(
+            \Magento\Framework\Url\Helper\Data::class
+        )->disableOriginalConstructor()->setMethods(
+            ['addRequestParam']
+        )->getMock();
         $urlMock->expects(
             $this->once()
         )->method(
@@ -137,19 +121,21 @@ class ExpressRedirectTest extends TestCase
             $expectedLoginUrl
         );
 
-        $this->objectManager->expects(
+        $this->_objectManager->expects(
             $this->once()
         )->method(
             'get'
         )->with(
-            Data::class
+            \Magento\Framework\Url\Helper\Data::class
         )->willReturn(
             $urlMock
         );
 
-        $responseMock = $this->getMockBuilder(Http::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['setRedirect'])->getMock();
+        $responseMock = $this->getMockBuilder(
+            \Magento\Framework\App\Response\Http::class
+        )->disableOriginalConstructor()->setMethods(
+            ['setRedirect', '__wakeup']
+        )->getMock();
         $responseMock->expects($this->once())->method('setRedirect')->with($expectedLoginUrl);
 
         $expressRedirectMock->expects($this->once())->method('getResponse')->willReturn($responseMock);
@@ -163,9 +149,8 @@ class ExpressRedirectTest extends TestCase
         );
         $expectedCustomerBeforeAuthUrl = $customerBeforeAuthUrl !== null
         ? $customerBeforeAuthUrl : $customerBeforeAuthUrlDefault;
-
         if ($expectedCustomerBeforeAuthUrl) {
-            $this->customerSession->expects(
+            $this->_customerSession->expects(
                 $this->once()
             )->method(
                 'setBeforeAuthUrl'
@@ -173,15 +158,14 @@ class ExpressRedirectTest extends TestCase
                 $expectedCustomerBeforeAuthUrl
             );
         }
-        $this->helper->redirectLogin($expressRedirectMock, $customerBeforeAuthUrlDefault);
+        $this->_helper->redirectLogin($expressRedirectMock, $customerBeforeAuthUrlDefault);
     }
 
     /**
-     * Data provider.
-     *
+     * Data provider
      * @return array
      */
-    public function redirectLoginDataProvider(): array
+    public function redirectLoginDataProvider()
     {
         return [
             [[], 'beforeCustomerUrl', 'beforeCustomerUrlDEFAULT'],

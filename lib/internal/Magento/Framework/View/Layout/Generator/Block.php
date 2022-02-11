@@ -12,7 +12,7 @@ use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Layout;
 
 /**
- * The block of the layout generator
+ * Class Block
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class Block implements Layout\GeneratorInterface
@@ -299,8 +299,7 @@ class Block implements Layout\GeneratorInterface
         $profilerKey = 'BLOCK_ACTION:' . $block->getNameInLayout() . '>' . $methodName;
         \Magento\Framework\Profiler::start($profilerKey);
         $args = $this->evaluateArguments($actionArguments);
-        // The `array_values` is a workaround to ensure the same behavior in PHP 7 and 8.
-        call_user_func_array([$block, $methodName], array_values($args));
+        call_user_func_array([$block, $methodName], $args);
         \Magento\Framework\Profiler::stop($profilerKey);
     }
 

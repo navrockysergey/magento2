@@ -17,7 +17,6 @@ use Magento\ConfigurableProduct\Model\Product\Type\Collection\SalableProcessor;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\EntityManager\MetadataPool;
 use Magento\Framework\Api\SearchCriteriaBuilder;
-use Magento\Framework\File\UploaderFactory;
 
 /**
  * Configurable product type implementation
@@ -36,7 +35,7 @@ class Configurable extends \Magento\Catalog\Model\Product\Type\AbstractType
     /**
      * Product type code
      */
-    public const TYPE_CODE = 'configurable';
+    const TYPE_CODE = 'configurable';
 
     /**
      * Cache key for Used Product Attribute Ids
@@ -104,45 +103,50 @@ class Configurable extends \Magento\Catalog\Model\Product\Type\AbstractType
     protected $_canConfigure = true;
 
     /**
-     * Local cache
-     *
-     * @var array
-     * @since 100.4.0
-     */
-    protected $isSaleableBySku = [];
-
-    /**
      * @var \Magento\Framework\App\Config\ScopeConfigInterface
      */
     protected $_scopeConfig;
 
     /**
+     * Catalog product type configurable
+     *
      * @var \Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable
      */
     protected $_catalogProductTypeConfigurable;
 
     /**
-     * @var \Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable\Attribute\CollectionFactory
+     * Attribute collection factory
+     *
+     * @var
+     * \Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable\Attribute\CollectionFactory
      */
     protected $_attributeCollectionFactory;
 
     /**
+     * Product collection factory
+     *
      * @var \Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable\Product\CollectionFactory
      */
     protected $_productCollectionFactory;
 
     /**
+     * Configurable attribute factory
+     *
      * @var \Magento\ConfigurableProduct\Model\Product\Type\Configurable\AttributeFactory
      * @since 100.1.0
      */
     protected $configurableAttributeFactory;
 
     /**
+     * Eav attribute factory
+     *
      * @var \Magento\Catalog\Model\ResourceModel\Eav\AttributeFactory
      */
     protected $_eavAttributeFactory;
 
     /**
+     * Type configurable factory
+     *
      * @var \Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\ConfigurableFactory
      * @since 100.1.0
      */
@@ -179,6 +183,8 @@ class Configurable extends \Magento\Catalog\Model\Product\Type\AbstractType
     private $customerSession;
 
     /**
+     * Product factory
+     *
      * @var ProductInterfaceFactory
      */
     private $productFactory;
@@ -221,12 +227,11 @@ class Configurable extends \Magento\Catalog\Model\Product\Type\AbstractType
      * @param \Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface $extensionAttributesJoinProcessor
      * @param \Magento\Framework\Cache\FrontendInterface|null $cache
      * @param \Magento\Customer\Model\Session|null $customerSession
-     * @param \Magento\Framework\Serialize\Serializer\Json|null $serializer
-     * @param ProductInterfaceFactory|null $productFactory
-     * @param SalableProcessor|null $salableProcessor
+     * @param \Magento\Framework\Serialize\Serializer\Json $serializer
+     * @param ProductInterfaceFactory $productFactory
+     * @param SalableProcessor $salableProcessor
      * @param ProductAttributeRepositoryInterface|null $productAttributeRepository
      * @param SearchCriteriaBuilder|null $searchCriteriaBuilder
-     * @param UploaderFactory|null $uploaderFactory
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
@@ -253,8 +258,7 @@ class Configurable extends \Magento\Catalog\Model\Product\Type\AbstractType
         ProductInterfaceFactory $productFactory = null,
         SalableProcessor $salableProcessor = null,
         ProductAttributeRepositoryInterface $productAttributeRepository = null,
-        SearchCriteriaBuilder $searchCriteriaBuilder = null,
-        UploaderFactory $uploaderFactory = null
+        SearchCriteriaBuilder $searchCriteriaBuilder = null
     ) {
         $this->typeConfigurableFactory = $typeConfigurableFactory;
         $this->_eavAttributeFactory = $eavAttributeFactory;
@@ -283,8 +287,7 @@ class Configurable extends \Magento\Catalog\Model\Product\Type\AbstractType
             $coreRegistry,
             $logger,
             $productRepository,
-            $serializer,
-            $uploaderFactory
+            $serializer
         );
     }
 
@@ -581,9 +584,8 @@ class Configurable extends \Magento\Catalog\Model\Product\Type\AbstractType
      *
      * @param  \Magento\Catalog\Model\Product $product
      * @return \Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable\Product\Collection
-     * @since 100.4.0
      */
-    protected function getLinkedProductCollection($product)
+    public function getUsedProductCollection($product)
     {
         $collection = $this->_productCollectionFactory->create()->setFlag(
             'product_children',
@@ -596,17 +598,6 @@ class Configurable extends \Magento\Catalog\Model\Product\Type\AbstractType
         }
 
         return $collection;
-    }
-
-    /**
-     * Retrieve related products collection. Extension point for listing
-     *
-     * @param  \Magento\Catalog\Model\Product $product
-     * @return \Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable\Product\Collection
-     */
-    public function getUsedProductCollection($product)
-    {
-        return $this->getLinkedProductCollection($product);
     }
 
     /**
@@ -753,29 +744,14 @@ class Configurable extends \Magento\Catalog\Model\Product\Type\AbstractType
      */
     public function isSalable($product)
     {
-        $storeId = $this->getStoreFilter($product);
-        if ($storeId instanceof \Magento\Store\Model\Store) {
-            $storeId = $storeId->getId();
-        }
-        if ($storeId === null && $product->getStoreId()) {
-            $storeId = $product->getStoreId();
-        }
-
-        $sku = $product->getSku();
-        if (isset($this->isSaleableBySku[$storeId][$sku])) {
-            return $this->isSaleableBySku[$storeId][$sku];
-        }
-
         $salable = parent::isSalable($product);
 
         if ($salable !== false) {
-            $collection = $this->getLinkedProductCollection($product);
-            $collection->addStoreFilter($storeId);
+            $collection = $this->getUsedProductCollection($product);
+            $collection->addStoreFilter($this->getStoreFilter($product));
             $collection = $this->salableProcessor->process($collection);
             $salable = 0 !== $collection->getSize();
         }
-
-        $this->isSaleableBySku[$storeId][$sku] = $salable;
 
         return $salable;
     }

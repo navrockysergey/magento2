@@ -147,7 +147,7 @@ class Store extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
             )->where(
                 $connection->quoteInto('group_id=?', $model->getOriginalGroupId())
             );
-            $storeId = $connection->fetchOne($select);
+            $storeId = $connection->fetchOne($select, 'default_store_id');
 
             if ($storeId == $model->getId()) {
                 $bind = ['default_store_id' => \Magento\Store\Model\Store::DEFAULT_STORE_ID];

@@ -195,7 +195,6 @@ class PatchRegistry implements \IteratorAggregate
      *
      * @return \ArrayIterator
      */
-    #[\ReturnTypeWillChange]
     public function getIterator()
     {
         if ($this->iterator === null) {

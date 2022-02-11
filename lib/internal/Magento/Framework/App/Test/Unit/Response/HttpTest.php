@@ -3,30 +3,18 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
 
 namespace Magento\Framework\App\Test\Unit\Response;
 
-use Magento\Framework\App\Http\Context;
-use Magento\Framework\App\ObjectManager as AppObjectManager;
-use Magento\Framework\App\Request\Http as RequestHttp;
 use Magento\Framework\App\Response\Http;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Framework\Session\Config\ConfigInterface;
 use Magento\Framework\Stdlib\Cookie\CookieMetadata;
-use Magento\Framework\Stdlib\Cookie\CookieMetadataFactory;
-use Magento\Framework\Stdlib\Cookie\SensitiveCookieMetadata;
-use Magento\Framework\Stdlib\CookieManagerInterface;
-use Magento\Framework\Stdlib\DateTime;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class HttpTest extends TestCase
+class HttpTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var Http
@@ -34,37 +22,37 @@ class HttpTest extends TestCase
     protected $model;
 
     /**
-     * @var CookieManagerInterface|MockObject
+     * @var \Magento\Framework\Stdlib\CookieManagerInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $cookieManagerMock;
 
     /**
-     * @var CookieMetadataFactory|MockObject
+     * @var \Magento\Framework\Stdlib\Cookie\CookieMetadataFactory|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $cookieMetadataFactoryMock;
 
     /**
-     * @var Context|MockObject
+     * @var \Magento\Framework\App\Http\Context|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $contextMock;
 
     /**
-     * @var Context|MockObject
+     * @var \Magento\Framework\App\Http\Context|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $dateTimeMock;
 
     /**
-     * @var RequestHttp|MockObject
+     * @var \Magento\Framework\App\Request\Http|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $requestMock;
 
     /**
-     * @var ObjectManager
+     * @var \Magento\Framework\TestFramework\Unit\Helper\ObjectManager
      */
     protected $objectManager;
 
     /**
-     * @var ConfigInterface|MockObject
+     * @var ConfigInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $sessionConfigMock;
 
@@ -78,22 +66,20 @@ class HttpTest extends TestCase
      */
     protected function setUp(): void
     {
-        $this->objectManager = new ObjectManager($this);
-        $this->requestMock = $this->getMockBuilder(RequestHttp::class)
-            ->onlyMethods(['get'])
+        $this->objectManager = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
+        $this->requestMock = $this->getMockBuilder(\Magento\Framework\App\Request\Http::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->cookieMetadataFactoryMock = $this->getMockBuilder(CookieMetadataFactory::class)
-            ->addMethods(['get'])
-            ->onlyMethods(['createSensitiveCookieMetadata'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->cookieManagerMock = $this->getMockForAbstractClass(CookieManagerInterface::class);
-        $this->contextMock = $this->getMockBuilder(Context::class)
-            ->disableOriginalConstructor()
+        $this->cookieMetadataFactoryMock = $this->getMockBuilder(
+            \Magento\Framework\Stdlib\Cookie\CookieMetadataFactory::class
+        )->disableOriginalConstructor()->getMock();
+        $this->cookieManagerMock = $this->createMock(\Magento\Framework\Stdlib\CookieManagerInterface::class);
+        $this->contextMock = $this->getMockBuilder(
+            \Magento\Framework\App\Http\Context::class
+        )->disableOriginalConstructor()
             ->getMock();
 
-        $this->dateTimeMock = $this->getMockBuilder(DateTime::class)
+        $this->dateTimeMock = $this->getMockBuilder(\Magento\Framework\Stdlib\DateTime::class)
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -102,14 +88,14 @@ class HttpTest extends TestCase
             ->getMockForAbstractClass();
 
         $this->model = $this->objectManager->getObject(
-            Http::class,
+            \Magento\Framework\App\Response\Http::class,
             [
                 'request' => $this->requestMock,
                 'cookieManager' => $this->cookieManagerMock,
                 'cookieMetadataFactory' => $this->cookieMetadataFactoryMock,
                 'context' => $this->contextMock,
                 'dateTime' => $this->dateTimeMock,
-                'sessionConfig' => $this->sessionConfigMock
+                'sessionConfig' => $this->sessionConfigMock,
             ]
         );
         $this->model->headersSentThrowsException = false;
@@ -122,26 +108,24 @@ class HttpTest extends TestCase
     protected function tearDown(): void
     {
         unset($this->model);
-        /** @var ObjectManagerInterface|MockObject $objectManagerMock*/
-        $objectManagerMock = $this->getMockForAbstractClass(ObjectManagerInterface::class);
-        AppObjectManager::setInstance($objectManagerMock);
+        /** @var ObjectManagerInterface|\PHPUnit\Framework\MockObject\MockObject $objectManagerMock*/
+        $objectManagerMock = $this->createMock(\Magento\Framework\ObjectManagerInterface::class);
+        \Magento\Framework\App\ObjectManager::setInstance($objectManagerMock);
     }
 
-    /**
-     * @return void
-     */
-    public function testSendVary(): void
+    public function testSendVary()
     {
         $expectedCookieName = Http::COOKIE_VARY_STRING;
         $expectedCookieValue = 'SHA1 Serialized String';
         $sensitiveCookieMetadataMock = $this->getMockBuilder(
-            SensitiveCookieMetadata::class
+            \Magento\Framework\Stdlib\Cookie\SensitiveCookieMetadata::class
         )
             ->disableOriginalConstructor()
             ->getMock();
         $sensitiveCookieMetadataMock->expects($this->once())
             ->method('setPath')
-            ->with('/')->willReturnSelf();
+            ->with('/')
+            ->willReturnSelf();
 
         $this->contextMock->expects($this->once())
             ->method('getVaryString')
@@ -167,16 +151,14 @@ class HttpTest extends TestCase
         $this->model->sendVary();
     }
 
-    /**
-     * @return void
-     */
-    public function testSendVaryEmptyDataDeleteCookie(): void
+    public function testSendVaryEmptyDataDeleteCookie()
     {
         $expectedCookieName = Http::COOKIE_VARY_STRING;
-        $cookieMetadataMock = $this->createMock(CookieMetadata::class);
+        $cookieMetadataMock = $this->createMock(\Magento\Framework\Stdlib\Cookie\CookieMetadata::class);
         $cookieMetadataMock->expects($this->once())
             ->method('setPath')
-            ->with('/')->willReturnSelf();
+            ->with('/')
+            ->willReturnSelf();
         $this->contextMock->expects($this->once())
             ->method('getVaryString')
             ->willReturn(null);
@@ -192,10 +174,7 @@ class HttpTest extends TestCase
         $this->model->sendVary();
     }
 
-    /**
-     * @return void
-     */
-    public function testSendVaryEmptyData(): void
+    public function testSendVaryEmptyData()
     {
         $this->contextMock->expects($this->once())
             ->method('getVaryString')
@@ -209,11 +188,9 @@ class HttpTest extends TestCase
     }
 
     /**
-     * Test setting public cache headers.
-     *
-     * @return void
+     * Test setting public cache headers
      */
-    public function testSetPublicHeaders(): void
+    public function testSetPublicHeaders()
     {
         $ttl = 120;
         $timestamp = 1000000;
@@ -237,11 +214,9 @@ class HttpTest extends TestCase
     }
 
     /**
-     * Test for setting public headers without time to live parameter.
-     *
-     * @return void
+     * Test for setting public headers without time to live parameter
      */
-    public function testSetPublicHeadersWithoutTtl(): void
+    public function testSetPublicHeadersWithoutTtl()
     {
         $this->expectException('InvalidArgumentException');
         $this->expectExceptionMessage('Time to live is a mandatory parameter for set public headers');
@@ -249,11 +224,9 @@ class HttpTest extends TestCase
     }
 
     /**
-     * Test setting public cache headers.
-     *
-     * @return void
+     * Test setting public cache headers
      */
-    public function testSetPrivateHeaders(): void
+    public function testSetPrivateHeaders()
     {
         $ttl = 120;
         $timestamp = 1000000;
@@ -277,11 +250,9 @@ class HttpTest extends TestCase
     }
 
     /**
-     * Test for setting public headers without time to live parameter.
-     *
-     * @return void
+     * Test for setting public headers without time to live parameter
      */
-    public function testSetPrivateHeadersWithoutTtl(): void
+    public function testSetPrivateHeadersWithoutTtl()
     {
         $this->expectException('InvalidArgumentException');
         $this->expectExceptionMessage('Time to live is a mandatory parameter for set private headers');
@@ -289,11 +260,9 @@ class HttpTest extends TestCase
     }
 
     /**
-     * Test setting public cache headers.
-     *
-     * @return void
+     * Test setting public cache headers
      */
-    public function testSetNoCacheHeaders(): void
+    public function testSetNoCacheHeaders()
     {
         $timestamp = 1000000;
         $pragma = 'no-cache';
@@ -316,27 +285,26 @@ class HttpTest extends TestCase
     }
 
     /**
-     * Test setting body in JSON format.
-     *
-     * @return void
+     * Test setting body in JSON format
      */
-    public function testRepresentJson(): void
+    public function testRepresentJson()
     {
         $this->model->setHeader('Content-Type', 'text/javascript');
         $this->model->representJson('json_string');
         $this->assertEquals('application/json', $this->model->getHeader('Content-Type')->getFieldValue());
-        $this->assertEquals('json_string', $this->model->getBody());
+        $this->assertEquals('json_string', $this->model->getBody('default'));
     }
 
     /**
-     * @return void
+     *
      */
-    public function testWakeUpWithException(): void
+    public function testWakeUpWithException()
     {
-        $this->expectException('RuntimeException');
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('ObjectManager isn\'t initialized');
+
         /* ensure that the test preconditions are met */
-        $objectManagerClass = new ReflectionClass(AppObjectManager::class);
+        $objectManagerClass = new \ReflectionClass(\Magento\Framework\App\ObjectManager::class);
         $instanceProperty = $objectManagerClass->getProperty('_instance');
         $instanceProperty->setAccessible(true);
         $instanceProperty->setValue(null);
@@ -349,29 +317,25 @@ class HttpTest extends TestCase
     /**
      * Test for the magic method __wakeup
      *
-     * @return void
      * @covers \Magento\Framework\App\Response\Http::__wakeup
      */
-    public function testWakeUpWith(): void
+    public function testWakeUpWith()
     {
-        $objectManagerMock = $this->createMock(AppObjectManager::class);
+        $objectManagerMock = $this->createMock(\Magento\Framework\App\ObjectManager::class);
         $objectManagerMock->expects($this->once())
             ->method('create')
-            ->with(CookieManagerInterface::class)
+            ->with(\Magento\Framework\Stdlib\CookieManagerInterface::class)
             ->willReturn($this->cookieManagerMock);
-        $this->cookieMetadataFactoryMock
+        $objectManagerMock->expects($this->at(1))
             ->method('get')
-            ->with(CookieMetadataFactory::class)
+            ->with(\Magento\Framework\Stdlib\Cookie\CookieMetadataFactory::class)
             ->willReturn($this->cookieMetadataFactoryMock);
 
-        AppObjectManager::setInstance($objectManagerMock);
+        \Magento\Framework\App\ObjectManager::setInstance($objectManagerMock);
         $this->model->__wakeup();
     }
 
-    /**
-     * @return void
-     */
-    public function testSetXFrameOptions(): void
+    public function testSetXFrameOptions()
     {
         $value = 'DENY';
         $this->model->setXFrameOptions($value);

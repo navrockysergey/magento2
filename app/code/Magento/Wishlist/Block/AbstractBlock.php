@@ -224,7 +224,7 @@ abstract class AbstractBlock extends \Magento\Catalog\Block\Product\AbstractProd
      */
     public function hasDescription($item)
     {
-        return is_string($item->getDescription()) && trim($item->getDescription()) !== '';
+        return trim($item->getDescription()) != '';
     }
 
     /**

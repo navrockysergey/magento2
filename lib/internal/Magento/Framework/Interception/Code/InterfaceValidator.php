@@ -5,36 +5,30 @@
  */
 namespace Magento\Framework\Interception\Code;
 
-use Magento\Framework\Code\Reader\ArgumentsReader;
 use Magento\Framework\Exception\ValidatorException;
-use Magento\Framework\GetParameterClassTrait;
 use Magento\Framework\Phrase;
-use ReflectionParameter;
 
-/**
- * @SuppressWarnings(PHPMD.NPathComplexity)
- */
 class InterfaceValidator
 {
-    use GetParameterClassTrait;
+    const METHOD_BEFORE = 'before';
 
-    public const METHOD_BEFORE = 'before';
-    public const METHOD_AROUND = 'around';
-    public const METHOD_AFTER = 'after';
+    const METHOD_AROUND = 'around';
+
+    const METHOD_AFTER = 'after';
 
     /**
      * Arguments reader model
      *
-     * @var ArgumentsReader
+     * @var \Magento\Framework\Code\Reader\ArgumentsReader
      */
     protected $_argumentsReader;
 
     /**
-     * @param ArgumentsReader $argumentsReader
+     * @param \Magento\Framework\Code\Reader\ArgumentsReader $argumentsReader
      */
-    public function __construct(ArgumentsReader $argumentsReader = null)
+    public function __construct(\Magento\Framework\Code\Reader\ArgumentsReader $argumentsReader = null)
     {
-        $this->_argumentsReader = $argumentsReader ?? new ArgumentsReader();
+        $this->_argumentsReader = $argumentsReader ?: new \Magento\Framework\Code\Reader\ArgumentsReader();
     }
 
     /**
@@ -56,7 +50,7 @@ class InterfaceValidator
         $type = new \ReflectionClass($interceptedType);
 
         foreach ($plugin->getMethods(\ReflectionMethod::IS_PUBLIC) as $pluginMethod) {
-            /** @var \ReflectionMethod $pluginMethod */
+            /** @var  $pluginMethod \ReflectionMethod */
             $originMethodName = $this->getOriginMethodName($pluginMethod->getName());
             if ($originMethodName === null) {
                 continue;
@@ -69,11 +63,19 @@ class InterfaceValidator
                     )
                 );
             }
+            $originMethod = $type->getMethod($originMethodName);
 
             $pluginMethodParameters = $this->getMethodParameters($pluginMethod);
+            $originMethodParameters = $this->getMethodParameters($originMethod);
+
+            $methodType = $this->getMethodType($pluginMethod->getName());
+
             $subject = array_shift($pluginMethodParameters);
-            if ($subject['type'] === null
-                || !$this->_argumentsReader->isCompatibleType($subject['type'], $interceptedType)) {
+            if (!$this->_argumentsReader->isCompatibleType(
+                $subject['type'],
+                $interceptedType
+            ) || $subject['type'] === null
+            ) {
                 throw new ValidatorException(
                     new Phrase(
                         'Invalid [%1] $%2 type in %3::%4. It must be compatible with %5',
@@ -82,50 +84,45 @@ class InterfaceValidator
                 );
             }
 
-            $originMethod = $type->getMethod($originMethodName);
-            $originMethodParameters = $this->getMethodParameters($originMethod);
-            $methodType = $this->getMethodType($pluginMethod->getName());
-
-            if (self::METHOD_AFTER === $methodType && count($pluginMethodParameters) > 1) {
-                // remove result
-                array_shift($pluginMethodParameters);
-                $matchedParameters = array_intersect_key($originMethodParameters, $pluginMethodParameters);
-                $this->validateMethodsParameters(
-                    $pluginMethodParameters,
-                    $matchedParameters,
-                    $pluginClass,
-                    $pluginMethod->getName()
-                );
-                continue;
-            }
-
-            if (self::METHOD_BEFORE === $methodType) {
-                $this->validateMethodsParameters(
-                    $pluginMethodParameters,
-                    $originMethodParameters,
-                    $pluginClass,
-                    $pluginMethod->getName()
-                );
-                continue;
-            }
-
-            if (self::METHOD_AROUND === $methodType) {
-                $proceed = array_shift($pluginMethodParameters);
-                if (!$this->_argumentsReader->isCompatibleType($proceed['type'], '\\Closure')) {
-                    throw new ValidatorException(
-                        new Phrase(
-                            'Invalid [%1] $%2 type in %3::%4. It must be compatible with \\Closure',
-                            [$proceed['type'], $proceed['name'], $pluginClass, $pluginMethod->getName()]
-                        )
+            switch ($methodType) {
+                case self::METHOD_BEFORE:
+                    $this->validateMethodsParameters(
+                        $pluginMethodParameters,
+                        $originMethodParameters,
+                        $pluginClass,
+                        $pluginMethod->getName()
                     );
-                }
-                $this->validateMethodsParameters(
-                    $pluginMethodParameters,
-                    $originMethodParameters,
-                    $pluginClass,
-                    $pluginMethod->getName()
-                );
-                continue;
+                    break;
+                case self::METHOD_AROUND:
+                    $proceed = array_shift($pluginMethodParameters);
+                    if (!$this->_argumentsReader->isCompatibleType($proceed['type'], '\\Closure')) {
+                        throw new ValidatorException(
+                            new Phrase(
+                                'Invalid [%1] $%2 type in %3::%4. It must be compatible with \\Closure',
+                                [$proceed['type'], $proceed['name'], $pluginClass, $pluginMethod->getName()]
+                            )
+                        );
+                    }
+                    $this->validateMethodsParameters(
+                        $pluginMethodParameters,
+                        $originMethodParameters,
+                        $pluginClass,
+                        $pluginMethod->getName()
+                    );
+                    break;
+                case self::METHOD_AFTER:
+                    if (count($pluginMethodParameters) > 1) {
+                        // remove result
+                        array_shift($pluginMethodParameters);
+                        $matchedParameters = array_intersect_key($originMethodParameters, $pluginMethodParameters);
+                        $this->validateMethodsParameters(
+                            $pluginMethodParameters,
+                            $matchedParameters,
+                            $pluginClass,
+                            $pluginMethod->getName()
+                        );
+                    }
+                    break;
             }
         }
     }
@@ -166,17 +163,15 @@ class InterfaceValidator
     /**
      * Get parameters type
      *
-     * @param ReflectionParameter $parameter
+     * @param \ReflectionParameter $parameter
      *
      * @return string
      */
-    protected function getParametersType(ReflectionParameter $parameter)
+    protected function getParametersType(\ReflectionParameter $parameter)
     {
-        $parameterClass = $this->getParameterClass($parameter);
-        $parameterType = $parameter->getType();
-        return $parameterClass ?
-            '\\' . $parameterClass->getName() :
-            ($parameterType && $parameterType->getName() === 'array' ? 'array' : null);
+        $parameterClass = $parameter->getClass();
+        $type = $parameterClass ? '\\' . $parameterClass->getName() : ($parameter->isArray() ? 'array' : null);
+        return $type;
     }
 
     /**
@@ -188,16 +183,17 @@ class InterfaceValidator
      */
     protected function getOriginMethodName($pluginMethodName)
     {
-        $methodType = $this->getMethodType($pluginMethodName);
+        switch ($this->getMethodType($pluginMethodName)) {
+            case self::METHOD_BEFORE:
+            case self::METHOD_AROUND:
+                return lcfirst(substr($pluginMethodName, 6));
 
-        if (self::METHOD_AFTER === $methodType) {
-            return lcfirst(substr($pluginMethodName, 5));
-        }
-        if (self::METHOD_BEFORE === $methodType || self::METHOD_AROUND === $methodType) {
-            return lcfirst(substr($pluginMethodName, 6));
-        }
+            case self::METHOD_AFTER:
+                return lcfirst(substr($pluginMethodName, 5));
 
-        return null;
+            default:
+                return null;
+        }
     }
 
     /**
@@ -209,14 +205,12 @@ class InterfaceValidator
      */
     protected function getMethodType($pluginMethodName)
     {
-        if (0 === strpos($pluginMethodName, self::METHOD_AFTER)) {
-            return self::METHOD_AFTER;
-        }
-        if (0 === strpos($pluginMethodName, self::METHOD_BEFORE)) {
+        if (substr($pluginMethodName, 0, 6) == self::METHOD_BEFORE) {
             return self::METHOD_BEFORE;
-        }
-        if (0 === strpos($pluginMethodName, self::METHOD_AROUND)) {
+        } elseif (substr($pluginMethodName, 0, 6) == self::METHOD_AROUND) {
             return self::METHOD_AROUND;
+        } elseif (substr($pluginMethodName, 0, 5) == self::METHOD_AFTER) {
+            return self::METHOD_AFTER;
         }
 
         return null;

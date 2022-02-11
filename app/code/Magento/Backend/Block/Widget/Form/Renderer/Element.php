@@ -29,8 +29,6 @@ class Element extends \Magento\Backend\Block\Template implements RendererInterfa
     protected $_template = 'Magento_Backend::widget/form/renderer/element.phtml';
 
     /**
-     * Get abstract element
-     *
      * @return AbstractElement
      */
     public function getElement()
@@ -39,8 +37,6 @@ class Element extends \Magento\Backend\Block\Template implements RendererInterfa
     }
 
     /**
-     * Render the element
-     *
      * @param AbstractElement $element
      * @return string
      */

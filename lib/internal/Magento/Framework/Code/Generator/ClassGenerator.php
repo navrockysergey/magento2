@@ -6,7 +6,6 @@
 
 namespace Magento\Framework\Code\Generator;
 
-use InvalidArgumentException;
 use Laminas\Code\Generator\MethodGenerator;
 use Laminas\Code\Generator\PropertyGenerator;
 
@@ -121,10 +120,9 @@ class ClassGenerator extends \Laminas\Code\Generator\ClassGenerator implements
             ) > 0
             ) {
                 $parametersArray = [];
-                foreach ($methodOptions['parameters'] as $position => $parameterOptions) {
+                foreach ($methodOptions['parameters'] as $parameterOptions) {
                     $parameterObject = new \Laminas\Code\Generator\ParameterGenerator();
                     $this->_setDataToObject($parameterObject, $parameterOptions, $this->_parameterOptions);
-                    $parameterObject->setPosition((int) $position);
                     $parametersArray[] = $parameterObject;
                 }
 
@@ -153,12 +151,12 @@ class ClassGenerator extends \Laminas\Code\Generator\ClassGenerator implements
      *
      * @param  MethodGenerator $method
      * @return $this
-     * @throws InvalidArgumentException
+     * @throws \InvalidArgumentException
      */
     public function addMethodFromGenerator(MethodGenerator $method)
     {
-        if (empty($method->getName()) || !is_string($method->getName())) {
-            throw new InvalidArgumentException('addMethodFromGenerator() expects non-empty string for name');
+        if (!is_string($method->getName())) {
+            throw new \InvalidArgumentException('addMethodFromGenerator() expects string for name');
         }
 
         return parent::addMethodFromGenerator($method);
@@ -169,7 +167,7 @@ class ClassGenerator extends \Laminas\Code\Generator\ClassGenerator implements
      *
      * @param array $properties
      * @return $this
-     * @throws InvalidArgumentException
+     * @throws \InvalidArgumentException
      */
     public function addProperties(array $properties)
     {
@@ -198,12 +196,12 @@ class ClassGenerator extends \Laminas\Code\Generator\ClassGenerator implements
      *
      * @param  PropertyGenerator $property
      * @return $this
-     * @throws InvalidArgumentException
+     * @throws \InvalidArgumentException
      */
     public function addPropertyFromGenerator(PropertyGenerator $property)
     {
-        if (empty($property->getName()) || !is_string($property->getName())) {
-            throw new InvalidArgumentException('addPropertyFromGenerator() expects non-empty string for name');
+        if (!is_string($property->getName())) {
+            throw new \InvalidArgumentException('addPropertyFromGenerator() expects string for name');
         }
 
         return parent::addPropertyFromGenerator($property);
@@ -226,10 +224,6 @@ class ClassGenerator extends \Laminas\Code\Generator\ClassGenerator implements
      */
     public function getNamespaceName()
     {
-        $namespaceName = parent::getNamespaceName();
-        if ($namespaceName !== null) {
-            $namespaceName = ltrim($namespaceName, '\\') ?: null;
-        }
-        return $namespaceName;
+        return ltrim(parent::getNamespaceName(), '\\') ?: null;
     }
 }

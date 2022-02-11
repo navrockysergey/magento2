@@ -5,11 +5,9 @@
  */
 namespace Magento\Customer\Block\Form;
 
-use Magento\Customer\Helper\Address;
 use Magento\Customer\Model\AccountManagement;
 use Magento\Framework\App\ObjectManager;
 use Magento\Newsletter\Model\Config;
-use Magento\Store\Model\ScopeInterface;
 
 /**
  * Customer register form block
@@ -54,7 +52,6 @@ class Register extends \Magento\Directory\Block\Data
      * @param \Magento\Customer\Model\Url $customerUrl
      * @param array $data
      * @param Config $newsLetterConfig
-     * @param Address|null $addressHelper
      *
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
@@ -69,11 +66,8 @@ class Register extends \Magento\Directory\Block\Data
         \Magento\Customer\Model\Session $customerSession,
         \Magento\Customer\Model\Url $customerUrl,
         array $data = [],
-        Config $newsLetterConfig = null,
-        Address $addressHelper = null
+        Config $newsLetterConfig = null
     ) {
-        $data['addressHelper'] = $addressHelper ?: ObjectManager::getInstance()->get(Address::class);
-        $data['directoryHelper'] = $directoryHelper;
         $this->_customerUrl = $customerUrl;
         $this->_moduleManager = $moduleManager;
         $this->_customerSession = $customerSession;
@@ -185,7 +179,7 @@ class Register extends \Magento\Directory\Block\Data
     public function isNewsletterEnabled()
     {
         return $this->_moduleManager->isOutputEnabled('Magento_Newsletter')
-            && $this->newsLetterConfig->isActive(ScopeInterface::SCOPE_STORE);
+            && $this->newsLetterConfig->isActive();
     }
 
     /**

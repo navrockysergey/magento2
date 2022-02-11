@@ -1,13 +1,13 @@
 <?php
 /**
+ * Router list
+ * Used as a container for list of routers
+ *
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Framework\App;
 
-/**
- * Used as a container for list of routers.
- */
 class RouterList implements RouterListInterface
 {
     /**
@@ -55,49 +55,56 @@ class RouterList implements RouterListInterface
     }
 
     /**
-     * @inheritDoc
-     *
+     * (PHP 5 &gt;= 5.0.0)<br/>
+     * Return the current element
+     * @link http://php.net/manual/en/iterator.current.php
      * @return RouterInterface
      */
-    #[\ReturnTypeWillChange]
     public function current()
     {
         return $this->getRouterInstance($this->key());
     }
 
     /**
-     * @inheritdoc
+     * (PHP 5 &gt;= 5.0.0)<br/>
+     * Move forward to next element
+     * @link http://php.net/manual/en/iterator.next.php
+     * @return void Any returned value is ignored.
      */
-    #[\ReturnTypeWillChange]
     public function next()
     {
         next($this->routerList);
     }
 
     /**
-     * @inheritDoc
-     *
+     * (PHP 5 &gt;= 5.0.0)<br/>
+     * Return the key of the current element
+     * @link http://php.net/manual/en/iterator.key.php
      * @return string|int|null
      */
-    #[\ReturnTypeWillChange]
     public function key()
     {
         return key($this->routerList);
     }
 
     /**
-     * @inheritdoc
+     * (PHP 5 &gt;= 5.0.0)<br/>
+     * Checks if current position is valid
+     * @link http://php.net/manual/en/iterator.valid.php
+     * @return boolean The return value will be casted to boolean and then evaluated.
+     * Returns true on success or false on failure.
      */
-    #[\ReturnTypeWillChange]
     public function valid()
     {
         return !!current($this->routerList);
     }
 
     /**
-     * @inheritdoc
+     * (PHP 5 &gt;= 5.0.0)<br/>
+     * Rewind the Iterator to the first element
+     * @link http://php.net/manual/en/iterator.rewind.php
+     * @return void Any returned value is ignored.
      */
-    #[\ReturnTypeWillChange]
     public function rewind()
     {
         reset($this->routerList);

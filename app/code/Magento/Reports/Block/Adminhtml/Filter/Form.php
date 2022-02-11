@@ -9,6 +9,7 @@ namespace Magento\Reports\Block\Adminhtml\Filter;
 /**
  * Adminhtml report filter form
  *
+ * @api
  * @author     Magento Core Team <core@magentocommerce.com>
  * @api
  * @since 100.0.2
@@ -16,16 +17,22 @@ namespace Magento\Reports\Block\Adminhtml\Filter;
 class Form extends \Magento\Backend\Block\Widget\Form\Generic
 {
     /**
+     * Report type options
+     *
      * @var array
      */
     protected $_reportTypeOptions = [];
 
     /**
+     * Report field visibility
+     *
      * @var array
      */
     protected $_fieldVisibility = [];
 
     /**
+     * Report field options
+     *
      * @var array
      */
     protected $_fieldOptions = [];
@@ -193,6 +200,7 @@ class Form extends \Magento\Backend\Block\Widget\Form\Generic
     }
 
     /**
+     * Initialize form fields values
      * Method will be called after prepareForm and can be used for field values initialization
      *
      * @return \Magento\Backend\Block\Widget\Form

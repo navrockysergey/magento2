@@ -7,25 +7,21 @@
 -->
 
 <tests xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:mftf:Test/etc/testSchema.xsd">
-    <test name="CancelOrdersInOrderSalesReportTest" deprecated="Use AdminCanceledOrdersInOrderSalesReportTest instead">
+    <test name="CancelOrdersInOrderSalesReportTest">
         <annotations>
             <features value="Reports"/>
             <stories value="Order Sales Report includes canceled orders"/>
             <group value="reports"/>
-            <title value="DEPRECATED. Canceled orders in order sales report"/>
+            <title value="Canceled orders in order sales report"/>
             <description value="Verify canceling of orders in order sales report"/>
             <severity value="MAJOR"/>
             <testCaseId value="MAGETWO-95960"/>
             <useCaseId value="MAGETWO-95823"/>
-            <skip>
-                <issueId value="DEPRECATED">Use AdminCanceledOrdersInOrderSalesReportTest instead</issueId>
-            </skip>
-            <group value="pr_exclude"/>
         </annotations>
 
         <before>
             <!-- log in as admin -->
-            <actionGroup ref="AdminLoginActionGroup" stepKey="loginAsAdmin"/>
+            <actionGroup ref="LoginAsAdmin" stepKey="loginAsAdmin"/>
 
             <!-- create new product -->
             <createData entity="_defaultCategory" stepKey="createCategory"/>
@@ -41,7 +37,7 @@
             <deleteData createDataKey="createCustomer" stepKey="deleteCustomer"/>
             <deleteData createDataKey="createCategory" stepKey="deleteCategory"/>
             <deleteData createDataKey="createSimpleProduct" stepKey="deleteProduct"/>
-            <actionGroup ref="AdminLogoutActionGroup" stepKey="logout"/>
+            <actionGroup ref="logout" stepKey="logout"/>
         </after>
 
 
@@ -51,11 +47,10 @@
             <argument name="customer" value="$$createCustomer$$"/>
         </actionGroup>
 
-        <actionGroup ref="AdminClickInvoiceButtonOrderViewActionGroup" stepKey="clickInvoiceAction"/>
-        <actionGroup ref="AssertAdminPageTitleActionGroup" stepKey="seePageNameNewInvoicePage">
-            <argument name="value" value="New Invoice"/>
-        </actionGroup>
-        <actionGroup ref="AdminInvoiceClickSubmitActionGroup" stepKey="clickSubmitInvoice"/>
+        <click selector="{{AdminOrderDetailsMainActionsSection.invoice}}" stepKey="clickInvoiceAction"/>
+        <see selector="{{AdminHeaderSection.pageTitle}}" userInput="New Invoice" stepKey="seePageNameNewInvoicePage"/>
+        <click selector="{{AdminInvoiceMainActionsSection.submitInvoice}}" stepKey="clickSubmitInvoice"/>
+
         <click selector="{{AdminOrderDetailsMainActionsSection.ship}}" stepKey="clickShipAction"/>
         <seeInCurrentUrl url="{{AdminShipmentNewPage.url}}" stepKey="seeOrderShipmentUrl"/>
         <click selector="{{AdminShipmentMainActionsSection.submitShipment}}" stepKey="clickSubmitShipment"/>
@@ -67,7 +62,7 @@
         </actionGroup>
 
         <!-- Cancel order -->
-        <actionGroup ref="CancelPendingOrderActionGroup" stepKey="cancelOrder"/>
+        <actionGroup ref="cancelPendingOrder" stepKey="cancelOrder"/>
 
         <!-- Generate Order report for statuses  -->
         <amOnPage url="{{OrdersReportPage.url}}" stepKey="goToOrdersReportPage1"/>
@@ -94,9 +89,6 @@
         <grabTextFrom selector="{{GeneratedReportSection.ordersCount}}" stepKey="grabCanceledOrdersAny"/>
 
         <!-- Compare canceled orders price -->
-        <assertEquals stepKey="assertEquals">
-			<actualResult type="string">{$grabCanceledOrdersAny}</actualResult>
-			<expectedResult type="string">{$grabCanceledOrdersSpecified}</expectedResult>
-        </assertEquals>
+        <assertEquals expected="{$grabCanceledOrdersSpecified}" expectedType="string" actual="{$grabCanceledOrdersAny}" actualType="string"  stepKey="assertEquals"/>
     </test>
 </tests>

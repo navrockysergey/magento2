@@ -10,8 +10,6 @@ use Magento\Framework\Setup\Lists;
 
 /**
  * Locale validator model
- *
- * @api
  */
 class Locale
 {
@@ -35,6 +33,8 @@ class Locale
      *
      * @param string $localeCode
      * @return bool
+     *
+     * @api
      */
     public function isValid($localeCode)
     {

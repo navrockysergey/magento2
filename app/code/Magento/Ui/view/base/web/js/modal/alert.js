@@ -40,11 +40,18 @@ define([
         },
 
         /**
+         * Create widget.
+         */
+        _create: function () {
+            this.options.actions.always();
+            this._super();
+        },
+
+        /**
          * Close modal window.
          */
         closeModal: function () {
-            this.options.actions.always();
-            this.element.on('alertclosed', _.bind(this._remove, this));
+            this.element.bind('alertclosed', _.bind(this._remove, this));
 
             return this._super();
         }

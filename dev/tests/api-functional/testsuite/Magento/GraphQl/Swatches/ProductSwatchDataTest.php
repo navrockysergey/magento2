@@ -32,7 +32,8 @@ class ProductSwatchDataTest extends GraphQlAbstract
     }
 
     /**
-     * @magentoApiDataFixture Magento/Swatches/_files/configurable_product_text_swatch_attribute.php
+     * @magentoApiDataFixture Magento/Swatches/_files/text_swatch_attribute.php
+     * @magentoApiDataFixture Magento/ConfigurableProduct/_files/configurable_products.php
      */
     public function testTextSwatchDataValues()
     {
@@ -67,15 +68,14 @@ QUERY;
         $option = $product['configurable_options'][0];
         $this->assertArrayHasKey('values', $option);
         $length = count($option['values']);
-        $swatchData = ['Swatch 1', 'Swatch 2', 'Swatch 3'];
         for ($i = 0; $i < $length; $i++) {
-            $swatchValue = $option['values'][$i]['swatch_data']['value'];
-            $this->assertContains($swatchValue, $swatchData);
+            $this->assertEquals('option ' . ($i + 1), $option['values'][$i]['swatch_data']['value']);
         }
     }
 
     /**
-     * @magentoApiDataFixture Magento/Swatches/_files/configurable_product_with_visual_swatch_attribute.php
+     * @magentoApiDataFixture Magento/Swatches/_files/visual_swatch_attribute_with_different_options_type.php
+     * @magentoApiDataFixture Magento/ConfigurableProduct/_files/configurable_products.php
      */
     public function testVisualSwatchDataValues()
     {
@@ -84,28 +84,15 @@ QUERY;
         $color = '#000000';
         $query = <<<QUERY
 {
-  products(filter: { sku: { eq: "$productSku" } }) {
+  products(filter: {sku: {eq: "$productSku"}}) {
     items {
-      ... on ConfigurableProduct {
-        configurable_options {
+        ... on ConfigurableProduct{
+      configurable_options{
           values {
-            swatch_data {
+            swatch_data{
               value
               ... on ImageSwatchData {
                 thumbnail
-              }
-            }
-          }
-        }
-        configurable_product_options_selection {
-          configurable_options {
-            values {
-              label
-              swatch {
-                value
-                ... on ImageSwatchData {
-                  thumbnail
-                }
               }
             }
           }
@@ -134,20 +121,6 @@ QUERY;
         );
         $this->assertEquals(
             $option['values'][1]['swatch_data']['thumbnail'],
-            $this->swatchMediaHelper->getSwatchAttributeImage(Swatch::SWATCH_THUMBNAIL_NAME, $imageName)
-        );
-
-        $configurableProductOptionsSelection =
-            $product['configurable_product_options_selection']['configurable_options'][0];
-
-        $this->assertArrayHasKey('values', $configurableProductOptionsSelection);
-        $this->assertEquals($color, $configurableProductOptionsSelection['values'][0]['swatch']['value']);
-        $this->assertStringContainsString(
-            $configurableProductOptionsSelection['values'][1]['swatch']['value'],
-            $this->swatchMediaHelper->getSwatchAttributeImage(Swatch::SWATCH_IMAGE_NAME, $imageName)
-        );
-        $this->assertEquals(
-            $configurableProductOptionsSelection['values'][1]['swatch']['thumbnail'],
             $this->swatchMediaHelper->getSwatchAttributeImage(Swatch::SWATCH_THUMBNAIL_NAME, $imageName)
         );
     }

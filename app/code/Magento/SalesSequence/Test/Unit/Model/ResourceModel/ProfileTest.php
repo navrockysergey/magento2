@@ -3,44 +3,37 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\SalesSequence\Test\Unit\Model\ResourceModel;
 
-use Magento\Framework\App\ResourceConnection;
-use Magento\Framework\DB\Adapter\AdapterInterface;
-use Magento\Framework\DB\Select;
-use Magento\Framework\Model\ResourceModel\Db\Context;
-use Magento\SalesSequence\Model\Meta;
-use Magento\SalesSequence\Model\ProfileFactory;
 use Magento\SalesSequence\Model\ResourceModel\Profile;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class ProfileTest extends TestCase
+/**
+ * Class ProfileTest
+ */
+class ProfileTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var AdapterInterface|MockObject
+     * @var \Magento\Framework\DB\Adapter\AdapterInterface | \PHPUnit\Framework\MockObject\MockObject
      */
     private $connectionMock;
 
     /**
-     * @var Context|MockObject
+     * @var \Magento\Framework\Model\ResourceModel\Db\Context | \PHPUnit\Framework\MockObject\MockObject
      */
     private $dbContext;
 
     /**
-     * @var ProfileFactory|MockObject
+     * @var \Magento\SalesSequence\Model\ProfileFactory | \PHPUnit\Framework\MockObject\MockObject
      */
     private $profileFactory;
 
     /**
-     * @var Meta|MockObject
+     * @var \Magento\SalesSequence\Model\Meta | \PHPUnit\Framework\MockObject\MockObject
      */
     private $meta;
 
     /**
-     * @var \Magento\SalesSequence\Model\Profile|MockObject
+     * @var \Magento\SalesSequence\Model\Profile | \PHPUnit\Framework\MockObject\MockObject
      */
     private $profile;
 
@@ -50,22 +43,22 @@ class ProfileTest extends TestCase
     private $resource;
 
     /**
-     * @var Resource|MockObject
+     * @var Resource | \PHPUnit\Framework\MockObject\MockObject
      */
     protected $resourceMock;
 
     /**
-     * @var Select|MockObject
+     * @var \Magento\Framework\DB\Select | \PHPUnit\Framework\MockObject\MockObject
      */
     private $select;
 
     /**
-     * @inheritDoc
+     * Initialization
      */
     protected function setUp(): void
     {
         $this->connectionMock = $this->getMockForAbstractClass(
-            AdapterInterface::class,
+            \Magento\Framework\DB\Adapter\AdapterInterface::class,
             [],
             '',
             false,
@@ -73,18 +66,18 @@ class ProfileTest extends TestCase
             true,
             ['query']
         );
-        $this->dbContext = $this->createMock(Context::class);
+        $this->dbContext = $this->createMock(\Magento\Framework\Model\ResourceModel\Db\Context::class);
         $this->profileFactory = $this->createPartialMock(
-            ProfileFactory::class,
+            \Magento\SalesSequence\Model\ProfileFactory::class,
             ['create']
         );
         $this->resourceMock = $this->createPartialMock(
-            ResourceConnection::class,
+            \Magento\Framework\App\ResourceConnection::class,
             ['getConnection', 'getTableName']
         );
         $this->dbContext->expects($this->once())->method('getResources')->willReturn($this->resourceMock);
-        $this->select = $this->createMock(Select::class);
-        $this->meta = $this->createMock(Meta::class);
+        $this->select = $this->createMock(\Magento\Framework\DB\Select::class);
+        $this->meta = $this->createMock(\Magento\SalesSequence\Model\Meta::class);
         $this->profile = $this->createMock(\Magento\SalesSequence\Model\Profile::class);
         $this->resource = new Profile(
             $this->dbContext,
@@ -92,10 +85,7 @@ class ProfileTest extends TestCase
         );
     }
 
-    /**
-     * @return void
-     */
-    public function testLoadActiveProfile(): void
+    public function testLoadActiveProfile()
     {
         $profileTableName = 'sequence_profile';
         $profileIdFieldName = 'profile_id';
@@ -113,26 +103,30 @@ class ProfileTest extends TestCase
             ->method('getTableName')
             ->willReturn($profileTableName);
         $this->connectionMock->expects($this->any())->method('select')->willReturn($this->select);
+        $this->select->expects($this->at(0))
+            ->method('from')
+            ->with($profileTableName, [$profileIdFieldName])
+            ->willReturn($this->select);
+        $this->select->expects($this->at(1))
+            ->method('where')
+            ->with('meta_id = :meta_id')
+            ->willReturn($this->select);
+        $this->select->expects($this->at(2))
+            ->method('where')
+            ->with('is_active = 1')
+            ->willReturn($this->select);
         $this->connectionMock->expects($this->once())
             ->method('fetchOne')
             ->with($this->select, ['meta_id' => $metaId])
             ->willReturn($profileId);
-        $this->select
+        $this->select->expects($this->at(3))
             ->method('from')
-            ->withConsecutive(
-                [$profileTableName, [$profileIdFieldName]],
-                [$profileTableName, '*', null]
-            )->willReturnOnConsecutiveCalls($this->select, $this->select);
-        $this->select
-            ->method('where')
-            ->withConsecutive(['meta_id = :meta_id'], ['is_active = 1'])
-            ->willReturnOnConsecutiveCalls($this->select, $this->select);
+            ->with($profileTableName, '*', null)
+            ->willReturn($this->select);
         $this->connectionMock->expects($this->any())
             ->method('quoteIdentifier');
         $this->connectionMock->expects($this->once())->method('fetchRow')->willReturn($profileData);
-        $this->profile
-            ->method('setData')
-            ->with($profileData);
+        $this->profile->expects($this->at(1))->method('setData')->with($profileData);
         $this->assertEquals($this->profile, $this->resource->loadActiveProfile($metaId));
     }
 }

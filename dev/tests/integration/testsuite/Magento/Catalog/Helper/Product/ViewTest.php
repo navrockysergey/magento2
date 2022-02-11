@@ -77,10 +77,7 @@ class ViewTest extends \PHPUnit\Framework\TestCase
         $uniqid = uniqid();
         /** @var $product \Magento\Catalog\Model\Product */
         $product = $this->objectManager->create(\Magento\Catalog\Model\Product::class);
-        $product->setTypeId(\Magento\Catalog\Model\Product\Type::DEFAULT_TYPE)
-            ->setId(99)
-            ->setSku('test-sku')
-            ->setUrlKey($uniqid);
+        $product->setTypeId(\Magento\Catalog\Model\Product\Type::DEFAULT_TYPE)->setId(99)->setUrlKey($uniqid);
         /** @var $objectManager \Magento\TestFramework\ObjectManager */
         $objectManager = $this->objectManager;
         $objectManager->get(\Magento\Framework\Registry::class)->register('product', $product);
@@ -95,7 +92,7 @@ class ViewTest extends \PHPUnit\Framework\TestCase
         );
         $this->assertStringContainsString("product-{$uniqid}", $bodyClass);
         $handles = $this->page->getLayout()->getUpdate()->getHandles();
-        $this->assertContains('catalog_product_view_type_simple', $handles);
+        $this->assertContains('catalog_product_view_type_simple',$handles);
     }
 
     /**
@@ -122,12 +119,12 @@ class ViewTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
+     *
      * @magentoAppIsolation enabled
      */
     public function testPrepareAndRenderWrongController()
     {
         $this->expectException(\Magento\Framework\Exception\NoSuchEntityException::class);
-
         $objectManager = $this->objectManager;
         $controller = $objectManager->create(\Magento\Catalog\Helper\Product\Stub\ProductControllerStub::class);
         $this->_helper->prepareAndRender($this->page, 10, $controller);
@@ -135,11 +132,11 @@ class ViewTest extends \PHPUnit\Framework\TestCase
 
     /**
      * @magentoAppIsolation enabled
+     *
      */
     public function testPrepareAndRenderWrongProduct()
     {
         $this->expectException(\Magento\Framework\Exception\NoSuchEntityException::class);
-
         $this->_helper->prepareAndRender($this->page, 999, $this->_controller);
     }
 }

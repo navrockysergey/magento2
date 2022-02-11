@@ -3,21 +3,17 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Framework\Config\Test\Unit\Dom;
 
 use Magento\Framework\Config\Dom\NodeMergingConfig;
 use Magento\Framework\Config\Dom\NodePathMatcher;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
 /**
  * Test for
  *
  * @see NodeMergingConfig
  */
-class NodeMergingConfigTest extends TestCase
+class NodeMergingConfigTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var NodeMergingConfig
@@ -25,13 +21,10 @@ class NodeMergingConfigTest extends TestCase
     protected $object;
 
     /**
-     * @var NodePathMatcher|MockObject
+     * @var NodePathMatcher|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $nodePathMatcher;
 
-    /**
-     * @inheritdoc
-     */
     protected function setUp(): void
     {
         $this->nodePathMatcher = $this->createMock(NodePathMatcher::class);
@@ -41,36 +34,65 @@ class NodeMergingConfigTest extends TestCase
         );
     }
 
-    /**
-     * @return void
-     */
-    public function testGetIdAttributeMatched(): void
+    public function testGetIdAttributeMatched()
     {
         $xpath = '/root/two[@attr="value"]';
-        $this->nodePathMatcher
-            ->method('match')
-            ->withConsecutive(
-                ['/root/one', $xpath],
-                ['/root/two', $xpath]
-            )
-            ->willReturnOnConsecutiveCalls(false, true);
+        $this->nodePathMatcher->expects(
+            $this->at(0)
+        )->method(
+            'match'
+        )->with(
+            '/root/one',
+            $xpath
+        )->willReturn(
+            false
+        );
+        $this->nodePathMatcher->expects(
+            $this->at(1)
+        )->method(
+            'match'
+        )->with(
+            '/root/two',
+            $xpath
+        )->willReturn(
+            true
+        );
         $this->assertEquals('id', $this->object->getIdAttribute($xpath));
     }
 
-    /**
-     * @return void
-     */
-    public function testGetIdAttributeNotMatched(): void
+    public function testGetIdAttributeNotMatched()
     {
         $xpath = '/root/four[@attr="value"]';
-        $this->nodePathMatcher
-            ->method('match')
-            ->withConsecutive(
-                ['/root/one', $xpath],
-                ['/root/two', $xpath],
-                ['/root/three', $xpath]
-            )
-            ->willReturnOnConsecutiveCalls(false, false, false);
+        $this->nodePathMatcher->expects(
+            $this->at(0)
+        )->method(
+            'match'
+        )->with(
+            '/root/one',
+            $xpath
+        )->willReturn(
+            false
+        );
+        $this->nodePathMatcher->expects(
+            $this->at(1)
+        )->method(
+            'match'
+        )->with(
+            '/root/two',
+            $xpath
+        )->willReturn(
+            false
+        );
+        $this->nodePathMatcher->expects(
+            $this->at(2)
+        )->method(
+            'match'
+        )->with(
+            '/root/three',
+            $xpath
+        )->willReturn(
+            false
+        );
         $this->assertNull($this->object->getIdAttribute($xpath));
     }
 }

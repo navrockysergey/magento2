@@ -267,48 +267,27 @@ class CreateHandler implements ExtensionInterface
     {
         foreach ($images as &$image) {
             if (empty($image['removed'])) {
-                $isNew = empty($image['value_id']);
                 $data = $this->processNewImage($product, $image);
 
+                if (!$product->isObjectNew()) {
+                    $this->resourceModel->deleteGalleryValueInStore(
+                        $image['value_id'],
+                        $product->getData($this->metadata->getLinkField()),
+                        $product->getStoreId()
+                    );
+                }
                 // Add per store labels, position, disabled
                 $data['value_id'] = $image['value_id'];
                 $data['label'] = isset($image['label']) ? $image['label'] : '';
-                $data['position'] = isset($image['position']) && $image['position'] !== ''
-                    ? (int)$image['position']
-                    : null;
+                $data['position'] = isset($image['position']) ? (int)$image['position'] : 0;
                 $data['disabled'] = isset($image['disabled']) ? (int)$image['disabled'] : 0;
                 $data['store_id'] = (int)$product->getStoreId();
 
                 $data[$this->metadata->getLinkField()] = (int)$product->getData($this->metadata->getLinkField());
 
-                $this->saveGalleryStoreValue($product, $data);
-                if ($isNew && $data['store_id'] !== Store::DEFAULT_STORE_ID) {
-                    $dataForDefaultScope = $data;
-                    $dataForDefaultScope['store_id'] = Store::DEFAULT_STORE_ID;
-                    $dataForDefaultScope['disabled'] = 0;
-                    $dataForDefaultScope['label'] = null;
-                    $this->saveGalleryStoreValue($product, $dataForDefaultScope);
-                }
+                $this->resourceModel->insertGalleryValueInStore($data);
             }
         }
-    }
-
-    /**
-     * Save media gallery store value
-     *
-     * @param Product $product
-     * @param array $data
-     */
-    private function saveGalleryStoreValue(Product $product, array $data): void
-    {
-        if (!$product->isObjectNew()) {
-            $this->resourceModel->deleteGalleryValueInStore(
-                $data['value_id'],
-                $data[$this->metadata->getLinkField()],
-                $data['store_id']
-            );
-        }
-        $this->resourceModel->insertGalleryValueInStore($data);
     }
 
     /**
@@ -550,7 +529,6 @@ class CreateHandler implements ExtensionInterface
      * @param array $clearImages
      * @param array $newImages
      * @param array $existImages
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     private function processMediaAttributeLabel(
         Product $product,
@@ -572,9 +550,6 @@ class CreateHandler implements ExtensionInterface
 
         if (in_array($attrData, array_keys($existImages)) && isset($existImages[$attrData]['label'])) {
             $product->setData($mediaAttrCode . '_label', $existImages[$attrData]['label']);
-            if ($existImages[$attrData]['label'] == null) {
-                $resetLabel = true;
-            }
         }
 
         if ($attrData === 'no_selection' && !empty($product->getData($mediaAttrCode . '_label'))) {
@@ -622,21 +597,10 @@ class CreateHandler implements ExtensionInterface
         $canRemoveImage = true;
         $gallery = $this->getImagesForAllStores($product);
         $storeId = $product->getStoreId();
-        $storeIds = [];
-        $storeIds[] = 0;
-        $websiteIds = array_map('intval', $product->getWebsiteIds() ?? []);
-        foreach ($this->storeManager->getStores() as $store) {
-            if (in_array((int) $store->getWebsiteId(), $websiteIds, true)) {
-                $storeIds[] = (int) $store->getId();
-            }
-        }
 
         if (!empty($gallery)) {
             foreach ($gallery as $image) {
-                if (in_array((int) $image['store_id'], $storeIds)
-                    && $image['filepath'] === $imageFile
-                    && (int) $image['store_id'] !== $storeId
-                ) {
+                if ($image['filepath'] === $imageFile && (int) $image['store_id'] !== $storeId) {
                     $canRemoveImage = false;
                 }
             }

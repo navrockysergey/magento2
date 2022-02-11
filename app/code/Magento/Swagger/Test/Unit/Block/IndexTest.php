@@ -10,22 +10,20 @@ namespace Magento\Swagger\Test\Unit\Block;
 
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use Magento\Framework\UrlInterface;
 use Magento\Framework\View\Element\Template\Context;
 use Magento\Swagger\Api\Data\SchemaTypeInterface;
 use Magento\Swagger\Block\Index;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Magento\SwaggerWebapi\Model\SchemaType\Rest;
 
-class IndexTest extends TestCase
+class IndexTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var SchemaTypeInterface|MockObject
+     * @var SchemaTypeInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $schemaTypeMock;
 
     /**
-     * @var RequestInterface|MockObject
+     * @var RequestInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $requestMock;
 
@@ -35,21 +33,12 @@ class IndexTest extends TestCase
     private $index;
 
     /**
-     * @var UrlInterface
-     */
-    private $urlBuilder;
-
-    /**
      * @inheritdoc
      */
     protected function setUp(): void
     {
-        $this->requestMock = $this->getMockBuilder(RequestInterface::class)
-            ->getMock();
-        $this->schemaTypeMock = $this->getMockBuilder(SchemaTypeInterface::class)
-            ->getMock();
-        $this->urlBuilder = $this->getMockBuilder(UrlInterface::class)
-            ->getMock();
+        $this->requestMock = $this->getMockBuilder(RequestInterface::class)->getMock();
+        $this->schemaTypeMock = $this->getMockBuilder(SchemaTypeInterface::class)->getMock();
 
         $this->index = (new ObjectManager($this))->getObject(
             Index::class,
@@ -58,7 +47,6 @@ class IndexTest extends TestCase
                     Context::class,
                     [
                         'request' => $this->requestMock,
-                        'urlBuilder' => $this->urlBuilder
                     ]
                 ),
                 'data' => [
@@ -87,10 +75,6 @@ class IndexTest extends TestCase
         $this->schemaTypeMock->expects($this->once())
             ->method('getSchemaUrlPath')
             ->willReturn('/test');
-
-        $this->urlBuilder->expects($this->any())
-            ->method('getBaseUrl')
-            ->willReturn('');
 
         $this->assertEquals('/test', $this->index->getSchemaUrl());
     }

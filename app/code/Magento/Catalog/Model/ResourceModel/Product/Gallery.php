@@ -453,9 +453,6 @@ class Gallery extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
         $select = $this->getConnection()->select()->from(
             $this->getTable(self::GALLERY_VALUE_TABLE)
         )->where(
-            $linkField . ' = ?',
-            $originalProductId
-        )->where(
             'value_id IN(?)',
             array_keys($valueIdMap)
         );
@@ -500,8 +497,7 @@ class Gallery extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
             $product->getData($this->metadata->getLinkField())
         )->where(
             'store_id IN (?)',
-            $storeIds,
-            \Zend_Db::INT_TYPE
+            $storeIds
         )->where(
             'attribute_code IN (?)',
             $this->mediaConfig->getMediaAttributeCodes()

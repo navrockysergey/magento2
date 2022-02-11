@@ -3,32 +3,27 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Paypal\Test\Unit\Model;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Store\Model\ScopeInterface as ModelScopeInterface;
+use Magento\Payment\Model\MethodInterface;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManagerHelper;
-use Magento\Payment\Model\MethodInterface;
-use Magento\Store\Model\ScopeInterface;
-use Magento\Store\Model\ScopeInterface as ModelScopeInterface;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
 /**
- * Test for \Magento\Paypal\Model\AbstractConfig
+ * Test for \Magento\Framework\App\Config\ScopeConfigInterface
  */
-class AbstractConfigTest extends TestCase
+class AbstractConfigTest extends \PHPUnit\Framework\TestCase
 {
 
     /**
-     * @var ScopeConfigInterface|MockObject
+     * @var ScopeConfigInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $scopeConfigMock;
 
     /**
-     * @var AbstractConfigTesting|MockObject
+     * @var AbstractConfigTesting|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $config;
 
@@ -54,7 +49,7 @@ class AbstractConfigTest extends TestCase
 
     public function testSetMethodInstance()
     {
-        /** @var MethodInterface $methodInterfaceMock */
+        /** @var $methodInterfaceMock MethodInterface */
         $methodInterfaceMock = $this->getMockBuilder(MethodInterface::class)
             ->getMockForAbstractClass();
         $this->assertSame($this->config, $this->config->setMethodInstance($methodInterfaceMock));
@@ -69,7 +64,7 @@ class AbstractConfigTest extends TestCase
      */
     public function setMethodDataProvider()
     {
-        /** @var MethodInterface $methodInterfaceMock */
+        /** @var $methodInterfaceMock MethodInterface */
         $methodInterfaceMock = $this->getMockBuilder(MethodInterface::class)
             ->getMockForAbstractClass();
         $methodInterfaceMock->expects($this->once())
@@ -301,33 +296,23 @@ class AbstractConfigTest extends TestCase
      * Check bill me later active setting uses disable funding options
      *
      * @param string|null $disableFundingOptions
-     * @param int $expressBml
+     * @param int $expectedFlag
      * @param bool $expectedValue
      *
      * @dataProvider isMethodActiveBmlDataProvider
      */
-    public function testIsMethodActiveBml(
-        $disableFundingOptions,
-        $expressBml,
-        $wpsExpress,
-        $wpsExpressBml,
-        $expectedValue
-    ) {
+    public function testIsMethodActiveBml($disableFundingOptions, $expectedFlag, $expectedValue)
+    {
         $this->scopeConfigMock->method('getValue')
             ->with(
                 self::equalTo('paypal/style/disable_funding_options'),
-                self::equalTo(ScopeInterface::SCOPE_STORE)
+                self::equalTo('store')
             )
             ->willReturn($disableFundingOptions);
 
-        $configFlagMap = [
-            ['payment/wps_express/active', ScopeInterface::SCOPE_STORE, null, $wpsExpress],
-            ['payment/wps_express_bml/active', ScopeInterface::SCOPE_STORE, null, $wpsExpressBml],
-            ['payment/paypal_express_bml/active', ScopeInterface::SCOPE_STORE, null, $expressBml]
-        ];
-
         $this->scopeConfigMock->method('isSetFlag')
-            ->willReturnMap($configFlagMap);
+            ->with('payment/paypal_express_bml/active')
+            ->willReturn($expectedFlag);
 
         self::assertEquals($expectedValue, $this->config->isMethodActive('paypal_express_bml'));
     }
@@ -338,18 +323,14 @@ class AbstractConfigTest extends TestCase
     public function isMethodActiveBmlDataProvider()
     {
         return [
-            ['CREDIT,CARD,ELV', 0, 0, 0, false],
-            ['CREDIT,CARD,ELV', 1, 0, 0,  true],
-            ['CREDIT', 0, 0, 0, false],
-            ['CREDIT', 1, 0, 0, true],
-            ['CARD', 0, 0, 0,  true],
-            ['CARD', 1, 0, 0,  true],
-            [null, 0, 0, 0,  true],
-            [null, 1, 0, 0,  true],
-            ['CREDIT', 0, 1, 0, false],
-            ['', 0, 1, 0, false],
-            ['', 0, 1, 1, true],
-            ['CREDIT', 0, 1, 1, true]
+            ['CREDIT,CARD,ELV', 0, false],
+            ['CREDIT,CARD,ELV', 1, true],
+            ['CREDIT', 0, false],
+            ['CREDIT', 1, true],
+            ['CARD', 0, true],
+            ['CARD', 1, true],
+            [null, 0, true],
+            [null, 1, true]
         ];
     }
 

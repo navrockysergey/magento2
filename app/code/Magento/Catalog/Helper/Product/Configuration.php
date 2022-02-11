@@ -5,7 +5,6 @@
  */
 namespace Magento\Catalog\Helper\Product;
 
-use Magento\Catalog\Model\Product\Configuration\Item\ItemInterface;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Escaper;
 use Magento\Framework\Serialize\Serializer\Json;
@@ -27,6 +26,8 @@ class Configuration extends AbstractHelper implements ConfigurationInterface
     protected $filter;
 
     /**
+     * Product option factory
+     *
      * @var \Magento\Catalog\Model\Product\OptionFactory
      */
     protected $_productOptionFactory;
@@ -75,17 +76,15 @@ class Configuration extends AbstractHelper implements ConfigurationInterface
     /**
      * Retrieves product configuration options
      *
-     * @param ItemInterface $item
-     *
+     * @param \Magento\Catalog\Model\Product\Configuration\Item\ItemInterface $item
      * @return array
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
-    public function getCustomOptions(ItemInterface $item) //phpcs:ignore Generic.Metrics.NestingLevel
+    public function getCustomOptions(\Magento\Catalog\Model\Product\Configuration\Item\ItemInterface $item)
     {
         $product = $item->getProduct();
         $options = [];
         $optionIds = $item->getOptionByCode('option_ids');
-        if ($optionIds && $optionIds->getValue()) {
+        if ($optionIds) {
             $options = [];
             foreach (explode(',', $optionIds->getValue()) as $optionId) {
                 $option = $product->getOptionById($optionId);
@@ -134,10 +133,10 @@ class Configuration extends AbstractHelper implements ConfigurationInterface
     /**
      * Retrieves product options list
      *
-     * @param ItemInterface $item
+     * @param \Magento\Catalog\Model\Product\Configuration\Item\ItemInterface $item
      * @return array
      */
-    public function getOptions(ItemInterface $item)
+    public function getOptions(\Magento\Catalog\Model\Product\Configuration\Item\ItemInterface $item)
     {
         return $this->getCustomOptions($item);
     }

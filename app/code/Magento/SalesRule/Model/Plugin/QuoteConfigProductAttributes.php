@@ -3,47 +3,43 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-
 namespace Magento\SalesRule\Model\Plugin;
 
-use Magento\Quote\Model\Quote\Config;
 use Magento\SalesRule\Model\ResourceModel\Rule as RuleResource;
 
+/**
+ * Quote Config Product Attributes Class
+ */
 class QuoteConfigProductAttributes
 {
     /**
      * @var RuleResource
      */
-    private $ruleResource;
-
-    /**
-     * @var array|null
-     */
-    private $activeAttributeCodes;
+    protected $_ruleResource;
 
     /**
      * @param RuleResource $ruleResource
      */
     public function __construct(RuleResource $ruleResource)
     {
-        $this->ruleResource = $ruleResource;
+        $this->_ruleResource = $ruleResource;
     }
 
     /**
      * Append sales rule product attribute keys to select by quote item collection
      *
-     * @param Config $subject
+     * @param \Magento\Quote\Model\Quote\Config $subject
      * @param array $attributeKeys
      *
      * @return array
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function afterGetProductAttributes(Config $subject, array $attributeKeys): array
+    public function afterGetProductAttributes(\Magento\Quote\Model\Quote\Config $subject, array $attributeKeys)
     {
-        if ($this->activeAttributeCodes === null) {
-            $this->activeAttributeCodes = array_column($this->ruleResource->getActiveAttributes(), 'attribute_code');
+        $attributes = $this->_ruleResource->getActiveAttributes();
+        foreach ($attributes as $attribute) {
+            $attributeKeys[] = $attribute['attribute_code'];
         }
-
-        return array_merge($attributeKeys, $this->activeAttributeCodes);
+        return $attributeKeys;
     }
 }

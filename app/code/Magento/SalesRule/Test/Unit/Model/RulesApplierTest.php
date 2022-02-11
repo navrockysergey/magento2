@@ -3,12 +3,9 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
 
 namespace Magento\SalesRule\Test\Unit\Model;
 
-use Magento\Catalog\Model\Product;
-use Magento\Framework\Api\ExtensionAttributesInterface;
 use Magento\Framework\Event\Manager;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address;
@@ -19,12 +16,11 @@ use Magento\SalesRule\Model\Quote\ChildrenValidationLocator;
 use Magento\SalesRule\Model\Rule;
 use Magento\SalesRule\Model\Rule\Action\Discount\CalculatorFactory;
 use Magento\SalesRule\Model\Rule\Action\Discount\Data;
-use Magento\SalesRule\Model\Rule\Action\Discount\DataFactory;
 use Magento\SalesRule\Model\Rule\Action\Discount\DiscountInterface;
 use Magento\SalesRule\Model\RulesApplier;
 use Magento\SalesRule\Model\Utility;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
@@ -37,43 +33,40 @@ class RulesApplierTest extends TestCase
     protected $rulesApplier;
 
     /**
-     * @var CalculatorFactory|MockObject
+     * @var CalculatorFactory|PHPUnit\Framework\MockObject\MockObject
      */
     protected $calculatorFactory;
 
     /**
-     * @var DataFactory|MockObject
+     * @var \Magento\SalesRule\Model\Rule\Action\Discount\DataFactory|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $discountFactory;
 
     /**
-     * @var Manager|MockObject
+     * @var Manager|PHPUnit\Framework\MockObject\MockObject
      */
     protected $eventManager;
 
     /**
-     * @var Utility|MockObject
+     * @var Utility|PHPUnit\Framework\MockObject\MockObject
      */
     protected $validatorUtility;
 
     /**
-     * @var ChildrenValidationLocator|MockObject
+     * @var ChildrenValidationLocator|PHPUnit\Framework\MockObject\MockObject
      */
     protected $childrenValidationLocator;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
         $this->calculatorFactory = $this->createMock(
             CalculatorFactory::class
         );
         $this->discountFactory = $this->createPartialMock(
-            DataFactory::class,
+            \Magento\SalesRule\Model\Rule\Action\Discount\DataFactory::class,
             ['create']
         );
-        $this->eventManager = $this->createPartialMock(Manager::class, ['dispatch']);
+        $this->eventManager = $this->createPartialMock(\Magento\Framework\Event\Manager::class, ['dispatch']);
         $this->validatorUtility = $this->createPartialMock(
             Utility::class,
             ['canProcessRule', 'minFix', 'deltaRoundingFix', 'getItemQty']
@@ -95,13 +88,10 @@ class RulesApplierTest extends TestCase
      * @param bool $isChildren
      * @param bool $isContinue
      *
-     * @return void
      * @dataProvider dataProviderChildren
      */
-    public function testApplyRules(
-        bool $isChildren,
-        bool $isContinue
-    ): void {
+    public function testApplyRulesWhenRuleWithStopRulesProcessingIsUsed($isChildren, $isContinue)
+    {
         $positivePrice = 1;
         $skipValidation = false;
         $item = $this->getPreparedItem();
@@ -109,25 +99,40 @@ class RulesApplierTest extends TestCase
 
         $ruleId = 1;
         $appliedRuleIds = [$ruleId => $ruleId];
-        $discountData = $this->getMockBuilder(Data::class)
+        $discountData = $this->getMockBuilder(\Magento\SalesRule\Model\Rule\Action\Discount\Data::class)
+            ->setConstructorArgs(
+                [
+                    'amount' => 0,
+                    'baseAmount' => 0,
+                    'originalAmount' => 0,
+                    'baseOriginalAmount' => 0
+                ]
+            )
             ->getMock();
         $this->discountFactory->expects($this->any())
             ->method('create')
             ->with($this->anything())
             ->willReturn($discountData);
         /**
-         * @var Rule|MockObject $rule
+         * @var Rule|PHPUnit\Framework\MockObject\MockObject $ruleWithStopFurtherProcessing
          */
-        $rule = $this->getMockBuilder(Rule::class)
-            ->addMethods(['getCouponType', 'getRuleId'])
-            ->onlyMethods(['getStoreLabel', 'getActions'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        $ruleWithStopFurtherProcessing = $this->createPartialMock(
+            Rule::class,
+            ['getStoreLabel', 'getCouponType', 'getRuleId', '__wakeup', 'getActions']
+        );
+        /**
+         * @var Rule|PHPUnit\Framework\MockObject\MockObject $ruleThatShouldNotBeRun
+        */
+        $ruleThatShouldNotBeRun = $this->createPartialMock(
+            Rule::class,
+            ['getStopRulesProcessing', '__wakeup']
+        );
 
-        $actionMock = $this->getMockBuilder(Collection::class)
-            ->addMethods(['validate'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        $actionMock = $this->createPartialMock(Collection::class, ['validate']);
+
+        $ruleWithStopFurtherProcessing->setName('ruleWithStopFurtherProcessing');
+        $ruleThatShouldNotBeRun->setName('ruleThatShouldNotBeRun');
+        $rules = [$ruleWithStopFurtherProcessing, $ruleThatShouldNotBeRun];
 
         $item->setDiscountCalculationPrice($positivePrice);
         $item->setData('calculation_price', $positivePrice);
@@ -140,67 +145,69 @@ class RulesApplierTest extends TestCase
             ->method('canProcessRule')
             ->willReturn(true);
 
-        $rule->expects($this->atLeastOnce())
+        $ruleWithStopFurtherProcessing->expects($this->atLeastOnce())
             ->method('getActions')
             ->willReturn($actionMock);
+        $actionMock->expects($this->at(0))
+            ->method('validate')
+            ->with($item)
+            ->willReturn(!$isChildren);
 
         // if there are child elements, check them
         if ($isChildren) {
             $item->expects($this->atLeastOnce())
                 ->method('getChildren')
                 ->willReturn([$item]);
-            $actionMock->method('validate')
+            $actionMock->expects($this->at(1))
+                ->method('validate')
                 ->with($item)
                 ->willReturn(!$isContinue);
-            $product = $this->createPartialMock(Product::class, []);
-            $item->expects($this->atLeastOnce())
-                ->method('getProduct')
-                ->willReturn($product);
-        } else {
-            $actionMock->method('validate')
-                ->with($item)
-                ->willReturn(!$isChildren);
         }
 
+        //
         if (!$isContinue || !$isChildren) {
-            $rule->expects($this->any())
+            $ruleWithStopFurtherProcessing->expects($this->any())
                 ->method('getRuleId')
                 ->willReturn($ruleId);
 
-            $this->applyRule($item, $rule);
+            $this->applyRule($item, $ruleWithStopFurtherProcessing);
+
+            $ruleWithStopFurtherProcessing->setStopRulesProcessing(true);
+            $ruleThatShouldNotBeRun->expects($this->never())
+                ->method('getStopRulesProcessing');
         }
 
-        $result = $this->rulesApplier->applyRules($item, [$rule], $skipValidation, $couponCode);
+        $result = $this->rulesApplier->applyRules($item, $rules, $skipValidation, $couponCode);
         $this->assertEquals($appliedRuleIds, $result);
     }
 
-    /**
-     * @return void
-     */
-    public function testAddCouponDescriptionWithRuleDescriptionIsUsed(): void
+    public function testAddCouponDescriptionWithRuleDescriptionIsUsed()
     {
         $ruleId = 1;
         $ruleDescription = 'Rule description';
 
         /**
-         * @var Rule|MockObject $rule
+         * @var Rule|PHPUnit\Framework\MockObject\MockObject $rule
          */
-        $rule = $this->getMockBuilder(Rule::class)
-            ->addMethods(['getCouponType', 'getRuleId'])
-            ->onlyMethods(['getStoreLabel', 'getActions'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        $rule = $this->createPartialMock(
+            Rule::class,
+            ['getStoreLabel', 'getCouponType', 'getRuleId', '__wakeup', 'getActions']
+        );
 
         $rule->setDescription($ruleDescription);
 
         /**
-         * @var Address|MockObject $address
-         */
-        $address = $this->getMockBuilder(Address::class)
-            ->addMethods(['setCouponCode', 'setAppliedRuleIds'])
-            ->onlyMethods(['getQuote'])
-            ->disableOriginalConstructor()
-            ->getMock();
+         * @var Address|PHPUnit\Framework\MockObject\MockObject $address
+        */
+        $address = $this->createPartialMock(
+            Address::class,
+            [
+            'getQuote',
+            'setCouponCode',
+            'setAppliedRuleIds',
+            '__wakeup'
+            ]
+        );
         $description = $address->getDiscountDescriptionArray();
         $description[$ruleId] = $rule->getDescription();
         $address->setDiscountDescriptionArray($description[$ruleId]);
@@ -211,43 +218,55 @@ class RulesApplierTest extends TestCase
     /**
      * @return array
      */
-    public function dataProviderChildren(): array
+    public function dataProviderChildren()
     {
         return [
             ['isChildren' => true, 'isContinue' => false],
-            ['isChildren' => false, 'isContinue' => true]
+            ['isChildren' => false, 'isContinue' => true],
         ];
     }
 
     /**
-     * @return AbstractItem|MockObject
+     * @return AbstractItem|PHPUnit\Framework\MockObject\MockObject
      */
-    protected function getPreparedItem(): AbstractItem
+    protected function getPreparedItem()
     {
         /**
-         * @var Address|MockObject $address
-         */
-        $address = $this->getMockBuilder(Address::class)
-            ->addMethods(['setCouponCode', 'setAppliedRuleIds'])
-            ->onlyMethods(['getQuote'])
-            ->disableOriginalConstructor()
-            ->getMock();
+         * @var Address|PHPUnit\Framework\MockObject\MockObject $address
+        */
+        $address = $this->createPartialMock(
+            Address::class,
+            [
+                'getQuote',
+                'setCouponCode',
+                'setAppliedRuleIds',
+                '__wakeup'
+            ]
+        );
         /**
-         * @var AbstractItem|MockObject $item
-         */
-        $item = $this->getMockBuilder(Item::class)
-            ->addMethods(['setDiscountAmount', 'setBaseDiscountAmount', 'setDiscountPercent', 'setAppliedRuleIds'])
-            ->onlyMethods(['getAddress', 'getChildren', 'getExtensionAttributes', 'getProduct'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $itemExtension = $this->getMockBuilder(ExtensionAttributesInterface::class)
-            ->addMethods(['setDiscounts', 'getDiscounts'])
-            ->getMock();
+         * @var AbstractItem|PHPUnit\Framework\MockObject\MockObject $item
+        */
+        $item = $this->createPartialMock(
+            Item::class,
+            [
+                'setDiscountAmount',
+                'setBaseDiscountAmount',
+                'setDiscountPercent',
+                'getAddress',
+                'setAppliedRuleIds',
+                '__wakeup',
+                'getChildren',
+                'getExtensionAttributes'
+            ]
+        );
+        $itemExtension = $this->getMockBuilder(
+            \Magento\Framework\Api\ExtensionAttributesInterface::class
+        )->setMethods(['setDiscounts', 'getDiscounts'])->getMock();
         $itemExtension->method('getDiscounts')->willReturn([]);
         $itemExtension->expects($this->any())
             ->method('setDiscounts')
             ->willReturn([]);
-        $quote = $this->createPartialMock(Quote::class, ['getStore']);
+        $quote = $this->createPartialMock(\Magento\Quote\Model\Quote::class, ['getStore', '__wakeUp']);
         $item->expects($this->any())->method('getAddress')->willReturn($address);
         $item->expects($this->any())->method('getExtensionAttributes')->willReturn($itemExtension);
         $address->expects($this->any())
@@ -258,12 +277,10 @@ class RulesApplierTest extends TestCase
     }
 
     /**
-     * @param MockObject $item
-     * @param MockObject $rule
-     *
-     * @return void
+     * @param $item
+     * @param $rule
      */
-    protected function applyRule(MockObject $item, MockObject $rule): void
+    protected function applyRule($item, $rule)
     {
         $qty = 2;
         $discountCalc = $this->createPartialMock(
@@ -271,6 +288,14 @@ class RulesApplierTest extends TestCase
             ['fixQuantity', 'calculate']
         );
         $discountData = $this->getMockBuilder(Data::class)
+            ->setConstructorArgs(
+                [
+                    'amount' => 30,
+                    'baseAmount' => 30,
+                    'originalAmount' => 30,
+                    'baseOriginalAmount' => 30
+                ]
+            )
             ->getMock();
         $this->validatorUtility->expects($this->any())
             ->method('getItemQty')
@@ -278,12 +303,12 @@ class RulesApplierTest extends TestCase
             ->willReturn($qty);
         $discountCalc->expects($this->any())
             ->method('fixQuantity')
-            ->with($qty, $rule)
+            ->with($this->equalTo($qty), $this->equalTo($rule))
             ->willReturn($qty);
 
         $discountCalc->expects($this->any())
             ->method('calculate')
-            ->with($rule, $item, $qty)
+            ->with($this->equalTo($rule), $this->equalTo($item), $this->equalTo($qty))
             ->willReturn($discountData);
         $this->calculatorFactory->expects($this->any())
             ->method('create')

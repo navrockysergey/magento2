@@ -143,7 +143,7 @@ class Currency extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
             $data = [];
             foreach ($rates as $currencyCode => $rate) {
                 foreach ($rate as $currencyTo => $value) {
-                    $value = abs((float) $value);
+                    $value = abs($value);
                     if ($value == 0) {
                         continue;
                     }

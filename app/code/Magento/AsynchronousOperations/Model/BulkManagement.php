@@ -3,30 +3,25 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\AsynchronousOperations\Model;
 
-use Exception;
+use Magento\Framework\App\ObjectManager;
+use Magento\Framework\App\ResourceConnection;
 use Magento\AsynchronousOperations\Api\Data\BulkSummaryInterface;
 use Magento\AsynchronousOperations\Api\Data\BulkSummaryInterfaceFactory;
 use Magento\AsynchronousOperations\Api\Data\OperationInterface;
-use Magento\AsynchronousOperations\Model\ResourceModel\Operation\Collection;
-use Magento\AsynchronousOperations\Model\ResourceModel\Operation\CollectionFactory;
-use Magento\Authorization\Model\UserContextInterface;
-use Magento\Framework\App\ResourceConnection;
-use Magento\Framework\Bulk\BulkManagementInterface;
+use Magento\Framework\MessageQueue\BulkPublisherInterface;
 use Magento\Framework\EntityManager\EntityManager;
 use Magento\Framework\EntityManager\MetadataPool;
-use Magento\Framework\MessageQueue\BulkPublisherInterface;
-use Psr\Log\LoggerInterface;
+use Magento\AsynchronousOperations\Model\ResourceModel\Operation\CollectionFactory;
+use Magento\Authorization\Model\UserContextInterface;
 
 /**
- * Asynchronous Bulk Management
+ * Class BulkManagement
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class BulkManagement implements BulkManagementInterface
+class BulkManagement implements \Magento\Framework\Bulk\BulkManagementInterface
 {
     /**
      * @var EntityManager
@@ -59,12 +54,12 @@ class BulkManagement implements BulkManagementInterface
     private $resourceConnection;
 
     /**
-     * @var UserContextInterface
+     * @var \Magento\Authorization\Model\UserContextInterface
      */
     private $userContext;
 
     /**
-     * @var LoggerInterface
+     * @var \Psr\Log\LoggerInterface
      */
     private $logger;
 
@@ -76,7 +71,7 @@ class BulkManagement implements BulkManagementInterface
      * @param BulkPublisherInterface $publisher
      * @param MetadataPool $metadataPool
      * @param ResourceConnection $resourceConnection
-     * @param LoggerInterface $logger
+     * @param \Psr\Log\LoggerInterface $logger
      * @param UserContextInterface $userContext
      */
     public function __construct(
@@ -86,8 +81,8 @@ class BulkManagement implements BulkManagementInterface
         BulkPublisherInterface $publisher,
         MetadataPool $metadataPool,
         ResourceConnection $resourceConnection,
-        LoggerInterface $logger,
-        UserContextInterface $userContext
+        \Psr\Log\LoggerInterface $logger,
+        UserContextInterface $userContext = null
     ) {
         $this->entityManager = $entityManager;
         $this->bulkSummaryFactory= $bulkSummaryFactory;
@@ -96,7 +91,7 @@ class BulkManagement implements BulkManagementInterface
         $this->resourceConnection = $resourceConnection;
         $this->publisher = $publisher;
         $this->logger = $logger;
-        $this->userContext = $userContext;
+        $this->userContext = $userContext ?: ObjectManager::getInstance()->get(UserContextInterface::class);
     }
 
     /**
@@ -113,7 +108,7 @@ class BulkManagement implements BulkManagementInterface
             $userType = UserContextInterface::USER_TYPE_ADMIN;
         }
         try {
-            /** @var BulkSummaryInterface $bulkSummary */
+            /** @var \Magento\AsynchronousOperations\Api\Data\BulkSummaryInterface $bulkSummary */
             $bulkSummary = $this->bulkSummaryFactory->create();
             $this->entityManager->load($bulkSummary, $bulkUuid);
             $bulkSummary->setBulkId($bulkUuid);
@@ -121,16 +116,16 @@ class BulkManagement implements BulkManagementInterface
             $bulkSummary->setUserId($userId);
             $bulkSummary->setUserType($userType);
             $bulkSummary->setOperationCount((int)$bulkSummary->getOperationCount() + count($operations));
+
             $this->entityManager->save($bulkSummary);
 
-            $this->publishOperations($operations);
-
             $connection->commit();
-        } catch (Exception $exception) {
+        } catch (\Exception $exception) {
             $connection->rollBack();
             $this->logger->critical($exception->getMessage());
             return false;
         }
+        $this->publishOperations($operations);
 
         return true;
     }
@@ -144,69 +139,53 @@ class BulkManagement implements BulkManagementInterface
      */
     public function retryBulk($bulkUuid, array $errorCodes)
     {
-        /** @var Collection $collection */
-        $collection = $this->operationCollectionFactory->create();
-        /** @var Operation[] $retriablyFailedOperations */
-        $retriablyFailedOperations = $collection
-            ->addFieldToFilter(OperationInterface::BULK_ID, ['eq' => $bulkUuid])
-            ->addFieldToFilter(OperationInterface::ERROR_CODE, ['in' => $errorCodes])
+        $metadata = $this->metadataPool->getMetadata(BulkSummaryInterface::class);
+        $connection = $this->resourceConnection->getConnectionByName($metadata->getEntityConnectionName());
+
+        /** @var \Magento\AsynchronousOperations\Model\ResourceModel\Operation[] $retriablyFailedOperations */
+        $retriablyFailedOperations = $this->operationCollectionFactory->create()
+            ->addFieldToFilter('error_code', ['in' => $errorCodes])
+            ->addFieldToFilter('bulk_uuid', ['eq' => $bulkUuid])
             ->getItems();
-        $affectedOperations = count($retriablyFailedOperations);
-        if ($retriablyFailedOperations) {
-            $operation = reset($retriablyFailedOperations);
-            //async consumer expects operations to be in the database
-            // thus such operation should not be deleted but reopened
-            $shouldReopen = strpos($operation->getTopicName(), ConfigInterface::TOPIC_PREFIX) === 0;
-            $metadata = $this->metadataPool->getMetadata(OperationInterface::class);
-            $linkField = $metadata->getLinkField();
-            $ids = [];
+
+        // remove corresponding operations from database (i.e. move them to 'open' status)
+        $connection->beginTransaction();
+        try {
+            $operationIds = [];
+            $currentBatchSize = 0;
+            $maxBatchSize = 10000;
+            /** @var OperationInterface $operation */
             foreach ($retriablyFailedOperations as $operation) {
-                $ids[] = (int) $operation->getData($linkField);
-            }
-            $batchSize = 10000;
-            $chunks = array_chunk($ids, $batchSize);
-            $connection = $this->resourceConnection->getConnectionByName($metadata->getEntityConnectionName());
-            $connection->beginTransaction();
-            try {
-                if ($shouldReopen) {
-                    foreach ($chunks as $chunk) {
-                        $connection->update(
-                            $metadata->getEntityTable(),
-                            [
-                                OperationInterface::STATUS => OperationInterface::STATUS_TYPE_OPEN,
-                                OperationInterface::RESULT_SERIALIZED_DATA => null,
-                                OperationInterface::ERROR_CODE => null,
-                                OperationInterface::RESULT_MESSAGE => null,
-                                'started_at' => null,
-                            ],
-                            [
-                                $linkField . ' IN (?)' => $chunk,
-                            ]
-                        );
-                    }
-                } else {
-                    foreach ($chunks as $chunk) {
-                        $connection->delete(
-                            $metadata->getEntityTable(),
-                            [
-                                $linkField . ' IN (?)' => $chunk,
-                            ]
-                        );
-                    }
+                if ($currentBatchSize === $maxBatchSize) {
+                    $connection->delete(
+                        $this->resourceConnection->getTableName('magento_operation'),
+                        $connection->quoteInto('id IN (?)', $operationIds)
+                    );
+                    $operationIds = [];
+                    $currentBatchSize = 0;
                 }
-                $connection->commit();
-            } catch (\Throwable $exception) {
-                $connection->rollBack();
-                $this->logger->critical($exception->getMessage());
-                $affectedOperations = 0;
+                $currentBatchSize++;
+                $operationIds[] = $operation->getId();
+                // Rescheduled operations must be put in queue in 'open' state (i.e. without ID)
+                $operation->setId(null);
+            }
+            // remove operations from the last batch
+            if (!empty($operationIds)) {
+                $connection->delete(
+                    $this->resourceConnection->getTableName('magento_operation'),
+                    $connection->quoteInto('id IN (?)', $operationIds)
+                );
             }
 
-            if ($affectedOperations) {
-                $this->publishOperations($retriablyFailedOperations);
-            }
+            $connection->commit();
+        } catch (\Exception $exception) {
+            $connection->rollBack();
+            $this->logger->critical($exception->getMessage());
+            return 0;
         }
+        $this->publishOperations($retriablyFailedOperations);
 
-        return $affectedOperations;
+        return count($retriablyFailedOperations);
     }
 
     /**

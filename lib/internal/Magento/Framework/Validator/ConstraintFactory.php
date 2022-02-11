@@ -9,9 +9,6 @@
  */
 namespace Magento\Framework\Validator;
 
-/**
- * @api
- */
 class ConstraintFactory
 {
     /**
@@ -22,6 +19,8 @@ class ConstraintFactory
     protected $_objectManager = null;
 
     /**
+     * Instance name to create
+     *
      * @var string
      */
     protected $_instanceName = null;
@@ -45,6 +44,7 @@ class ConstraintFactory
      *
      * @param array $data
      * @return \Magento\Framework\Validator\Constraint
+     * @api
      */
     public function create(array $data = [])
     {

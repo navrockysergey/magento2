@@ -49,12 +49,7 @@ class GroupedTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @magentoDataFixture Magento\Catalog\Test\Fixture\Product as:p1
-     * @magentoDataFixture Magento\Catalog\Test\Fixture\Virtual as:p2
-     * @magentoDataFixture Magento\GroupedProduct\Test\Fixture\Product as:gr1
-     * @magentoDataFixtureDataProvider {"p1":{"sku":"simple","name":"Simple Product","price":10}}
-     * @magentoDataFixtureDataProvider {"p2":{"sku":"virtual-product","name":"Virtual Product","price":10}}
-     * @magentoDataFixtureDataProvider {"gr1":{"sku":"gr1","product_links":["$p1$",{"sku":"$p2.sku$","qty":2}]}}
+     * @magentoDataFixture Magento/GroupedProduct/_files/product_grouped.php
      * @magentoAppArea frontend
      */
     public function testGetAssociatedProducts()
@@ -62,7 +57,7 @@ class GroupedTest extends \PHPUnit\Framework\TestCase
         $productRepository = $this->objectManager->create(ProductRepositoryInterface::class);
 
         /** @var Product $product */
-        $product = $productRepository->get('gr1');
+        $product = $productRepository->get('grouped-product');
         $type = $product->getTypeInstance();
         $this->assertInstanceOf(Grouped::class, $type);
 
@@ -79,14 +74,14 @@ class GroupedTest extends \PHPUnit\Framework\TestCase
     private function assertProductInfo($product)
     {
         $data = [
-            'simple' => [
+            1 => [
                 'sku' => 'simple',
                 'name' => 'Simple Product',
                 'price' => '10.000000',
                 'qty' => '1',
                 'position' => '1'
             ],
-            'virtual-product' => [
+            21 => [
                 'sku' => 'virtual-product',
                 'name' => 'Virtual Product',
                 'price' => '10.000000',
@@ -94,7 +89,7 @@ class GroupedTest extends \PHPUnit\Framework\TestCase
                 'position' => '2'
             ]
         ];
-        $productId = $product->getSku();
+        $productId = $product->getId();
         $this->assertEquals($data[$productId]['sku'], $product->getSku());
         $this->assertEquals($data[$productId]['name'], $product->getName());
         $this->assertEquals($data[$productId]['price'], $product->getPrice());

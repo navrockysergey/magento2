@@ -3,21 +3,20 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Ui\Test\Unit\Component;
 
+use Magento\Ui\Component\Listing;
+use Magento\Ui\Component\Listing\Columns;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Framework\View\Element\UiComponent\ContextInterface;
-use Magento\Framework\View\Element\UiComponent\Processor;
-use Magento\Ui\Component\Listing;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class ListingTest extends TestCase
+/**
+ * Class ListingTest
+ */
+class ListingTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var ContextInterface|MockObject
+     * @var ContextInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $contextMock;
 
@@ -27,14 +26,14 @@ class ListingTest extends TestCase
     protected $objectManager;
 
     /**
-     * @inheritdoc
+     * Set up
      */
     protected function setUp(): void
     {
         $this->objectManager = new ObjectManager($this);
 
         $this->contextMock = $this->getMockForAbstractClass(
-            ContextInterface::class,
+            \Magento\Framework\View\Element\UiComponent\ContextInterface::class,
             [],
             '',
             false
@@ -46,19 +45,19 @@ class ListingTest extends TestCase
      *
      * @return void
      */
-    public function testGetComponentName(): void
+    public function testGetComponentName()
     {
         $this->contextMock->expects($this->never())->method('getProcessor');
         /** @var Listing $listing */
         $listing = $this->objectManager->getObject(
-            Listing::class,
+            \Magento\Ui\Component\Listing::class,
             [
                 'context' => $this->contextMock,
                 'data' => []
             ]
         );
 
-        $this->assertSame(Listing::NAME, $listing->getComponentName());
+        $this->assertTrue($listing->getComponentName() === Listing::NAME);
     }
 
     /**
@@ -66,9 +65,9 @@ class ListingTest extends TestCase
      *
      * @return void
      */
-    public function testPrepare(): void
+    public function testPrepare()
     {
-        $processor = $this->getMockBuilder(Processor::class)
+        $processor = $this->getMockBuilder(\Magento\Framework\View\Element\UiComponent\Processor::class)
             ->disableOriginalConstructor()
             ->getMock();
         $this->contextMock->expects($this->atLeastOnce())->method('getProcessor')->willReturn($processor);
@@ -78,20 +77,20 @@ class ListingTest extends TestCase
         ];
         /** @var Listing $listing */
         $listing = $this->objectManager->getObject(
-            Listing::class,
+            \Magento\Ui\Component\Listing::class,
             [
                 'context' => $this->contextMock,
                 'data' => [
                     'js_config' => [
                         'extends' => 'test_config_extends',
-                        'testData' => 'testValue'
+                        'testData' => 'testValue',
                     ],
                     'buttons' => $buttons
                 ]
             ]
         );
 
-        $this->contextMock
+        $this->contextMock->expects($this->at(0))
             ->method('getNamespace')
             ->willReturn(Listing::NAME);
         $this->contextMock->expects($this->once())

@@ -9,10 +9,8 @@ namespace Magento\Tax\Model\TaxClass;
 
 use Magento\Framework\Api\FilterBuilder;
 use Magento\Framework\Api\Search\FilterGroup;
-use Magento\Framework\Api\SearchCriteria\CollectionProcessor;
 use Magento\Framework\Api\SearchCriteria\CollectionProcessorInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
-use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException as ModelException;
@@ -27,8 +25,6 @@ use Magento\Tax\Model\ResourceModel\TaxClass\CollectionFactory as TaxClassCollec
  */
 class Repository implements \Magento\Tax\Api\TaxClassRepositoryInterface
 {
-    public const CLASS_ID_NOT_ALLOWED = 'class_id is not expected for this request.';
-
     /**
      * @var TaxClassCollectionFactory
      */
@@ -44,12 +40,18 @@ class Repository implements \Magento\Tax\Api\TaxClassRepositoryInterface
      */
     protected $classModelRegistry;
 
+    const CLASS_ID_NOT_ALLOWED = 'class_id is not expected for this request.';
+
     /**
+     * Search Criteria Builder
+     *
      * @var SearchCriteriaBuilder
      */
     protected $searchCriteriaBuilder;
 
     /**
+     * Filter Builder
+     *
      * @var FilterBuilder
      */
     protected $filterBuilder;
@@ -96,12 +98,11 @@ class Repository implements \Magento\Tax\Api\TaxClassRepositoryInterface
         $this->classModelRegistry = $classModelRegistry;
         $this->taxClassResource = $taxClassResource;
         $this->joinProcessor = $joinProcessor;
-        $this->collectionProcessor = $collectionProcessor
-            ?: ObjectManager::getInstance()->get(CollectionProcessor::class);
+        $this->collectionProcessor = $collectionProcessor ?: $this->getCollectionProcessor();
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function save(\Magento\Tax\Api\Data\TaxClassInterface $taxClass)
     {
@@ -133,7 +134,7 @@ class Repository implements \Magento\Tax\Api\TaxClassRepositoryInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function get($taxClassId)
     {
@@ -141,7 +142,7 @@ class Repository implements \Magento\Tax\Api\TaxClassRepositoryInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function delete(\Magento\Tax\Api\Data\TaxClassInterface $taxClass)
     {
@@ -158,7 +159,7 @@ class Repository implements \Magento\Tax\Api\TaxClassRepositoryInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function deleteById($taxClassId)
     {
@@ -177,7 +178,7 @@ class Repository implements \Magento\Tax\Api\TaxClassRepositoryInterface
     {
         $exception = new InputException();
 
-        if (!\Zend_Validate::is(trim($taxClass->getClassName() ?? ''), 'NotEmpty')) {
+        if (!\Zend_Validate::is(trim($taxClass->getClassName()), 'NotEmpty')) {
             $exception->addError(
                 __('"%fieldName" is required. Enter and try again.', ['fieldName' => ClassModel::KEY_NAME])
             );
@@ -205,7 +206,7 @@ class Repository implements \Magento\Tax\Api\TaxClassRepositoryInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getList(\Magento\Framework\Api\SearchCriteriaInterface $searchCriteria)
     {
@@ -222,10 +223,8 @@ class Repository implements \Magento\Tax\Api\TaxClassRepositoryInterface
 
     /**
      * Helper function that adds a FilterGroup to the collection.
-     *
      * @param FilterGroup $filterGroup
      * @param TaxClassCollection $collection
-     *
      * @return void
      * @deprecated 100.2.0
      */
@@ -241,5 +240,21 @@ class Repository implements \Magento\Tax\Api\TaxClassRepositoryInterface
         if ($fields) {
             $collection->addFieldToFilter($fields, $conditions);
         }
+    }
+
+    /**
+     * Retrieve collection processor
+     *
+     * @deprecated 100.2.0
+     * @return CollectionProcessorInterface
+     */
+    private function getCollectionProcessor()
+    {
+        if (!$this->collectionProcessor) {
+            $this->collectionProcessor = \Magento\Framework\App\ObjectManager::getInstance()->get(
+                \Magento\Framework\Api\SearchCriteria\CollectionProcessor::class
+            );
+        }
+        return $this->collectionProcessor;
     }
 }

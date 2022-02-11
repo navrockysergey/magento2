@@ -5,24 +5,18 @@
  */
 namespace Magento\ImportExport\Model\Import;
 
-use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\App\ResourceConnection;
-use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\Serialize\Serializer\Json;
-use Magento\Framework\Stdlib\StringUtils;
 use Magento\ImportExport\Model\Import;
 use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingError;
 use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingErrorAggregatorInterface;
-use Magento\ImportExport\Model\ImportFactory;
-use Magento\ImportExport\Model\ResourceModel\Helper;
-use Magento\Store\Model\ScopeInterface;
 
 /**
  * Import entity abstract model
  *
- * phpcs:disable Magento2.Classes.AbstractApi
  * @api
+ *
  * @SuppressWarnings(PHPMD.TooManyFields)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @since 100.0.2
@@ -39,24 +33,20 @@ abstract class AbstractEntity
      */
     const COLUMN_ACTION_VALUE_DELETE = 'delete';
 
-    /**
-     * Path to bunch size configuration
+    /**#@+
+     * XML paths to parameters
      */
     const XML_PATH_BUNCH_SIZE = 'import/format_v2/bunch_size';
 
-    /**
-     * Path to page size configuration
-     */
     const XML_PATH_PAGE_SIZE = 'import/format_v2/page_size';
 
-    /**
-     * Size of varchar value
+    /**#@-*/
+
+    /**#@+
+     * Database constants
      */
     const DB_MAX_VARCHAR_LENGTH = 256;
 
-    /**
-     * Size of text value
-     */
     const DB_MAX_TEXT_LENGTH = 65536;
 
     const ERROR_CODE_SYSTEM_EXCEPTION = 'systemException';
@@ -93,9 +83,9 @@ abstract class AbstractEntity
             . ", see acceptable values on settings specified for Admin",
     ];
 
-    /**
-     * @var AdapterInterface
-     */
+    /**#@-*/
+
+    /**#@-*/
     protected $_connection;
 
     /**
@@ -106,7 +96,9 @@ abstract class AbstractEntity
     protected $_dataValidated = false;
 
     /**
-     * @var array
+     * Valid column names
+     *
+     * @array
      */
     protected $validColumnNames = [];
 
@@ -139,7 +131,7 @@ abstract class AbstractEntity
     /**
      * Magento string lib
      *
-     * @var StringUtils
+     * @var \Magento\Framework\Stdlib\StringUtils
      */
     protected $string;
 
@@ -259,7 +251,7 @@ abstract class AbstractEntity
     /**
      * Core store config
      *
-     * @var ScopeConfigInterface
+     * @var \Magento\Framework\App\Config\ScopeConfigInterface
      */
     protected $_scopeConfig;
 
@@ -292,50 +284,57 @@ abstract class AbstractEntity
     private $serializer;
 
     /**
-     * @param StringUtils $string
-     * @param ScopeConfigInterface $scopeConfig
-     * @param ImportFactory $importFactory
-     * @param Helper $resourceHelper
-     * @param ResourceConnection $resource
+     * @param \Magento\Framework\Stdlib\StringUtils $string
+     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+     * @param \Magento\ImportExport\Model\ImportFactory $importFactory
+     * @param \Magento\ImportExport\Model\ResourceModel\Helper $resourceHelper
+     * @param \Magento\Framework\App\ResourceConnection $resource
      * @param ProcessingErrorAggregatorInterface $errorAggregator
      * @param array $data
-     * @param Json|null $serializer
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     public function __construct(
-        StringUtils $string,
-        ScopeConfigInterface $scopeConfig,
-        ImportFactory $importFactory,
-        Helper $resourceHelper,
+        \Magento\Framework\Stdlib\StringUtils $string,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        \Magento\ImportExport\Model\ImportFactory $importFactory,
+        \Magento\ImportExport\Model\ResourceModel\Helper $resourceHelper,
         ResourceConnection $resource,
         ProcessingErrorAggregatorInterface $errorAggregator,
-        array $data = [],
-        Json $serializer = null
+        array $data = []
     ) {
-        $this->string = $string;
         $this->_scopeConfig = $scopeConfig;
-        $this->_dataSourceModel = $data['data_source_model'] ?? $importFactory->create()->getDataSourceModel();
-        $this->_maxDataSize = $data['max_data_size'] ?? $resourceHelper->getMaxDataSize();
-        $this->_connection = $data['connection'] ?? $resource->getConnection();
-        $this->errorAggregator = $errorAggregator;
-        $this->_pageSize = $data['page_size'] ?? ((int) $this->_scopeConfig->getValue(
+        $this->_dataSourceModel = isset(
+            $data['data_source_model']
+        ) ? $data['data_source_model'] : $importFactory->create()->getDataSourceModel();
+        $this->_connection =
+            isset($data['connection']) ?
+            $data['connection'] :
+            $resource->getConnection();
+        $this->string = $string;
+        $this->_pageSize = isset(
+            $data['page_size']
+        ) ? $data['page_size'] : (static::XML_PATH_PAGE_SIZE ? (int)$this->_scopeConfig->getValue(
             static::XML_PATH_PAGE_SIZE,
-            ScopeInterface::SCOPE_STORE
-        ) ?: 0);
-        $this->_bunchSize = $data['bunch_size'] ?? ((int) $this->_scopeConfig->getValue(
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        ) : 0);
+        $this->_maxDataSize = isset(
+            $data['max_data_size']
+        ) ? $data['max_data_size'] : $resourceHelper->getMaxDataSize();
+        $this->_bunchSize = isset(
+            $data['bunch_size']
+        ) ? $data['bunch_size'] : (static::XML_PATH_BUNCH_SIZE ? (int)$this->_scopeConfig->getValue(
             static::XML_PATH_BUNCH_SIZE,
-            ScopeInterface::SCOPE_STORE
-        ) ?: 0);
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        ) : 0);
+
+        $this->errorAggregator = $errorAggregator;
 
         foreach ($this->errorMessageTemplates as $errorCode => $message) {
             $this->getErrorAggregator()->addErrorMessageTemplate($errorCode, $message);
         }
-        $this->serializer = $serializer ?: ObjectManager::getInstance()->get(Json::class);
     }
 
     /**
-     * Returns Error aggregator
-     *
      * @return ProcessingErrorAggregatorInterface
      */
     public function getErrorAggregator()
@@ -414,7 +413,7 @@ abstract class AbstractEntity
 
         $source->rewind();
         $this->_dataSourceModel->cleanBunches();
-        $mainAttributeCode = $this->getMasterAttributeCode();
+        $masterAttributeCode = $this->getMasterAttributeCode();
 
         while ($source->valid() || count($bunchRows) || isset($entityGroup)) {
             if ($startNewBunch || !$source->valid()) {
@@ -454,13 +453,13 @@ abstract class AbstractEntity
                     continue;
                 }
 
-                if (isset($rowData[$mainAttributeCode]) && trim($rowData[$mainAttributeCode])) {
+                if (isset($rowData[$masterAttributeCode]) && trim($rowData[$masterAttributeCode])) {
                     /* Add entity group that passed validation to bunch */
                     if (isset($entityGroup)) {
                         foreach ($entityGroup as $key => $value) {
                             $bunchRows[$key] = $value;
                         }
-                        $productDataSize = strlen($this->serializer->serialize($bunchRows));
+                        $productDataSize = strlen($this->getSerializer()->serialize($bunchRows));
 
                         /* Check if the new bunch should be started */
                         $isBunchSizeExceeded = ($this->_bunchSize > 0 && count($bunchRows) >= $this->_bunchSize);
@@ -471,7 +470,7 @@ abstract class AbstractEntity
                     $entityGroup = [];
                 }
 
-                if (isset($entityGroup) && isset($rowData) && $this->validateRow($rowData, $source->key())) {
+                if (isset($entityGroup) && $this->validateRow($rowData, $source->key())) {
                     /* Add row to entity group */
                     $entityGroup[$source->key()] = $this->_prepareRowForDb($rowData);
                 } elseif (isset($entityGroup)) {
@@ -484,6 +483,22 @@ abstract class AbstractEntity
             }
         }
         return $this;
+    }
+
+    /**
+     * Get Serializer instance
+     *
+     * Workaround. Only way to implement dependency and not to break inherited child classes
+     *
+     * @return Json
+     * @deprecated 100.2.0
+     */
+    private function getSerializer()
+    {
+        if (null === $this->serializer) {
+            $this->serializer = ObjectManager::getInstance()->get(Json::class);
+        }
+        return $this->serializer;
     }
 
     /**
@@ -535,7 +550,7 @@ abstract class AbstractEntity
     /**
      * Import behavior getter
      *
-     * @param array|null $rowData
+     * @param array $rowData
      * @return string
      */
     public function getBehavior(array $rowData = null)
@@ -551,9 +566,7 @@ abstract class AbstractEntity
             if ($rowData !== null && $behavior == \Magento\ImportExport\Model\Import::BEHAVIOR_CUSTOM) {
                 // try analyze value in self::COLUMN_CUSTOM column and return behavior for given $rowData
                 if (array_key_exists(self::COLUMN_ACTION, $rowData)) {
-                    if ($rowData[self::COLUMN_ACTION]
-                        && strtolower($rowData[self::COLUMN_ACTION]) == self::COLUMN_ACTION_VALUE_DELETE
-                    ) {
+                    if (strtolower($rowData[self::COLUMN_ACTION]) == self::COLUMN_ACTION_VALUE_DELETE) {
                         $behavior = \Magento\ImportExport\Model\Import::BEHAVIOR_DELETE;
                     } else {
                         // as per task description, if column value is different to self::COLUMN_CUSTOM_VALUE_DELETE,
@@ -577,7 +590,6 @@ abstract class AbstractEntity
      * Get default import behavior
      *
      * @return string
-     * phpcs:disable Magento2.Functions.StaticFunction
      */
     public static function getDefaultBehavior()
     {
@@ -640,9 +652,7 @@ abstract class AbstractEntity
     }
 
     /**
-     * Returns the master attribute code to use in an import
-     *
-     * @return string
+     * @return string the master attribute code to use in an import
      */
     public function getMasterAttributeCode()
     {

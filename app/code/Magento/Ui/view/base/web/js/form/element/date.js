@@ -108,13 +108,6 @@ define([
         },
 
         /**
-         * @inheritdoc
-         */
-        getPreview: function () {
-            return this.shiftedValue();
-        },
-
-        /**
          * Prepares and sets date/time value that will be displayed
          * in the input field.
          *
@@ -124,10 +117,10 @@ define([
             var shiftedValue;
 
             if (value) {
-                if (this.options.showsTime && !this.options.timeOnly) {
+                if (this.options.showsTime) {
                     shiftedValue = moment.tz(value, 'UTC').tz(this.storeTimeZone);
                 } else {
-                    shiftedValue = moment(value, this.outputDateFormat, true);
+                    shiftedValue = moment(value, this.outputDateFormat);
                 }
 
                 if (!shiftedValue.isValid()) {
@@ -157,7 +150,7 @@ define([
             if (shiftedValue) {
                 momentValue = moment(shiftedValue, this.pickerDateTimeFormat);
 
-                if (this.options.showsTime && !this.options.timeOnly) {
+                if (this.options.showsTime) {
                     formattedValue = moment(momentValue).format(this.timezoneFormat);
                     value = moment.tz(formattedValue, this.storeTimeZone).tz('UTC').toISOString();
                 } else {
@@ -177,14 +170,10 @@ define([
          * with moment.js library.
          */
         prepareDateTimeFormats: function () {
-            if (this.options.timeOnly) {
-                this.pickerDateTimeFormat = this.options.timeFormat;
-            } else {
-                this.pickerDateTimeFormat = this.options.dateFormat;
+            this.pickerDateTimeFormat = this.options.dateFormat;
 
-                if (this.options.showsTime) {
-                    this.pickerDateTimeFormat += ' ' + this.options.timeFormat;
-                }
+            if (this.options.showsTime) {
+                this.pickerDateTimeFormat += ' ' + this.options.timeFormat;
             }
 
             this.pickerDateTimeFormat = utils.convertToMomentFormat(this.pickerDateTimeFormat);
@@ -193,12 +182,8 @@ define([
                 this.outputDateFormat = this.options.dateFormat;
             }
 
-            this.inputDateFormat = this.options.timeOnly ?
-                utils.convertToMomentFormat(this.pickerDefaultTimeFormat) :
-                utils.convertToMomentFormat(this.inputDateFormat);
-            this.outputDateFormat = this.options.timeOnly ?
-                utils.convertToMomentFormat(this.options.timeFormat) :
-                utils.convertToMomentFormat(this.outputDateFormat);
+            this.inputDateFormat = utils.convertToMomentFormat(this.inputDateFormat);
+            this.outputDateFormat = utils.convertToMomentFormat(this.outputDateFormat);
 
             this.validationParams.dateFormat = this.outputDateFormat;
         }

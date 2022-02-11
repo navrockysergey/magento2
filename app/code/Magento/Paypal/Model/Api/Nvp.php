@@ -7,7 +7,6 @@
 namespace Magento\Paypal\Model\Api;
 
 use Magento\Framework\DataObject;
-use Magento\Payment\Gateway\Http\ClientException;
 use Magento\Payment\Model\Cart;
 use Magento\Payment\Model\Method\Logger;
 
@@ -26,30 +25,30 @@ class Nvp extends \Magento\Paypal\Model\Api\AbstractApi
     /**
      * Paypal methods definition
      */
-    public const DO_DIRECT_PAYMENT = 'DoDirectPayment';
+    const DO_DIRECT_PAYMENT = 'DoDirectPayment';
 
-    public const DO_CAPTURE = 'DoCapture';
+    const DO_CAPTURE = 'DoCapture';
 
-    public const DO_AUTHORIZATION = 'DoAuthorization';
+    const DO_AUTHORIZATION = 'DoAuthorization';
 
-    public const DO_VOID = 'DoVoid';
+    const DO_VOID = 'DoVoid';
 
-    public const REFUND_TRANSACTION = 'RefundTransaction';
+    const REFUND_TRANSACTION = 'RefundTransaction';
 
-    public const SET_EXPRESS_CHECKOUT = 'SetExpressCheckout';
+    const SET_EXPRESS_CHECKOUT = 'SetExpressCheckout';
 
-    public const GET_EXPRESS_CHECKOUT_DETAILS = 'GetExpressCheckoutDetails';
+    const GET_EXPRESS_CHECKOUT_DETAILS = 'GetExpressCheckoutDetails';
 
-    public const DO_EXPRESS_CHECKOUT_PAYMENT = 'DoExpressCheckoutPayment';
+    const DO_EXPRESS_CHECKOUT_PAYMENT = 'DoExpressCheckoutPayment';
 
-    public const CALLBACK_RESPONSE = 'CallbackResponse';
+    const CALLBACK_RESPONSE = 'CallbackResponse';
 
     /**
      * Paypal ManagePendingTransactionStatus actions
      */
-    public const PENDING_TRANSACTION_ACCEPT = 'Accept';
+    const PENDING_TRANSACTION_ACCEPT = 'Accept';
 
-    public const PENDING_TRANSACTION_DENY = 'Deny';
+    const PENDING_TRANSACTION_DENY = 'Deny';
 
     /**
      * Capture type (make authorization close or remain open)
@@ -388,11 +387,15 @@ class Nvp extends \Magento\Paypal\Model\Api\AbstractApi
     protected $_doVoidRequest = ['AUTHORIZATIONID', 'NOTE'];
 
     /**
+     * GetTransactionDetailsRequest
+     *
      * @var string[]
      */
     protected $_getTransactionDetailsRequest = ['TRANSACTIONID'];
 
     /**
+     * GetTransactionDetailsResponse
+     *
      * @var string[]
      */
     protected $_getTransactionDetailsResponse = [
@@ -1157,7 +1160,7 @@ class Nvp extends \Magento\Paypal\Model\Api\AbstractApi
      * @param string $methodName
      * @param array $request
      * @return array
-     * @throws ClientException|\Magento\Framework\Exception\LocalizedException|\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException|\Exception
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     public function call($methodName, array $request)
@@ -1215,7 +1218,7 @@ class Nvp extends \Magento\Paypal\Model\Api\AbstractApi
             );
             $http->close();
 
-            throw new ClientException(
+            throw new \Magento\Framework\Exception\LocalizedException(
                 __('Payment Gateway is unreachable at the moment. Please use another payment option.')
             );
         }
@@ -1282,6 +1285,15 @@ class Nvp extends \Magento\Paypal\Model\Api\AbstractApi
             isset($response['VERSION']) ? $response['VERSION'] : ''
         );
         $this->_logger->critical($exceptionLogMessage);
+
+        /**
+         * The response code 10415 'Transaction has already been completed for this token'
+         * must not fails place order. The old Paypal interface does not lock 'Send' button
+         * it may result to re-send data.
+         */
+        if (in_array((string)ProcessableException::API_TRANSACTION_HAS_BEEN_COMPLETED, $this->_callErrors)) {
+            return;
+        }
 
         $exceptionPhrase = __('PayPal gateway has rejected request. %1', $errorMessages);
 
@@ -1411,7 +1423,7 @@ class Nvp extends \Magento\Paypal\Model\Api\AbstractApi
      */
     protected function _deformatNVP($nvpstr)
     {
-        $initial = 0;
+        $intial = 0;
         $nvpArray = [];
 
         $nvpstr = strpos($nvpstr, "\r\n\r\n") !== false ? substr($nvpstr, strpos($nvpstr, "\r\n\r\n") + 4) : $nvpstr;
@@ -1423,7 +1435,7 @@ class Nvp extends \Magento\Paypal\Model\Api\AbstractApi
             $valuepos = strpos($nvpstr, '&') ? strpos($nvpstr, '&') : strlen($nvpstr);
 
             /*getting the Key and Value values and storing in a Associative Array*/
-            $keyval = substr($nvpstr, $initial, $keypos);
+            $keyval = substr($nvpstr, $intial, $keypos);
             $valval = substr($nvpstr, $keypos + 1, $valuepos - $keypos - 1);
             //decoding the response
             $nvpArray[urldecode($keyval)] = urldecode($valval);
@@ -1501,13 +1513,12 @@ class Nvp extends \Magento\Paypal\Model\Api\AbstractApi
         // attempt to fetch region_id from directory
         if ($address->getCountryId() && $address->getRegion()) {
             $regions = $this->_countryFactory->create()
-                ->loadByCode($address->getCountryId())
                 ->getRegionCollection()
+                ->addCountryFilter($address->getCountryId())
                 ->addRegionCodeOrNameFilter($address->getRegion())
                 ->setPageSize(1);
-
-            if ($regions->count()) {
-                $regionItems = $regions->getItems();
+            $regionItems = $regions->getItems();
+            if (count($regionItems)) {
                 $region = array_shift($regionItems);
                 $address->setRegionId($region->getId());
                 $address->setExportedKeys(array_merge($address->getExportedKeys(), ['region_id']));

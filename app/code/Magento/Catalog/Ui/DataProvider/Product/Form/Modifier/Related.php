@@ -25,7 +25,7 @@ use Magento\Catalog\Helper\Image as ImageHelper;
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
 
 /**
- * Class for Product Modifier Related
+ * Class Related
  *
  * @api
  *
@@ -143,8 +143,7 @@ class Related extends AbstractModifier
     }
 
     /**
-     * @inheritdoc
-     *
+     * {@inheritdoc}
      * @since 101.0.0
      */
     public function modifyMeta(array $meta)
@@ -183,8 +182,7 @@ class Related extends AbstractModifier
     }
 
     /**
-     * @inheritdoc
-     *
+     * {@inheritdoc}
      * @since 101.0.0
      */
     public function modifyData(array $data)
@@ -205,17 +203,11 @@ class Related extends AbstractModifier
 
         foreach ($this->getDataScopes() as $dataScope) {
             $data[$productId]['links'][$dataScope] = [];
-            $linkItems = [];
             foreach ($this->productLinkRepository->getList($product) as $linkItem) {
                 if ($linkItem->getLinkType() !== $dataScope) {
                     continue;
                 }
-                $linkItems[] = $linkItem;
-            }
-            usort($linkItems, function ($a, $b) {
-                return $a->getPosition() <=> $b->getPosition();
-            });
-            foreach ($linkItems as $linkItem) {
+
                 /** @var \Magento\Catalog\Model\Product $linkedProduct */
                 $linkedProduct = $this->productRepository->get(
                     $linkItem->getLinkedProductSku(),
@@ -536,12 +528,10 @@ class Related extends AbstractModifier
                                 'imports' => [
                                     'productId' => '${ $.provider }:data.product.current_product_id',
                                     'storeId' => '${ $.provider }:data.product.current_store_id',
-                                    '__disableTmpl' => ['productId' => false, 'storeId' => false],
                                 ],
                                 'exports' => [
                                     'productId' => '${ $.externalProvider }:params.current_product_id',
                                     'storeId' => '${ $.externalProvider }:params.current_store_id',
-                                    '__disableTmpl' => ['productId' => false, 'storeId' => false],
                                 ]
                             ],
                         ],
@@ -592,8 +582,7 @@ class Related extends AbstractModifier
                             'thumbnail' => 'thumbnail_src',
                         ],
                         'links' => [
-                            'insertData' => '${ $.provider }:${ $.dataProvider }',
-                            '__disableTmpl' => ['insertData' => false],
+                            'insertData' => '${ $.provider }:${ $.dataProvider }'
                         ],
                         'sortOrder' => 2,
                     ],

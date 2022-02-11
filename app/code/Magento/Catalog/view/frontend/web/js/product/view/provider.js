@@ -30,13 +30,9 @@ define([
          * @returns {Object} Chainable.
          */
         initialize: function () {
-            this._super();
-
-            if (window.checkout && window.checkout.baseUrl) {
-                this.initIdsStorage();
-            }
-
-            this.initDataStorage();
+            this._super()
+                .initIdsStorage()
+                .initDataStorage();
 
             return this;
         },

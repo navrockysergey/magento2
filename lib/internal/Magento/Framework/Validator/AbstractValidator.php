@@ -8,7 +8,6 @@ namespace Magento\Framework\Validator;
 /**
  * Abstract validator class.
  *
- * phpcs:disable Magento2.Classes.AbstractApi
  * @api
  * @since 100.0.2
  */
@@ -25,6 +24,8 @@ abstract class AbstractValidator implements \Magento\Framework\Validator\Validat
     protected $_translator = null;
 
     /**
+     * Array of validation failure messages
+     *
      * @var array
      */
     protected $_messages = [];
@@ -34,6 +35,7 @@ abstract class AbstractValidator implements \Magento\Framework\Validator\Validat
      *
      * @param \Magento\Framework\Translate\AdapterInterface|null $translator
      * @return void
+     * @api
      */
     public static function setDefaultTranslator(\Magento\Framework\Translate\AdapterInterface $translator = null)
     {
@@ -44,6 +46,7 @@ abstract class AbstractValidator implements \Magento\Framework\Validator\Validat
      * Get default translator
      *
      * @return \Magento\Framework\Translate\AdapterInterface|null
+     * @api
      */
     public static function getDefaultTranslator()
     {
@@ -89,6 +92,7 @@ abstract class AbstractValidator implements \Magento\Framework\Validator\Validat
      * Get validation failure messages
      *
      * @return string[]
+     * @api
      */
     public function getMessages()
     {
@@ -99,6 +103,7 @@ abstract class AbstractValidator implements \Magento\Framework\Validator\Validat
      * Whether it has failure messages
      *
      * @return bool
+     * @api
      */
     public function hasMessages()
     {

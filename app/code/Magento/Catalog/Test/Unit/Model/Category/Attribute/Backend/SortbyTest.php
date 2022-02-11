@@ -3,84 +3,70 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
 
 namespace Magento\Catalog\Test\Unit\Model\Category\Attribute\Backend;
 
-use Magento\Catalog\Model\Category\Attribute\Backend\Sortby;
-use Magento\Eav\Model\Entity\AbstractEntity;
-use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
-use Magento\Eav\Model\Entity\Attribute\Frontend\AbstractFrontend;
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\DataObject;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use PHPUnit\Framework\TestCase;
-
-class SortbyTest extends TestCase
+class SortbyTest extends \PHPUnit\Framework\TestCase
 {
     const DEFAULT_ATTRIBUTE_CODE = 'attribute_name';
 
     /**
-     * @var Sortby
+     * @var \Magento\Catalog\Model\Category\Attribute\Backend\Sortby
      */
-    private $model;
+    protected $_model;
 
     /**
-     * @var ObjectManager
+     * @var \Magento\Framework\TestFramework\Unit\Helper\ObjectManager
      */
-    private $objectHelper;
+    protected $_objectHelper;
 
     /**
-     * @var AbstractAttribute
+     * @var \Magento\Eav\Model\Entity\Attribute\AbstractAttribute
      */
-    private $attribute;
+    protected $_attribute;
 
     /**
-     * @var ScopeConfigInterface
+     * @var \Magento\Framework\App\Config\ScopeConfigInterface
      */
-    private $scopeConfig;
+    protected $_scopeConfig;
 
-    /**
-     * @inheritdoc
-     */
     protected function setUp(): void
     {
         $this->markTestSkipped('Due to MAGETWO-48956');
-        $this->objectHelper = new ObjectManager($this);
-        $this->scopeConfig = $this->getMockForAbstractClass(ScopeConfigInterface::class);
-        $this->model = $this->objectHelper->getObject(
-            Sortby::class,
-            ['scopeConfig' => $this->scopeConfig]
+        $this->_objectHelper = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
+        $this->_scopeConfig = $this->createMock(\Magento\Framework\App\Config\ScopeConfigInterface::class);
+        $this->_model = $this->_objectHelper->getObject(
+            \Magento\Catalog\Model\Category\Attribute\Backend\Sortby::class,
+            ['scopeConfig' => $this->_scopeConfig]
         );
-        $this->attribute = $this->createPartialMock(
-            AbstractAttribute::class,
+        $this->_attribute = $this->createPartialMock(
+            \Magento\Eav\Model\Entity\Attribute\AbstractAttribute::class,
             [
                 'getName',
                 '__call',
                 'isValueEmpty',
                 'getEntity',
                 'getFrontend',
+                '__wakeup',
                 'getIsRequired',
                 'getIsUnique'
             ]
         );
 
-        $this->model->setAttribute($this->attribute);
+        $this->_model->setAttribute($this->_attribute);
     }
 
     /**
      * @param $attributeCode
      * @param $data
      * @param $expected
-     *
-     * @return void
      * @dataProvider beforeSaveDataProvider
      */
-    public function testBeforeSave($attributeCode, $data, $expected): void
+    public function testBeforeSave($attributeCode, $data, $expected)
     {
-        $this->attribute->expects($this->any())->method('getName')->willReturn($attributeCode);
-        $object = new DataObject($data);
-        $this->model->beforeSave($object);
+        $this->_attribute->expects($this->any())->method('getName')->willReturn($attributeCode);
+        $object = new \Magento\Framework\DataObject($data);
+        $this->_model->beforeSave($object);
         $this->assertTrue($object->hasData($attributeCode));
         $this->assertSame($expected, $object->getData($attributeCode));
     }
@@ -88,33 +74,33 @@ class SortbyTest extends TestCase
     /**
      * @return array
      */
-    public function beforeSaveDataProvider(): array
+    public function beforeSaveDataProvider()
     {
         return [
             'attribute with specified value' => [
                 self::DEFAULT_ATTRIBUTE_CODE,
                 [self::DEFAULT_ATTRIBUTE_CODE => 'test_value'],
-                'test_value'
+                'test_value',
             ],
             'attribute with default value' => [
                 self::DEFAULT_ATTRIBUTE_CODE,
                 [self::DEFAULT_ATTRIBUTE_CODE => null],
-                null
+                null,
             ],
             'attribute does not exist' => [
                 self::DEFAULT_ATTRIBUTE_CODE,
                 [],
-                null
+                null,
             ],
             'attribute sort by empty' => [
                 'available_sort_by',
                 ['available_sort_by' => null],
-                null
+                null,
             ],
             'attribute sort by' => [
                 'available_sort_by',
                 ['available_sort_by' => ['test', 'value']],
-                'test,value'
+                'test,value',
             ]
         ];
     }
@@ -123,15 +109,13 @@ class SortbyTest extends TestCase
      * @param $attributeCode
      * @param $data
      * @param $expected
-     *
-     * @return void
      * @dataProvider afterLoadDataProvider
      */
-    public function testAfterLoad($attributeCode, $data, $expected): void
+    public function testAfterLoad($attributeCode, $data, $expected)
     {
-        $this->attribute->expects($this->any())->method('getName')->willReturn($attributeCode);
-        $object = new DataObject($data);
-        $this->model->afterLoad($object);
+        $this->_attribute->expects($this->any())->method('getName')->willReturn($attributeCode);
+        $object = new \Magento\Framework\DataObject($data);
+        $this->_model->afterLoad($object);
         $this->assertTrue($object->hasData($attributeCode));
         $this->assertSame($expected, $object->getData($attributeCode));
     }
@@ -139,23 +123,23 @@ class SortbyTest extends TestCase
     /**
      * @return array
      */
-    public function afterLoadDataProvider(): array
+    public function afterLoadDataProvider()
     {
         return [
             'attribute with specified value' => [
                 self::DEFAULT_ATTRIBUTE_CODE,
                 [self::DEFAULT_ATTRIBUTE_CODE => 'test_value'],
-                'test_value'
+                'test_value',
             ],
             'attribute sort by empty' => [
                 'available_sort_by',
                 ['available_sort_by' => null],
-                null
+                null,
             ],
             'attribute sort by' => [
                 'available_sort_by',
                 ['available_sort_by' => 'test,value'],
-                ['test', 'value']
+                ['test', 'value'],
             ]
         ];
     }
@@ -164,64 +148,60 @@ class SortbyTest extends TestCase
      * @param $attributeData
      * @param $data
      * @param $expected
-     *
-     * @return void
      * @dataProvider validateDataProvider
      */
-    public function testValidate($attributeData, $data, $expected): void
+    public function testValidate($attributeData, $data, $expected)
     {
-        $this->attribute->expects($this->any())->method('getName')->willReturn($attributeData['code']);
-        $this->attribute->method('getIsRequired')
+        $this->_attribute->expects($this->any())->method('getName')->willReturn($attributeData['code']);
+        $this->_attribute
+            ->expects($this->at(1))
+            ->method('getIsRequired')
             ->willReturn($attributeData['isRequired']);
-        $this->attribute
+        $this->_attribute
             ->expects($this->any())
             ->method('isValueEmpty')
             ->willReturn($attributeData['isValueEmpty']);
-        $object = new DataObject($data);
-        $this->assertSame($expected, $this->model->validate($object));
+        $object = new \Magento\Framework\DataObject($data);
+        $this->assertSame($expected, $this->_model->validate($object));
     }
 
     /**
      * @return array
      */
-    public function validateDataProvider(): array
+    public function validateDataProvider()
     {
         return [
             'is not required' => [
                 ['code' => self::DEFAULT_ATTRIBUTE_CODE, 'isRequired' => false, 'isValueEmpty' => false],
                 [],
-                true
+                true,
             ],
             'required, empty, not use config case 1' => [
                 ['code' => self::DEFAULT_ATTRIBUTE_CODE, 'isRequired' => true, 'isValueEmpty' => true],
                 [self::DEFAULT_ATTRIBUTE_CODE => [], 'use_post_data_config' => []],
-                false
+                false,
             ],
             'required, empty, not use config case 2' => [
                 ['code' => self::DEFAULT_ATTRIBUTE_CODE, 'isRequired' => true, 'isValueEmpty' => true],
                 [self::DEFAULT_ATTRIBUTE_CODE => [], 'use_post_data_config' => ['config']],
-                false
+                false,
             ],
             'required, empty, use config' => [
                 ['code' => self::DEFAULT_ATTRIBUTE_CODE, 'isRequired' => true, 'isValueEmpty' => true],
                 [self::DEFAULT_ATTRIBUTE_CODE => [], 'use_post_data_config' => [self::DEFAULT_ATTRIBUTE_CODE]],
-                true
-            ]
+                true,
+            ],
         ];
     }
 
-    /**
-     * @return void
-     */
-    public function testValidateUnique(): void
+    public function testValidateUnique()
     {
-        $this->attribute->expects($this->any())->method('getName')->willReturn('attribute_name');
-        $this->attribute->method('getIsRequired');
-        $this->attribute§('getIsUnique')
-            ->willReturn(true);
+        $this->_attribute->expects($this->any())->method('getName')->willReturn('attribute_name');
+        $this->_attribute->expects($this->at(1))->method('getIsRequired');
+        $this->_attribute->expects($this->at(2))->method('getIsUnique')->willReturn(true);
 
         $entityMock = $this->getMockForAbstractClass(
-            AbstractEntity::class,
+            \Magento\Eav\Model\Entity\AbstractEntity::class,
             [],
             '',
             false,
@@ -229,24 +209,23 @@ class SortbyTest extends TestCase
             true,
             ['checkAttributeUniqueValue']
         );
-        $this->attribute->expects($this->any())->method('getEntity')->willReturn($entityMock);
-        $entityMock->method('checkAttributeUniqueValue')
-            ->willReturn(true);
-        $this->assertTrue($this->model->validate(new DataObject()));
+        $this->_attribute->expects($this->any())->method('getEntity')->willReturn($entityMock);
+        $entityMock->expects($this->at(0))->method('checkAttributeUniqueValue')->willReturn(true);
+        $this->assertTrue($this->_model->validate(new \Magento\Framework\DataObject()));
     }
 
     /**
-     * @return void
      */
-    public function testValidateUniqueException(): void
+    public function testValidateUniqueException()
     {
-        $this->expectException('Magento\Framework\Exception\LocalizedException');
-        $this->attribute->expects($this->any())->method('getName')->willReturn('attribute_name');
-        $this->attribute->method('getIsRequired');
-        $this->attribute->method('getIsUnique')->willReturn(true);
+        $this->expectException(\Magento\Framework\Exception\LocalizedException::class);
+
+        $this->_attribute->expects($this->any())->method('getName')->willReturn('attribute_name');
+        $this->_attribute->expects($this->at(1))->method('getIsRequired');
+        $this->_attribute->expects($this->at(2))->method('getIsUnique')->willReturn(true);
 
         $entityMock = $this->getMockForAbstractClass(
-            AbstractEntity::class,
+            \Magento\Eav\Model\Entity\AbstractEntity::class,
             [],
             '',
             false,
@@ -255,7 +234,7 @@ class SortbyTest extends TestCase
             ['checkAttributeUniqueValue']
         );
         $frontMock = $this->getMockForAbstractClass(
-            AbstractFrontend::class,
+            \Magento\Eav\Model\Entity\Attribute\Frontend\AbstractFrontend::class,
             [],
             '',
             false,
@@ -263,31 +242,29 @@ class SortbyTest extends TestCase
             true,
             ['getLabel']
         );
-        $this->attribute->expects($this->any())->method('getEntity')->willReturn($entityMock);
-        $this->attribute->expects($this->any())->method('getFrontend')->willReturn($frontMock);
-        $entityMock->method('checkAttributeUniqueValue')->willReturn(false);
-        $this->assertTrue($this->model->validate(new DataObject()));
+        $this->_attribute->expects($this->any())->method('getEntity')->willReturn($entityMock);
+        $this->_attribute->expects($this->any())->method('getFrontend')->willReturn($frontMock);
+        $entityMock->expects($this->at(0))->method('checkAttributeUniqueValue')->willReturn(false);
+        $this->assertTrue($this->_model->validate(new \Magento\Framework\DataObject()));
     }
 
     /**
      * @param $attributeCode
      * @param $data
-     *
-     * @return void
      * @dataProvider validateDefaultSortDataProvider
      */
-    public function testValidateDefaultSort($attributeCode, $data): void
+    public function testValidateDefaultSort($attributeCode, $data)
     {
-        $this->attribute->expects($this->any())->method('getName')->willReturn($attributeCode);
-        $this->scopeConfig->expects($this->any())->method('getValue')->willReturn('value2');
-        $object = new DataObject($data);
-        $this->assertTrue($this->model->validate($object));
+        $this->_attribute->expects($this->any())->method('getName')->willReturn($attributeCode);
+        $this->_scopeConfig->expects($this->any())->method('getValue')->willReturn('value2');
+        $object = new \Magento\Framework\DataObject($data);
+        $this->assertTrue($this->_model->validate($object));
     }
 
     /**
      * @return array
      */
-    public function validateDefaultSortDataProvider(): array
+    public function validateDefaultSortDataProvider()
     {
         return [
             [
@@ -296,7 +273,7 @@ class SortbyTest extends TestCase
                     'available_sort_by' => ['value1', 'value2'],
                     'default_sort_by' => 'value2',
                     'use_post_data_config' => []
-                ]
+                ],
             ],
             [
                 'default_sort_by',
@@ -312,30 +289,29 @@ class SortbyTest extends TestCase
                     'default_sort_by' => null,
                     'use_post_data_config' => ['available_sort_by', 'default_sort_by', 'filter_price_range']
                 ]
-            ]
+            ],
         ];
     }
 
     /**
      * @param $attributeCode
      * @param $data
-     *
-     * @return void
      * @dataProvider validateDefaultSortException
      */
-    public function testValidateDefaultSortException($attributeCode, $data): void
+    public function testValidateDefaultSortException($attributeCode, $data)
     {
-        $this->expectException('Magento\Framework\Exception\LocalizedException');
-        $this->attribute->expects($this->any())->method('getName')->willReturn($attributeCode);
-        $this->scopeConfig->expects($this->any())->method('getValue')->willReturn('another value');
-        $object = new DataObject($data);
-        $this->model->validate($object);
+        $this->expectException(\Magento\Framework\Exception\LocalizedException::class);
+
+        $this->_attribute->expects($this->any())->method('getName')->willReturn($attributeCode);
+        $this->_scopeConfig->expects($this->any())->method('getValue')->willReturn('another value');
+        $object = new \Magento\Framework\DataObject($data);
+        $this->_model->validate($object);
     }
 
     /**
      * @return array
      */
-    public function validateDefaultSortException(): array
+    public function validateDefaultSortException()
     {
         return [
             [
@@ -343,7 +319,7 @@ class SortbyTest extends TestCase
                 [
                     'available_sort_by' => null,
                     'use_post_data_config' => ['default_sort_by']
-                ]
+                ],
             ],
             [
                 'default_sort_by',
@@ -366,7 +342,7 @@ class SortbyTest extends TestCase
                     'available_sort_by' => 'value1',
                     'use_post_data_config' => []
                 ]
-            ]
+            ],
         ];
     }
 }

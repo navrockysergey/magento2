@@ -12,12 +12,12 @@ use Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\TestFramework\TestCase\WebapiAbstract;
 
 /**
- * Class TransactionReadTest
+ * Class TransactionReadTest for Magento sales webapi
  */
 class TransactionTest extends WebapiAbstract
 {
     /**
-     * Service read name
+     * Service read name constant
      */
     const SERVICE_READ_NAME = 'salesTransactionRepositoryV1';
 
@@ -27,7 +27,7 @@ class TransactionTest extends WebapiAbstract
     const RESOURCE_PATH = '/V1/transactions';
 
     /**
-     * Service version
+     * Service version constant
      */
     const SERVICE_VERSION = 'V1';
 

@@ -3,130 +3,92 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
 
 namespace Magento\CatalogUrlRewrite\Test\Unit\Observer;
 
-use Magento\Catalog\Model\Category;
-use Magento\Catalog\Model\ResourceModel\Category as CategoryResource;
-use Magento\CatalogUrlRewrite\Model\Category\ChildrenCategoriesProvider;
-use Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator;
-use Magento\CatalogUrlRewrite\Model\ResourceModel\Category\GetDefaultUrlKey;
-use Magento\CatalogUrlRewrite\Observer\CategoryUrlPathAutogeneratorObserver;
-use Magento\CatalogUrlRewrite\Service\V1\StoreViewService;
-use Magento\Framework\Event\Observer;
-use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManagerHelper;
-use Magento\Store\Model\Store;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-use Magento\Backend\Model\Validator\UrlKey\CompositeUrlKey;
 
-/**
- * Unit tests for \Magento\CatalogUrlRewrite\Observer\CategoryUrlPathAutogeneratorObserver class.
- */
-class CategoryUrlPathAutogeneratorObserverTest extends TestCase
+class CategoryUrlPathAutogeneratorObserverTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var CategoryUrlPathAutogeneratorObserver
+     * @var \Magento\CatalogUrlRewrite\Observer\CategoryUrlPathAutogeneratorObserver
      */
     private $categoryUrlPathAutogeneratorObserver;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     private $categoryUrlPathGenerator;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     private $childrenCategoriesProvider;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     private $observer;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     private $category;
 
     /**
-     * @var StoreViewService|MockObject
+     * @var \Magento\CatalogUrlRewrite\Service\V1\StoreViewService|\PHPUnit\Framework\MockObject\MockObject
      */
     private $storeViewService;
 
     /**
-     * @var CategoryResource|MockObject
+     * @var \Magento\Catalog\Model\ResourceModel\Category|\PHPUnit\Framework\MockObject\MockObject
      */
     private $categoryResource;
-
-    /**
-     * @var CompositeUrlKey|MockObject
-     */
-    private $compositeUrlValidator;
-
-    /**
-     * @var GetDefaultUrlKey|MockObject
-     */
-    private $getDefaultUrlKey;
 
     /**
      * @inheritDoc
      */
     protected function setUp(): void
     {
-        $this->observer = $this->getMockBuilder(Observer::class)
-            ->addMethods(['getCategory'])
-            ->onlyMethods(['getEvent'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->categoryResource = $this->createMock(CategoryResource::class);
+        $this->observer = $this->createPartialMock(
+            \Magento\Framework\Event\Observer::class,
+            ['getEvent', 'getCategory']
+        );
+        $this->categoryResource = $this->createMock(\Magento\Catalog\Model\ResourceModel\Category::class);
         $this->category = $this->createPartialMock(
-            Category::class,
+            \Magento\Catalog\Model\Category::class,
             [
                 'dataHasChangedFor',
                 'getResource',
                 'getStoreId',
-                'formatUrlKey',
-                'getId',
-                'hasChildren',
+                'formatUrlKey'
             ]
         );
         $this->category->expects($this->any())->method('getResource')->willReturn($this->categoryResource);
         $this->observer->expects($this->any())->method('getEvent')->willReturnSelf();
         $this->observer->expects($this->any())->method('getCategory')->willReturn($this->category);
-        $this->categoryUrlPathGenerator = $this->createMock(CategoryUrlPathGenerator::class);
-        $this->childrenCategoriesProvider = $this->createMock(ChildrenCategoriesProvider::class);
+        $this->categoryUrlPathGenerator = $this->createMock(
+            \Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator::class
+        );
+        $this->childrenCategoriesProvider = $this->createMock(
+            \Magento\CatalogUrlRewrite\Model\Category\ChildrenCategoriesProvider::class
+        );
 
-        $this->storeViewService = $this->createMock(StoreViewService::class);
-
-        $this->compositeUrlValidator = $this->getMockBuilder(CompositeUrlKey::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['validate'])
-            ->getMock();
-
-        $this->getDefaultUrlKey = $this->getMockBuilder(GetDefaultUrlKey::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['execute'])
-            ->getMock();
+        $this->storeViewService = $this->createMock(\Magento\CatalogUrlRewrite\Service\V1\StoreViewService::class);
 
         $this->categoryUrlPathAutogeneratorObserver = (new ObjectManagerHelper($this))->getObject(
-            CategoryUrlPathAutogeneratorObserver::class,
+            \Magento\CatalogUrlRewrite\Observer\CategoryUrlPathAutogeneratorObserver::class,
             [
                 'categoryUrlPathGenerator' => $this->categoryUrlPathGenerator,
                 'childrenCategoriesProvider' => $this->childrenCategoriesProvider,
                 'storeViewService' => $this->storeViewService,
-                'compositeUrlValidator' => $this->compositeUrlValidator,
-                'getDefaultUrlKey' => $this->getDefaultUrlKey,
             ]
         );
     }
 
     /**
      * @param $isObjectNew
-     * @throws LocalizedException
+     * @throws \Magento\Framework\Exception\LocalizedException
      * @dataProvider shouldFormatUrlKeyAndGenerateUrlPathIfUrlKeyIsNotUsingDefaultValueDataProvider
      */
     public function testShouldFormatUrlKeyAndGenerateUrlPathIfUrlKeyIsNotUsingDefaultValue($isObjectNew)
@@ -140,7 +102,6 @@ class CategoryUrlPathAutogeneratorObserverTest extends TestCase
         $this->categoryUrlPathGenerator->expects($this->once())->method('getUrlPath')->willReturn($expectedUrlPath);
         $this->assertEquals($categoryData['url_key'], $this->category->getUrlKey());
         $this->assertEquals($categoryData['url_path'], $this->category->getUrlPath());
-        $this->compositeUrlValidator->expects($this->once())->method('validate')->with('formatted_url_key')->willReturn([]);
         $this->categoryUrlPathAutogeneratorObserver->execute($this->observer);
         $this->assertEquals($expectedUrlKey, $this->category->getUrlKey());
         $this->assertEquals($expectedUrlPath, $this->category->getUrlPath());
@@ -159,26 +120,16 @@ class CategoryUrlPathAutogeneratorObserverTest extends TestCase
     }
 
     /**
-     * @param bool $isObjectNew
-     * @param int $storeId
-     * @return void
-     * @throws LocalizedException
+     * @param $isObjectNew
+     * @throws \Magento\Framework\Exception\LocalizedException
      * @dataProvider shouldResetUrlPathAndUrlKeyIfUrlKeyIsUsingDefaultValueDataProvider
      */
-    public function testShouldResetUrlPathAndUrlKeyIfUrlKeyIsUsingDefaultValue(bool $isObjectNew, int $storeId): void
+    public function testShouldResetUrlPathAndUrlKeyIfUrlKeyIsUsingDefaultValue($isObjectNew)
     {
-        $categoryData = [
-            'use_default' => ['url_key' => 1],
-            'url_key' => 'some_key',
-            'url_path' => 'some_path',
-        ];
+        $categoryData = ['use_default' => ['url_key' => 1], 'url_key' => 'some_key', 'url_path' => 'some_path'];
         $this->category->setData($categoryData);
         $this->category->isObjectNew($isObjectNew);
         $this->category->expects($this->any())->method('formatUrlKey')->willReturn('formatted_key');
-        $this->category->expects($this->any())->method('getStoreId')->willReturn($storeId);
-        $this->category->expects($this->once())
-            ->method('hasChildren')
-            ->willReturn(false);
         $this->assertEquals($categoryData['url_key'], $this->category->getUrlKey());
         $this->assertEquals($categoryData['url_path'], $this->category->getUrlPath());
         $this->categoryUrlPathAutogeneratorObserver->execute($this->observer);
@@ -189,87 +140,18 @@ class CategoryUrlPathAutogeneratorObserverTest extends TestCase
     /**
      * @return array
      */
-    public function shouldResetUrlPathAndUrlKeyIfUrlKeyIsUsingDefaultValueDataProvider(): array
+    public function shouldResetUrlPathAndUrlKeyIfUrlKeyIsUsingDefaultValueDataProvider()
     {
         return [
-            [false, 0],
-            [false, 1],
-            [true, 1],
-            [true, 0],
+            [true],
+            [false],
         ];
-    }
-
-    /**
-     * @return void
-     */
-    public function testShouldUpdateUrlPathForChildrenIfUrlKeyIsUsingDefaultValueForSpecificStore(): void
-    {
-        $storeId = 1;
-        $categoryId = 1;
-        $categoryData = [
-            'use_default' => ['url_key' => 1],
-            'url_key' => null,
-            'url_path' => 'some_path',
-        ];
-
-        $this->category->setData($categoryData);
-        $this->category->isObjectNew(false);
-        $this->category->expects($this->any())
-            ->method('getStoreId')
-            ->willReturn($storeId);
-        $this->category->expects($this->once())
-            ->method('hasChildren')
-            ->willReturn(true);
-        $this->category->expects($this->exactly(2))
-            ->method('getId')
-            ->willReturn($categoryId);
-        $this->getDefaultUrlKey->expects($this->once())
-            ->method('execute')
-            ->with($categoryId)
-            ->willReturn('default_url_key');
-        $this->category->expects($this->once())
-            ->method('dataHasChangedFor')
-            ->with('url_path')
-            ->willReturn(true);
-
-        $childCategory = $this->getMockBuilder(Category::class)
-            ->onlyMethods(
-                [
-                    'getResource',
-                    'getStore',
-                    'getStoreId',
-                    'setStoreId',
-                ]
-            )
-            ->addMethods(
-                [
-                    'getUrlPath',
-                    'setUrlPath',
-                ]
-            )
-            ->disableOriginalConstructor()
-            ->getMock();
-        $childCategory->expects($this->any())
-            ->method('getResource')
-            ->willReturn($this->categoryResource);
-        $childCategory->expects($this->once())
-            ->method('setStoreId')
-            ->with($storeId)
-            ->willReturnSelf();
-
-        $this->childrenCategoriesProvider->expects($this->once())
-            ->method('getChildren')
-            ->willReturn([$childCategory]);
-
-        $this->categoryUrlPathAutogeneratorObserver->execute($this->observer);
-        $this->assertNull($this->category->getUrlKey());
-        $this->assertNull($this->category->getUrlPath());
     }
 
     /**
      * @param $useDefaultUrlKey
      * @param $isObjectNew
-     * @throws LocalizedException
+     * @throws \Magento\Framework\Exception\LocalizedException
      * @dataProvider shouldThrowExceptionIfUrlKeyIsEmptyDataProvider
      */
     public function testShouldThrowExceptionIfUrlKeyIsEmpty($useDefaultUrlKey, $isObjectNew)
@@ -279,7 +161,7 @@ class CategoryUrlPathAutogeneratorObserverTest extends TestCase
         $this->category->setData($categoryData);
         $this->category
             ->method('getStoreId')
-            ->willReturn(Store::DEFAULT_STORE_ID);
+            ->willReturn(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
         $this->category->isObjectNew($isObjectNew);
         $this->assertEquals($isObjectNew, $this->category->isObjectNew());
         $this->assertEquals($categoryData['url_key'], $this->category->getUrlKey());
@@ -312,7 +194,6 @@ class CategoryUrlPathAutogeneratorObserverTest extends TestCase
         $this->categoryUrlPathGenerator->expects($this->any())->method('getUrlPath')->willReturn($expectedUrlPath);
         $this->categoryResource->expects($this->once())->method('saveAttribute')->with($this->category, 'url_path');
         $this->category->expects($this->once())->method('dataHasChangedFor')->with('url_path')->willReturn(false);
-        $this->compositeUrlValidator->expects($this->once())->method('validate')->with('formatted_url_key')->willReturn([]);
         $this->categoryUrlPathAutogeneratorObserver->execute($this->observer);
     }
 
@@ -329,7 +210,6 @@ class CategoryUrlPathAutogeneratorObserverTest extends TestCase
 
         // break code execution
         $this->category->expects($this->once())->method('dataHasChangedFor')->with('url_path')->willReturn(false);
-        $this->compositeUrlValidator->expects($this->once())->method('validate')->with('url_key')->willReturn([]);
 
         $this->categoryUrlPathAutogeneratorObserver->execute($this->observer);
     }
@@ -346,10 +226,9 @@ class CategoryUrlPathAutogeneratorObserverTest extends TestCase
         // only for specific store
         $this->category->expects($this->atLeastOnce())->method('getStoreId')->willReturn(1);
 
-        $childCategoryResource = $this->getMockBuilder(CategoryResource::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $childCategory = $this->getMockBuilder(Category::class)
+        $childCategoryResource = $this->getMockBuilder(\Magento\Catalog\Model\ResourceModel\Category::class)
+            ->disableOriginalConstructor()->getMock();
+        $childCategory = $this->getMockBuilder(\Magento\Catalog\Model\Category::class)
             ->setMethods(
                 [
                     'getUrlPath',
@@ -368,7 +247,6 @@ class CategoryUrlPathAutogeneratorObserverTest extends TestCase
         $this->childrenCategoriesProvider->expects($this->once())->method('getChildren')->willReturn([$childCategory]);
         $childCategory->expects($this->once())->method('setUrlPath')->with('generated_url_path')->willReturnSelf();
         $childCategoryResource->expects($this->once())->method('saveAttribute')->with($childCategory, 'url_path');
-        $this->compositeUrlValidator->expects($this->once())->method('validate')->with('generated_url_key')->willReturn([]);
 
         $this->categoryUrlPathAutogeneratorObserver->execute($this->observer);
     }

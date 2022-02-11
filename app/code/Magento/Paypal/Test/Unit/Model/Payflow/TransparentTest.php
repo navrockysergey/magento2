@@ -9,8 +9,6 @@ namespace Magento\Paypal\Test\Unit\Model\Payflow;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\DataObject;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\State\InvalidTransitionException;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManagerHelper;
 use Magento\Payment\Model\Method\ConfigInterface as PaymentConfigInterface;
 use Magento\Payment\Model\Method\ConfigInterfaceFactory as PaymentConfigInterfaceFactory;
@@ -28,15 +26,14 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Vault\Api\Data\PaymentTokenInterface;
 use Magento\Vault\Api\Data\PaymentTokenInterfaceFactory;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\MockObject\MockObject as MockObject;
 
 /**
  * Paypal transparent test class
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class TransparentTest extends TestCase
+class TransparentTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var PayPalPayflowTransparent
@@ -78,11 +75,6 @@ class TransparentTest extends TestCase
      */
     private $order;
 
-    /**
-     * @var OrderPaymentExtensionInterface|MockObject
-     */
-    private $paymentExtensionAttributes;
-
     protected function setUp(): void
     {
         $this->initPayment();
@@ -103,61 +95,12 @@ class TransparentTest extends TestCase
     }
 
     /**
-     * Check correct parent transaction ID for Payflow delayed capture.
-     *
-     * @dataProvider captureCorrectIdDataProvider
-     * @param string $parentTransactionId
-     * @throws InvalidTransitionException
-     * @throws LocalizedException
-     */
-    public function testCaptureCorrectId(string $parentTransactionId)
-    {
-        if (empty($parentTransactionId)) {
-            $setParentTransactionIdCalls =  1;
-            $setAdditionalInformationCalls = 1;
-            $getGatewayTokenCalls = 2;
-        } else {
-            $setParentTransactionIdCalls =  0;
-            $setAdditionalInformationCalls = 0;
-            $getGatewayTokenCalls = 0;
-        }
-
-        $gatewayToken = 'gateway_token';
-        $this->payment->expects($this->once())->method('getParentTransactionId')->willReturn($parentTransactionId);
-        $this->payment->expects($this->exactly($setParentTransactionIdCalls))->method('setParentTransactionId');
-        $this->payment->expects($this->exactly($setAdditionalInformationCalls))->method('setAdditionalInformation')->with(Payflowpro::PNREF, $gatewayToken);
-        $this->payment->expects($this->exactly(4))->method('getAdditionalInformation')->withConsecutive(
-            ['result_code'],
-            [Payflowpro::PNREF],
-            [Payflowpro::PNREF],
-            [Payflowpro::PNREF],
-        )->willReturn(0, '', Payflowpro::PNREF, Payflowpro::PNREF);
-        $this->paymentExtensionAttributes->expects($this->once())->method('getVaultPaymentToken')->willReturn($this->paymentToken);
-        $this->paymentToken->expects($this->exactly($getGatewayTokenCalls))->method('getGatewayToken')->willReturn($gatewayToken);
-
-        $this->subject->capture($this->payment, 100);
-    }
-
-    /**
-     * Data provider for testCaptureCorrectId.
-     *
-     * @return array
-     */
-    public function captureCorrectIdDataProvider(): array
-    {
-        return [
-            'No Transaction ID' => [''],
-            'With Transaction ID' => ['1'],
-        ];
-    }
-
-    /**
      * Asserts that authorize request to Payflow gateway is valid.
      *
      * @dataProvider validAuthorizeRequestDataProvider
      * @param DataObject $validAuthorizeRequest
-     * @throws LocalizedException
-     * @throws InvalidTransitionException
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Magento\Framework\Exception\State\InvalidTransitionException
      */
     public function testValidAuthorizeRequest(DataObject $validAuthorizeRequest)
     {
@@ -187,7 +130,7 @@ class TransparentTest extends TestCase
 
         $this->payPalPayflowGateway->expects($this->once())
             ->method('postRequest')
-            ->with($validAuthorizeRequest);
+            ->with($this->equalTo($validAuthorizeRequest));
 
         $this->subject->authorize($this->payment, 10);
     }
@@ -349,7 +292,7 @@ class TransparentTest extends TestCase
         $this->order = $this->getMockBuilder(Order::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->paymentExtensionAttributes = $this->getMockBuilder(OrderPaymentExtensionInterface::class)
+        $paymentExtensionAttributes  = $this->getMockBuilder(OrderPaymentExtensionInterface::class)
             ->setMethods(
                 ['setVaultPaymentToken', 'getVaultPaymentToken', 'setNotificationMessage', 'getNotificationMessage']
             )
@@ -359,7 +302,7 @@ class TransparentTest extends TestCase
         $this->payment->method('setIsTransactionClosed')->willReturnSelf();
         $this->payment->method('getCcExpYear')->willReturn('2019');
         $this->payment->method('getCcExpMonth')->willReturn('05');
-        $this->payment->method('getExtensionAttributes')->willReturn($this->paymentExtensionAttributes);
+        $this->payment->method('getExtensionAttributes')->willReturn($paymentExtensionAttributes);
 
         return $this->payment;
     }

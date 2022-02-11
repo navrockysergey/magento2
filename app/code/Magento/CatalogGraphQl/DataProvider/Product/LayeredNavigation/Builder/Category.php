@@ -16,7 +16,6 @@ use Magento\Framework\Api\Search\AggregationValueInterface;
 use Magento\Framework\Api\Search\BucketInterface;
 use Magento\Framework\App\ResourceConnection;
 use Magento\CatalogGraphQl\DataProvider\Product\LayeredNavigation\Formatter\LayerFormatter;
-use Magento\CatalogGraphQl\DataProvider\Product\LayeredNavigation\Builder\Aggregations;
 
 /**
  * @inheritdoc
@@ -64,32 +63,24 @@ class Category implements LayerBuilderInterface
     private $layerFormatter;
 
     /**
-     * @var Aggregations\Category\IncludeDirectChildrenOnly
-     */
-    private $includeDirectChildrenOnly;
-
-    /**
      * @param CategoryAttributeQuery $categoryAttributeQuery
      * @param CategoryAttributesMapper $attributesMapper
      * @param RootCategoryProvider $rootCategoryProvider
      * @param ResourceConnection $resourceConnection
      * @param LayerFormatter $layerFormatter
-     * @param Aggregations\Category\IncludeDirectChildrenOnly $includeDirectChildrenOnly
      */
     public function __construct(
         CategoryAttributeQuery $categoryAttributeQuery,
         CategoryAttributesMapper $attributesMapper,
         RootCategoryProvider $rootCategoryProvider,
         ResourceConnection $resourceConnection,
-        LayerFormatter $layerFormatter,
-        Aggregations\Category\IncludeDirectChildrenOnly $includeDirectChildrenOnly
+        LayerFormatter $layerFormatter
     ) {
         $this->categoryAttributeQuery = $categoryAttributeQuery;
         $this->attributesMapper = $attributesMapper;
         $this->resourceConnection = $resourceConnection;
         $this->rootCategoryProvider = $rootCategoryProvider;
         $this->layerFormatter = $layerFormatter;
-        $this->includeDirectChildrenOnly = $includeDirectChildrenOnly;
     }
 
     /**
@@ -99,7 +90,6 @@ class Category implements LayerBuilderInterface
      */
     public function build(AggregationInterface $aggregation, ?int $storeId): array
     {
-        $aggregation = $this->includeDirectChildrenOnly->filter($aggregation, $storeId);
         $bucket = $aggregation->getBucket(self::CATEGORY_BUCKET);
         if ($this->isBucketEmpty($bucket)) {
             return [];

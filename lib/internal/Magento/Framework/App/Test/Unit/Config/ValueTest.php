@@ -3,54 +3,44 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Framework\App\Test\Unit\Config;
 
-use Magento\Framework\App\Cache\TypeListInterface;
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\App\Config\Value;
-use Magento\Framework\Event\ManagerInterface;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-
-class ValueTest extends TestCase
+class ValueTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var Value
+     * @var \Magento\Framework\App\Config\Value
      */
     protected $model;
 
     /**
-     * @var ManagerInterface|MockObject
+     * @var \Magento\Framework\Event\ManagerInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $eventManagerMock;
 
     /**
-     * @var ScopeConfigInterface|MockObject
+     * @var \Magento\Framework\App\Config\ScopeConfigInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $configMock;
 
     /**
-     * @var TypeListInterface|MockObject
+     * @var \Magento\Framework\App\Cache\TypeListInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $cacheTypeListMock;
 
     /**
-     * @inheritdoc
+     * @return void
      */
     protected function setUp(): void
     {
-        $this->configMock = $this->getMockForAbstractClass(ScopeConfigInterface::class);
-        $this->eventManagerMock = $this->getMockForAbstractClass(ManagerInterface::class);
-        $this->cacheTypeListMock = $this->getMockBuilder(TypeListInterface::class)
+        $this->configMock = $this->createMock(\Magento\Framework\App\Config\ScopeConfigInterface::class);
+        $this->eventManagerMock = $this->createMock(\Magento\Framework\Event\ManagerInterface::class);
+        $this->cacheTypeListMock = $this->getMockBuilder(\Magento\Framework\App\Cache\TypeListInterface::class)
             ->disableOriginalConstructor()
-            ->getMockForAbstractClass();
+            ->getMock();
 
-        $objectManager = new ObjectManager($this);
+        $objectManager = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
         $this->model = $objectManager->getObject(
-            Value::class,
+            \Magento\Framework\App\Config\Value::class,
             [
                 'config' => $this->configMock,
                 'eventDispatcher' => $this->eventManagerMock,
@@ -62,12 +52,18 @@ class ValueTest extends TestCase
     /**
      * @return void
      */
-    public function testGetOldValue(): void
+    public function testGetOldValue()
     {
-        $this->configMock->expects($this->once())
-            ->method('getValue')
-            ->with(null, 'default')
-            ->willReturn('old_value');
+        $this->configMock->expects(
+            $this->once()
+        )->method(
+            'getValue'
+        )->with(
+            null,
+            'default'
+        )->willReturn(
+            'old_value'
+        );
 
         $this->assertEquals('old_value', $this->model->getOldValue());
     }
@@ -76,16 +72,20 @@ class ValueTest extends TestCase
      * @param string $oldValue
      * @param string $value
      * @param bool $result
-     *
-     * @return void
      * @dataProvider dataIsValueChanged
      */
-    public function testIsValueChanged($oldValue, $value, $result): void
+    public function testIsValueChanged($oldValue, $value, $result)
     {
-        $this->configMock->expects($this->once())
-            ->method('getValue')
-            ->with(null, 'default')
-            ->willReturn($oldValue);
+        $this->configMock->expects(
+            $this->once()
+        )->method(
+            'getValue'
+        )->with(
+            null,
+            'default'
+        )->willReturn(
+            $oldValue
+        );
 
         $this->model->setValue($value);
 
@@ -95,34 +95,38 @@ class ValueTest extends TestCase
     /**
      * @return array
      */
-    public function dataIsValueChanged(): array
+    public function dataIsValueChanged()
     {
         return [
             ['value', 'value', false],
-            ['value', 'new_value', true]
+            ['value', 'new_value', true],
         ];
     }
 
     /**
      * @return void
      */
-    public function testAfterLoad(): void
+    public function testAfterLoad()
     {
-        $this->eventManagerMock
-            ->method('dispatch')
-            ->withConsecutive(
-                [
-                    'model_load_after',
-                    ['object' => $this->model]
-                ],
-                [
-                    'config_data_load_after',
-                    [
-                        'data_object' => $this->model,
-                        'config_data' => $this->model
-                    ]
-                ]
-            );
+        $this->eventManagerMock->expects(
+            $this->at(0)
+        )->method(
+            'dispatch'
+        )->with(
+            'model_load_after',
+            ['object' => $this->model]
+        );
+        $this->eventManagerMock->expects(
+            $this->at(1)
+        )->method(
+            'dispatch'
+        )->with(
+            'config_data_load_after',
+            [
+                'data_object' => $this->model,
+                'config_data' => $this->model,
+            ]
+        );
 
         $this->model->afterLoad();
     }
@@ -131,11 +135,10 @@ class ValueTest extends TestCase
      * @param mixed $fieldsetData
      * @param string $key
      * @param string $result
-     *
-     * @return void
      * @dataProvider dataProviderGetFieldsetDataValue
+     * @return void
      */
-    public function testGetFieldsetDataValue($fieldsetData, $key, $result): void
+    public function testGetFieldsetDataValue($fieldsetData, $key, $result)
     {
         $this->model->setData('fieldset_data', $fieldsetData);
         $this->assertEquals($result, $this->model->getFieldsetDataValue($key));
@@ -144,35 +147,33 @@ class ValueTest extends TestCase
     /**
      * @return array
      */
-    public function dataProviderGetFieldsetDataValue(): array
+    public function dataProviderGetFieldsetDataValue()
     {
         return [
             [
                 ['key' => 'value'],
                 'key',
-                'value'
+                'value',
             ],
             [
                 ['key' => 'value'],
                 'none',
-                null
+                null,
             ],
             [
                 'value',
                 'key',
-                null
-            ]
+                null,
+            ],
         ];
     }
 
     /**
      * @param int $callNumber
      * @param string $oldValue
-     *
-     * @return void
      * @dataProvider afterSaveDataProvider
      */
-    public function testAfterSave($callNumber, $oldValue): void
+    public function testAfterSave($callNumber, $oldValue)
     {
         $this->cacheTypeListMock->expects($this->exactly($callNumber))
             ->method('invalidate');
@@ -186,18 +187,18 @@ class ValueTest extends TestCase
     /**
      * @return array
      */
-    public function afterSaveDataProvider(): array
+    public function afterSaveDataProvider()
     {
         return [
             [0, 'some_value'],
-            [1, 'other_value']
+            [1, 'other_value'],
         ];
     }
 
     /**
-     * @return void
+     * @return void;
      */
-    public function testAfterDelete(): void
+    public function testAfterDelete()
     {
         $this->cacheTypeListMock->expects($this->once())->method('invalidate');
         $this->assertInstanceOf(get_class($this->model), $this->model->afterDelete());

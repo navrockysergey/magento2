@@ -3,99 +3,70 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Catalog\Test\Unit\Model\Product\ProductFrontendAction;
 
 use Magento\Catalog\Api\Data\ProductFrontendActionInterface;
-use Magento\Catalog\Model\FrontendStorageConfigurationInterface;
-use Magento\Catalog\Model\FrontendStorageConfigurationPool;
-use Magento\Catalog\Model\Product\ProductFrontendAction\Synchronizer;
-use Magento\Catalog\Model\ProductFrontendActionFactory;
 use Magento\Catalog\Model\ResourceModel\ProductFrontendAction\Collection;
-use Magento\Catalog\Model\ResourceModel\ProductFrontendAction\CollectionFactory;
-use Magento\Customer\Model\Session;
-use Magento\Customer\Model\Visitor;
-use Magento\Framework\EntityManager\EntityManager;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManagerHelper;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class SynchronizerTest extends TestCase
+class SynchronizerTest extends \PHPUnit\Framework\TestCase
 {
-    /**
-     * @var Synchronizer
-     */
+    /** @var \Magento\Catalog\Model\Product\ProductFrontendAction\Synchronizer */
     protected $model;
 
-    /**
-     * @var ObjectManagerHelper
-     */
+    /** @var ObjectManagerHelper */
     protected $objectManagerHelper;
 
-    /**
-     * @var Session|MockObject
-     */
+    /** @var \Magento\Customer\Model\Session|\PHPUnit\Framework\MockObject\MockObject */
     protected $sessionMock;
 
-    /**
-     * @var Visitor|MockObject
-     */
+    /** @var \Magento\Customer\Model\Visitor|\PHPUnit\Framework\MockObject\MockObject */
     protected $visitorMock;
 
-    /**
-     * @var ProductFrontendActionFactory|MockObject
-     */
+    /** @var \Magento\Catalog\Model\ProductFrontendActionFactory|\PHPUnit\Framework\MockObject\MockObject */
     protected $productFrontendActionFactoryMock;
 
-    /**
-     * @var EntityManager|MockObject
-     */
+    /** @var \Magento\Framework\EntityManager\EntityManager|\PHPUnit\Framework\MockObject\MockObject */
     protected $entityManagerMock;
 
-    /**
-     * @var MockObject
-     */
+    /** @var \PHPUnit\Framework\MockObject\MockObject */
     protected $collectionFactoryMock;
 
-    /**
-     * @var MockObject
-     */
+    /** @var \PHPUnit\Framework\MockObject\MockObject */
     protected $frontendStorageConfigurationPoolMock;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
-        $this->sessionMock = $this->getMockBuilder(Session::class)
+        $this->sessionMock = $this->getMockBuilder(\Magento\Customer\Model\Session::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->visitorMock = $this->getMockBuilder(Visitor::class)
+        $this->visitorMock = $this->getMockBuilder(\Magento\Customer\Model\Visitor::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->productFrontendActionFactoryMock = $this->getMockBuilder(ProductFrontendActionFactory::class)
+        $this->productFrontendActionFactoryMock = $this
+            ->getMockBuilder(\Magento\Catalog\Model\ProductFrontendActionFactory::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['create'])
+            ->setMethods(['create'])
             ->getMock();
-        $this->entityManagerMock = $this->getMockBuilder(EntityManager::class)
+        $this->entityManagerMock = $this->getMockBuilder(\Magento\Framework\EntityManager\EntityManager::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->collectionFactoryMock = $this->getMockBuilder(CollectionFactory::class)
+        $this->collectionFactoryMock = $this
+            ->getMockBuilder(\Magento\Catalog\Model\ResourceModel\ProductFrontendAction\CollectionFactory::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['create'])
+            ->setMethods(['create'])
             ->getMock();
         $this->frontendStorageConfigurationPoolMock = $this
-            ->getMockBuilder(FrontendStorageConfigurationPool::class)
+            ->getMockBuilder(\Magento\Catalog\Model\FrontendStorageConfigurationPool::class)
             ->disableOriginalConstructor()
             ->getMock();
 
         $this->objectManagerHelper = new ObjectManagerHelper($this);
         $this->model = $this->objectManagerHelper->getObject(
-            Synchronizer::class,
+            \Magento\Catalog\Model\Product\ProductFrontendAction\Synchronizer::class,
             [
                 'session' => $this->sessionMock,
                 'visitor' => $this->visitorMock,
@@ -107,27 +78,24 @@ class SynchronizerTest extends TestCase
         );
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function testFilterProductActions(): void
+    public function testFilterProductActions()
     {
         $typeId = 'recently_compared_product';
         $productsData = [
             'website-1-1' => [
                 'added_at' => 12,
-                'product_id' => 1
+                'product_id' => 1,
             ],
             'website-1-2' => [
                 'added_at' => 13,
-                'product_id' => '2'
+                'product_id' => '2',
             ],
             'website-2-3' => [
                 'added_at' => 14,
-                'product_id' => 3
+                'product_id' => 3,
             ]
         ];
-        $frontendConfiguration = $this->getMockForAbstractClass(FrontendStorageConfigurationInterface::class);
+        $frontendConfiguration = $this->createMock(\Magento\Catalog\Model\FrontendStorageConfigurationInterface::class);
         $frontendConfiguration->expects($this->once())
             ->method('get')
             ->willReturn([
@@ -159,9 +127,12 @@ class SynchronizerTest extends TestCase
         $collection->expects($this->once())
             ->method('addFilterByUserIdentities')
             ->with(1, 34);
-        $collection
+        $collection->expects($this->at(1))
             ->method('addFieldToFilter')
-            ->withConsecutive(['type_id', $typeId], ['product_id', [1, 2]]);
+            ->with('type_id', $typeId);
+        $collection->expects($this->at(2))
+            ->method('addFieldToFilter')
+            ->with('product_id', [1, 2]);
         $iterator = new \IteratorIterator(new \ArrayIterator([$frontendAction]));
         $collection->expects($this->once())
             ->method('getIterator')

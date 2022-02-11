@@ -3,21 +3,16 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
 
 namespace Magento\Catalog\Test\Unit\Model\ResourceModel\Product\Indexer\Price;
 
-use Magento\Catalog\Model\ResourceModel\Product\Indexer\Price\CompositeProductRelationsCalculator;
 use Magento\Catalog\Model\ResourceModel\Product\Indexer\Price\DefaultPrice;
-use Magento\Framework\DB\Adapter\AdapterInterface;
-use Magento\Framework\DB\Select;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Magento\Catalog\Model\ResourceModel\Product\Indexer\Price\CompositeProductRelationsCalculator;
 
-class CompositeProductRelationsCalculatorTest extends TestCase
+class CompositeProductRelationsCalculatorTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var MockObject|DefaultPrice
+     * @var \PHPUnit\Framework\MockObject\MockObject|DefaultPrice
      */
     private $defaultPriceMock;
 
@@ -26,31 +21,22 @@ class CompositeProductRelationsCalculatorTest extends TestCase
      */
     private $model;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
-        $this->defaultPriceMock = $this->getMockBuilder(DefaultPrice::class)
-            ->disableOriginalConstructor()
-            ->getMock();
+        $this->defaultPriceMock = $this->getMockBuilder(DefaultPrice::class)->disableOriginalConstructor()->getMock();
         $this->model = new CompositeProductRelationsCalculator($this->defaultPriceMock);
     }
 
-    /**
-     * @return void
-     */
-    public function testGetMaxRelationsCount(): void
+    public function testGetMaxRelationsCount()
     {
         $tableName = 'catalog_product_relation';
         $maxRelatedProductCount = 200;
 
-        $connectionMock = $this->getMockBuilder(AdapterInterface::class)
-            ->getMock();
+        $connectionMock = $this->getMockBuilder(\Magento\Framework\DB\Adapter\AdapterInterface::class)->getMock();
         $this->defaultPriceMock->expects($this->once())->method('getConnection')->willReturn($connectionMock);
         $this->defaultPriceMock->expects($this->once())->method('getTable')->with($tableName)->willReturn($tableName);
 
-        $relationSelectMock = $this->getMockBuilder(Select::class)
+        $relationSelectMock = $this->getMockBuilder(\Magento\Framework\DB\Select::class)
             ->disableOriginalConstructor()
             ->getMock();
         $relationSelectMock->expects($this->once())
@@ -61,8 +47,9 @@ class CompositeProductRelationsCalculatorTest extends TestCase
             )
             ->willReturnSelf();
         $relationSelectMock->expects($this->once())->method('group')->with('parent_id')->willReturnSelf();
+        $connectionMock->expects($this->at(0))->method('select')->willReturn($relationSelectMock);
 
-        $maxSelectMock = $this->getMockBuilder(Select::class)
+        $maxSelectMock = $this->getMockBuilder(\Magento\Framework\DB\Select::class)
             ->disableOriginalConstructor()
             ->getMock();
         $maxSelectMock->expects($this->once())
@@ -72,11 +59,9 @@ class CompositeProductRelationsCalculatorTest extends TestCase
                 ['count' => 'MAX(count)']
             )
             ->willReturnSelf();
+        $connectionMock->expects($this->at(1))->method('select')->willReturn($maxSelectMock);
 
-        $connectionMock
-            ->method('select')
-            ->willReturnOnConsecutiveCalls($relationSelectMock, $maxSelectMock);
-        $connectionMock
+        $connectionMock->expects($this->at(2))
             ->method('fetchOne')
             ->with($maxSelectMock)
             ->willReturn($maxRelatedProductCount);

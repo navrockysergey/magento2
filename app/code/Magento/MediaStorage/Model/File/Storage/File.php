@@ -6,7 +6,7 @@
 namespace Magento\MediaStorage\Model\File\Storage;
 
 /**
- * Class represents File in storage
+ * Class File
  *
  * @api
  * @since 100.0.2
@@ -57,11 +57,6 @@ class File
      * @var \Psr\Log\LoggerInterface
      */
     protected $_logger;
-
-    /**
-     * @var \Magento\MediaStorage\Model\ResourceModel\File\Storage\File
-     */
-    private $_fileUtility;
 
     /**
      * @param \Psr\Log\LoggerInterface $logger
@@ -296,15 +291,16 @@ class File
             && isset($file['content'])
             && !empty($file['content'])
         ) {
-            $directory = !empty($file['directory'] ?? '') ? $file['directory'] . '/' : '';
-            $filename = $directory . $file['filename'];
-
             try {
+                $filename = isset(
+                    $file['directory']
+                ) && !empty($file['directory']) ? $file['directory'] . '/' . $file['filename'] : $file['filename'];
+
                 return $this->_fileUtility->saveFile($filename, $file['content'], $overwrite);
             } catch (\Exception $e) {
                 $this->_logger->critical($e);
                 throw new \Magento\Framework\Exception\LocalizedException(
-                    __('Unable to save file "%1" at "%2"', $file['filename'], $filename)
+                    __('Unable to save file "%1" at "%2"', $file['filename'], $file['directory'])
                 );
             }
         } else {

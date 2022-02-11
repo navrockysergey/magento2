@@ -6,9 +6,31 @@
 namespace Magento\Customer\Ui\Component\Listing\Column;
 
 use Magento\Ui\Component\Listing\Columns\Column;
+use Magento\Framework\View\Element\UiComponent\ContextInterface;
+use Magento\Framework\View\Element\UiComponentFactory;
 
+/**
+ * Class AccountLock
+ */
 class AccountLock extends Column
 {
+    /**
+     * Constructor
+     *
+     * @param ContextInterface $context
+     * @param UiComponentFactory $uiComponentFactory
+     * @param array $components
+     * @param array $data
+     */
+    public function __construct(
+        ContextInterface $context,
+        UiComponentFactory $uiComponentFactory,
+        array $components = [],
+        array $data = []
+    ) {
+        parent::__construct($context, $uiComponentFactory, $components, $data);
+    }
+
     /**
      * Prepare Data Source
      *
@@ -20,7 +42,7 @@ class AccountLock extends Column
         if (isset($dataSource['data']['items'])) {
             foreach ($dataSource['data']['items'] as & $item) {
                 if (array_key_exists('lock_expires', $item)) {
-                    $lockExpires = new \DateTime($item['lock_expires'] ?? 'now');
+                    $lockExpires = new \DateTime($item['lock_expires']);
                     if ($lockExpires > new \DateTime()) {
                         $item['lock_expires'] =  __('Locked');
                     } else {

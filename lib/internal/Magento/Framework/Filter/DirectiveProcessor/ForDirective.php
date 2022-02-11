@@ -132,11 +132,7 @@ class ForDirective implements DirectiveProcessorInterface
                 $subText = $loopTextToReplace;
                 foreach ($attributes as $attribute) {
                     $text = $this->variableResolver->resolve($attribute[2], $filter, $templateVariables);
-                    $subText = str_replace(
-                        $attribute[0],
-                        is_array($text) ? $text : (string) $text,
-                        $subText
-                    );
+                    $subText = str_replace($attribute[0], $text, $subText);
                 }
                 $loopText[] = $subText;
             }

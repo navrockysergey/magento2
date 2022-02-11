@@ -15,7 +15,9 @@ use Magento\Framework\View\Element\Template;
 /**
  * Base price render
  *
+ * @api
  * @method string getPriceRenderHandle()
+ *
  * @api
  * @since 100.0.2
  */
@@ -24,21 +26,21 @@ class Render extends AbstractBlock
     /**#@+
      * Zones where prices displaying can be configured
      */
-    public const ZONE_ITEM_VIEW = 'item_view';
-    public const ZONE_ITEM_LIST = 'item_list';
-    public const ZONE_ITEM_OPTION = 'item_option';
-    public const ZONE_SALES     = 'sales';
-    public const ZONE_EMAIL     = 'email';
-    public const ZONE_CART      = 'cart';
-    public const ZONE_DEFAULT   = null;
+    const ZONE_ITEM_VIEW = 'item_view';
+    const ZONE_ITEM_LIST = 'item_list';
+    const ZONE_ITEM_OPTION = 'item_option';
+    const ZONE_SALES     = 'sales';
+    const ZONE_EMAIL     = 'email';
+    const ZONE_CART      = 'cart';
+    const ZONE_DEFAULT   = null;
     /**#@-*/
 
-    /**
-     * @var string
-     */
+    /**#@-*/
     protected $defaultTypeRender = 'default';
 
     /**
+     * Price layout
+     *
      * @var Layout
      */
     protected $priceLayout;
@@ -67,7 +69,6 @@ class Render extends AbstractBlock
     protected function _prepareLayout()
     {
         $this->priceLayout->addHandle($this->getPriceRenderHandle());
-        //phpcs:ignore
         $this->priceLayout->loadLayout();
         return parent::_prepareLayout();
     }

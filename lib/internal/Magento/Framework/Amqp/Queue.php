@@ -5,20 +5,19 @@
  */
 namespace Magento\Framework\Amqp;
 
-use Closure;
-use Exception;
 use Magento\Framework\MessageQueue\ConnectionLostException;
 use Magento\Framework\MessageQueue\EnvelopeInterface;
 use Magento\Framework\MessageQueue\QueueInterface;
-use Magento\Framework\Phrase;
-use PhpAmqpLib\Exception\AMQPTimeoutException;
+use PhpAmqpLib\Exception\AMQPProtocolConnectionException;
 use PhpAmqpLib\Message\AMQPMessage;
 use Magento\Framework\MessageQueue\EnvelopeFactory;
 use Psr\Log\LoggerInterface;
 
 /**
+ * Class Queue
+ *
  * @api
- * @since 103.0.0
+ * @since 102.0.5
  */
 class Queue implements QueueInterface
 {
@@ -43,38 +42,28 @@ class Queue implements QueueInterface
     private $logger;
 
     /**
-     * The prefetch value is used to specify how many messages that are being sent to the consumer at the same time.
-     * @see https://www.rabbitmq.com/consumer-prefetch.html
-     * @var int
-     */
-    private $prefetchCount;
-
-    /**
      * Initialize dependencies.
      *
      * @param Config $amqpConfig
      * @param EnvelopeFactory $envelopeFactory
      * @param string $queueName
      * @param LoggerInterface $logger
-     * @param int $prefetchCount
      */
     public function __construct(
         Config $amqpConfig,
         EnvelopeFactory $envelopeFactory,
         $queueName,
-        LoggerInterface $logger,
-        $prefetchCount = 100
+        LoggerInterface $logger
     ) {
         $this->amqpConfig = $amqpConfig;
         $this->queueName = $queueName;
         $this->envelopeFactory = $envelopeFactory;
         $this->logger = $logger;
-        $this->prefetchCount = (int)$prefetchCount;
     }
 
     /**
      * @inheritdoc
-     * @since 103.0.0
+     * @since 102.0.5
      */
     public function dequeue()
     {
@@ -84,11 +73,11 @@ class Queue implements QueueInterface
         /** @var AMQPMessage $message */
         try {
             $message = $channel->basic_get($this->queueName);
-        } catch (Exception $exception) {
+        } catch (AMQPProtocolConnectionException $e) {
             throw new ConnectionLostException(
-                $exception->getMessage(),
-                $exception->getCode(),
-                $exception
+                $e->getMessage(),
+                $e->getCode(),
+                $e
             );
         }
 
@@ -109,7 +98,7 @@ class Queue implements QueueInterface
 
     /**
      * @inheritdoc
-     * @since 103.0.0
+     * @since 102.0.5
      */
     public function acknowledge(EnvelopeInterface $envelope)
     {
@@ -118,11 +107,11 @@ class Queue implements QueueInterface
         // @codingStandardsIgnoreStart
         try {
             $channel->basic_ack($properties['delivery_tag']);
-        } catch (Exception $exception) {
+        } catch (AMQPProtocolConnectionException $e) {
             throw new ConnectionLostException(
-                $exception->getMessage(),
-                $exception->getCode(),
-                $exception
+                $e->getMessage(),
+                $e->getCode(),
+                $e
             );
         }
         // @codingStandardsIgnoreEnd
@@ -130,7 +119,7 @@ class Queue implements QueueInterface
 
     /**
      * @inheritdoc
-     * @since 103.0.0
+     * @since 102.0.5
      */
     public function subscribe($callback)
     {
@@ -146,7 +135,7 @@ class Queue implements QueueInterface
             // @codingStandardsIgnoreEnd
             $envelope = $this->envelopeFactory->create(['body' => $message->body, 'properties' => $properties]);
 
-            if ($callback instanceof Closure) {
+            if ($callback instanceof \Closure) {
                 $callback($envelope);
             } else {
                 call_user_func($callback, $envelope);
@@ -155,7 +144,6 @@ class Queue implements QueueInterface
 
         $channel = $this->amqpConfig->getChannel();
         // @codingStandardsIgnoreStart
-        $channel->basic_qos(0, $this->prefetchCount, false);
         $channel->basic_consume($this->queueName, '', false, false, false, false, $callbackConverter);
         // @codingStandardsIgnoreEnd
         while (count($channel->callbacks)) {
@@ -165,7 +153,7 @@ class Queue implements QueueInterface
 
     /**
      * @inheritdoc
-     * @since 103.0.0
+     * @since 102.0.5
      */
     public function reject(EnvelopeInterface $envelope, $requeue = true, $rejectionMessage = null)
     {
@@ -177,14 +165,14 @@ class Queue implements QueueInterface
         // @codingStandardsIgnoreEnd
         if ($rejectionMessage !== null) {
             $this->logger->critical(
-                new Phrase('Message has been rejected: %message', ['message' => $rejectionMessage])
+                new \Magento\Framework\Phrase('Message has been rejected: %message', ['message' => $rejectionMessage])
             );
         }
     }
 
     /**
      * @inheritdoc
-     * @since 103.0.0
+     * @since 102.0.5
      */
     public function push(EnvelopeInterface $envelope)
     {

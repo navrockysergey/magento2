@@ -1,13 +1,12 @@
 <?php
 /**
+ * URL rewrite collection
+ *
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\UrlRewrite\Model\ResourceModel;
 
-/**
- * @api
- */
 class UrlRewriteCollection extends \Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection
 {
     /**
@@ -58,6 +57,7 @@ class UrlRewriteCollection extends \Magento\Framework\Model\ResourceModel\Db\Col
      * @param mixed $store
      * @param bool $withAdmin
      * @return $this
+     * @api
      */
     public function addStoreFilter($store, $withAdmin = true)
     {
@@ -68,7 +68,7 @@ class UrlRewriteCollection extends \Magento\Framework\Model\ResourceModel\Db\Col
             $store[] = 0;
         }
 
-        $this->addFieldToFilter('main_table.store_id', ['in' => $store]);
+        $this->addFieldToFilter('store_id', ['in' => $store]);
 
         return $this;
     }

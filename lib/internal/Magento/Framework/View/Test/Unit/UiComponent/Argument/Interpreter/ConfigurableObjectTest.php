@@ -14,8 +14,8 @@ use Magento\Framework\ObjectManager\ConfigInterface;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Framework\View\Element\UiComponent\Argument\Interpreter\ConfigurableObject;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * Unit tests for ConfigurableObject
@@ -60,13 +60,17 @@ class ConfigurableObjectTest extends TestCase
                 'objectManager' => $this->objectManager,
                 'argumentInterpreter' => $this->interpreter,
                 'classWhitelist' => [
+                    // @phpstan-ignore-next-line
                     \Foo\Bar\ClassA::class,
+                    // @phpstan-ignore-next-line
                     \Foo\Bar\InterfaceA::class,
                 ],
                 'classReader' => $this->classReader,
                 'objectManagerConfig' => $this->objectManagerConfig,
                 'deniedClassList' => [
+                    // @phpstan-ignore-next-line
                     \Foo\Bar\ClassC::class,
+                    // @phpstan-ignore-next-line
                     \Foo\Bar\InterfaceC::class,
                 ],
             ]
@@ -123,6 +127,7 @@ class ConfigurableObjectTest extends TestCase
         $expectedException,
         $expectedExceptionMessage
     ) {
+
         $this->expectException($expectedException);
         $this->expectExceptionMessage($expectedExceptionMessage);
 
@@ -178,10 +183,12 @@ class ConfigurableObjectTest extends TestCase
                 [
                     ['MyFooClass', ['Something', 'skipme']],
                     ['Something', ['dontcare', 'SomethingElse']],
+                    // @phpstan-ignore-next-line
                     ['SomethingElse', [\Foo\Bar\ClassA::class, 'unrelated']],
                     ['skipme', []],
                     ['dontcare', []],
                     ['unrelated', []],
+                    // @phpstan-ignore-next-line
                     [\Foo\Bar\ClassA::class, []]
                 ],
                 []
@@ -198,10 +205,12 @@ class ConfigurableObjectTest extends TestCase
                 [
                     ['MyFooClass', ['Something', 'skipme']],
                     ['Something', ['dontcare', 'SomethingElse']],
+                    // @phpstan-ignore-next-line
                     ['SomethingElse', [\Foo\Bar\ClassA::class, 'unrelated']],
                     ['skipme', []],
                     ['dontcare', []],
                     ['unrelated', []],
+                    // @phpstan-ignore-next-line
                     [\Foo\Bar\ClassA::class, []]
                 ],
                 ['myarg' => 'bar']
@@ -218,11 +227,15 @@ class ConfigurableObjectTest extends TestCase
                 [
                     ['MyFooClass', ['Something', 'skipme']],
                     ['Something', ['dontcare', 'SomethingElse']],
+                    // @phpstan-ignore-next-line
                     ['SomethingElse', [\Foo\Bar\ClassA::class, 'unrelated']],
                     ['skipme', []],
                     ['dontcare', []],
+                    // @phpstan-ignore-next-line
                     ['unrelated', [\Foo\Bar\InterfaceA::class]],
+                    // @phpstan-ignore-next-line
                     [\Foo\Bar\ClassA::class, []],
+                    // @phpstan-ignore-next-line
                     [\Foo\Bar\InterfaceA::class, []]
                 ],
                 ['myarg' => 'bar']
@@ -283,11 +296,15 @@ class ConfigurableObjectTest extends TestCase
                 [
                     ['MyFooClass', ['Something', 'skipme']],
                     ['Something', ['dontcare', 'SomethingElse']],
+                    // @phpstan-ignore-next-line
                     ['SomethingElse', [\Foo\Bar\ClassC::class, 'unrelated']],
                     ['skipme', []],
                     ['dontcare', []],
+                    // @phpstan-ignore-next-line
                     ['unrelated', [\Foo\Bar\InterfaceC::class]],
+                    // @phpstan-ignore-next-line
                     [\Foo\Bar\ClassC::class, []],
+                    // @phpstan-ignore-next-line
                     [\Foo\Bar\InterfaceC::class, []],
                 ],
                 \InvalidArgumentException::class,

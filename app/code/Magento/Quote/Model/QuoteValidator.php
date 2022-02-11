@@ -10,7 +10,6 @@ use Magento\Directory\Model\AllowedCountries;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Message\Error;
-use Magento\Framework\Validator\Exception as ValidatorException;
 use Magento\Quote\Model\Quote as QuoteEntity;
 use Magento\Quote\Model\Quote\Validator\MinimumOrderAmount\ValidationMessage as OrderAmountValidationMessage;
 use Magento\Quote\Model\ValidationRules\QuoteValidationRuleInterface;
@@ -26,7 +25,7 @@ class QuoteValidator
     /**
      * Maximum available number
      */
-    public const MAXIMUM_AVAILABLE_NUMBER = 10000000000000000;
+    const MAXIMUM_AVAILABLE_NUMBER = 10000000000000000;
 
     /**
      * @var AllowedCountries
@@ -85,14 +84,13 @@ class QuoteValidator
      *
      * @param Quote $quote
      * @return $this
-     * @throws ValidatorException
      * @throws LocalizedException
      */
     public function validateBeforeSubmit(QuoteEntity $quote)
     {
         if ($quote->getHasError()) {
             $errors = $this->getQuoteErrors($quote);
-            throw new ValidatorException(__($errors ?: 'Something went wrong. Please try to place the order again.'));
+            throw new LocalizedException(__($errors ?: 'Something went wrong. Please try to place the order again.'));
         }
 
         foreach ($this->quoteValidationRule->validate($quote) as $validationResult) {
@@ -106,7 +104,7 @@ class QuoteValidator
                 $defaultMessage .= ' %1';
             }
             if ($defaultMessage) {
-                throw new ValidatorException(__($defaultMessage, implode(' ', $messages)));
+                throw new LocalizedException(__($defaultMessage, implode(' ', $messages)));
             }
         }
 

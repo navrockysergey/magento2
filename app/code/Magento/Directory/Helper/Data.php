@@ -13,7 +13,6 @@ use Magento\Directory\Model\ResourceModel\Country\Collection;
 use Magento\Directory\Model\ResourceModel\Region\CollectionFactory;
 use Magento\Framework\App\Cache\Type\Config;
 use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Json\Helper\Data as JsonData;
 use Magento\Store\Model\ScopeInterface;
@@ -26,10 +25,8 @@ use Magento\Store\Model\StoreManagerInterface;
  * @since 100.0.2
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class Data extends AbstractHelper
+class Data extends \Magento\Framework\App\Helper\AbstractHelper
 {
-    private const STORE_ID = 'store_id';
-
     /**
      * Config value that lists ISO2 country codes which have optional Zip/Postal pre-configured
      */
@@ -65,26 +62,36 @@ class Data extends AbstractHelper
     const XML_PATH_WEIGHT_UNIT = 'general/locale/weight_unit';
 
     /**
+     * Country collection
+     *
      * @var Collection
      */
     protected $_countryCollection;
 
     /**
+     * Region collection
+     *
      * @var \Magento\Directory\Model\ResourceModel\Region\Collection
      */
     protected $_regionCollection;
 
     /**
+     * Json representation of regions data
+     *
      * @var string
      */
     protected $_regionJson;
 
     /**
+     * Currency cache
+     *
      * @var array
      */
     protected $_currencyCache = [];
 
     /**
+     * ISO2 country codes which have optional Zip/Postal pre-configured
+     *
      * @var array
      */
     protected $_optZipCountries = null;
@@ -399,7 +406,6 @@ class Data extends AbstractHelper
      * Get current scope from request
      *
      * @return array
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     private function getCurrentScope(): array
     {
@@ -418,19 +424,6 @@ class Data extends AbstractHelper
                 'type' => ScopeInterface::SCOPE_STORE,
                 'value' => $request->getParam(ScopeInterface::SCOPE_STORE),
             ];
-        } elseif ($request->getParam(self::STORE_ID)) {
-            $scope = [
-                'type' => ScopeInterface::SCOPE_STORE,
-                'value' => $request->getParam(self::STORE_ID),
-            ];
-        } else {
-            $storeId = $this->_storeManager->getStore()->getId() ?? null;
-            if ($storeId) {
-                $scope = [
-                    'type' => ScopeInterface::SCOPE_STORE,
-                    'value' => $storeId,
-                ];
-            }
         }
 
         return $scope;

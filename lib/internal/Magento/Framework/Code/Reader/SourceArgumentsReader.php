@@ -5,12 +5,8 @@
  */
 namespace Magento\Framework\Code\Reader;
 
-use Magento\Framework\GetParameterClassTrait;
-
 class SourceArgumentsReader
 {
-    use GetParameterClassTrait;
-
     /**
      * Namespace separator
      * @deprecated
@@ -60,20 +56,19 @@ class SourceArgumentsReader
         foreach ($params as $param) {
             //For the sake of backward compatibility.
             $typeName = '';
-            $parameterType = $param->getType();
-            if ($parameterType && $parameterType->getName() === 'array') {
+            if ($param->isArray()) {
                 //For the sake of backward compatibility.
                 $typeName = 'array';
             } else {
                 try {
-                    $paramClass = $this->getParameterClass($param);
+                    $paramClass = $param->getClass();
                     if ($paramClass) {
                         $typeName = '\\' .$paramClass->getName();
                     }
                 } catch (\ReflectionException $exception) {
                     //If there's a problem loading a class then ignore it and
                     //just return it's name.
-                    $typeName = '\\' .$parameterType->getName();
+                    $typeName = '\\' .$param->getType()->getName();
                 }
             }
             $types[] = $typeName;

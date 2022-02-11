@@ -14,7 +14,7 @@ use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Quote\Api\Data\ShippingMethodInterface;
 use Magento\Quote\Model\Cart\ShippingMethodConverter;
-use Magento\QuoteGraphQl\Model\Cart\TotalsCollector;
+use Magento\Quote\Model\Quote\TotalsCollector;
 
 /**
  * @inheritdoc
@@ -59,8 +59,7 @@ class AvailableShippingMethods implements ResolverInterface
         if (!isset($value['model'])) {
             throw new LocalizedException(__('"model" values should be specified'));
         }
-        $address = clone $value['model'];
-        $address->setLimitCarrier(null);
+        $address = $value['model'];
 
         // Allow shipping rates by setting country id for new addresses
         if (!$address->getCountryId() && $address->getCountryCode()) {

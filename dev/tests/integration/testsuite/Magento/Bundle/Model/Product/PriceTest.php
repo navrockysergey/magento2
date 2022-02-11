@@ -7,17 +7,8 @@ declare(strict_types=1);
 
 namespace Magento\Bundle\Model\Product;
 
-use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\Data\TierPriceInterface;
-use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Customer\Model\Group;
-use Magento\Framework\ObjectManagerInterface;
-use Magento\Framework\Serialize\SerializerInterface;
-use Magento\Store\Api\WebsiteRepositoryInterface;
-use Magento\TestFramework\Catalog\Model\GetCategoryByName;
-use Magento\TestFramework\Catalog\Model\Product\Price\GetPriceIndexDataByProductId;
-use Magento\TestFramework\Helper\Bootstrap;
-use PHPUnit\Framework\TestCase;
 
 /**
  * Class to test bundle prices
@@ -27,44 +18,8 @@ use PHPUnit\Framework\TestCase;
  * @magentoAppArea frontend
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class PriceTest extends TestCase
+class PriceTest extends PriceAbstract
 {
-    /** @var ObjectManagerInterface */
-    private $objectManager;
-
-    /** @var ProductRepositoryInterface */
-    private $productRepository;
-
-    /** @var GetPriceIndexDataByProductId */
-    private $getPriceIndexDataByProductId;
-
-    /** @var WebsiteRepositoryInterface */
-    private $websiteRepository;
-
-    /** @var Price */
-    private $priceModel;
-
-    /** @var SerializerInterface */
-    private $json;
-
-    /** @var GetCategoryByName */
-    private $getCategoryByName;
-
-    /**
-     * @inheritdoc
-     */
-    protected function setUp(): void
-    {
-        $this->objectManager = Bootstrap::getObjectManager();
-        $this->priceModel = $this->objectManager->get(Price::class);
-        $this->websiteRepository = $this->objectManager->get(WebsiteRepositoryInterface::class);
-        $this->productRepository = $this->objectManager->get(ProductRepositoryInterface::class);
-        $this->productRepository->cleanCache();
-        $this->getPriceIndexDataByProductId = $this->objectManager->get(GetPriceIndexDataByProductId::class);
-        $this->json = $this->objectManager->get(SerializerInterface::class);
-        $this->getCategoryByName = $this->objectManager->get(GetCategoryByName::class);
-    }
-
     /**
      * @magentoDataFixture Magento/Bundle/_files/product_with_tier_pricing.php
      *
@@ -143,23 +98,14 @@ class PriceTest extends TestCase
 
     /**
      * Fixed Bundle Product without discounts
-     * @magentoDataFixture Magento\Catalog\Test\Fixture\Product with:{"sku":"simple1","price":10} as:p1
-     * @magentoDataFixture Magento\Catalog\Test\Fixture\Product with:{"sku":"simple2","price":20} as:p2
-     * @magentoDataFixture Magento\Catalog\Test\Fixture\Product with:{"sku":"simple3","price":30} as:p3
-     * @magentoDataFixture Magento\Bundle\Test\Fixture\Link with:{"sku":"$p1.sku$","price":10,"price_type":0} as:link1
-     * @magentoDataFixture Magento\Bundle\Test\Fixture\Link with:{"sku":"$p2.sku$","price":25,"price_type":1} as:link2
-     * @magentoDataFixture Magento\Bundle\Test\Fixture\Link with:{"sku":"$p3.sku$","price":25,"price_type":0} as:link3
-     * @magentoDataFixture Magento\Bundle\Test\Fixture\Option as:opt1
-     * @magentoDataFixture Magento\Bundle\Test\Fixture\Product as:bundle1
-     * @magentoDataFixtureDataProvider {"opt1":{"product_links":["$link1$","$link2$","$link3$"]}}
-     * @magentoDataFixtureDataProvider {"bundle1":{"sku":"bundle1","price":50,"price_type":1,"_options":["$opt1$"]}}
+     * @magentoDataFixture Magento/Bundle/_files/fixed_bundle_product_without_discounts.php
      *
      * @return void
      */
     public function testFixedBundleProductPriceWithoutDiscounts(): void
     {
         $this->checkBundlePrices(
-            'bundle1',
+            'fixed_bundle_product_without_discounts',
             ['price' => 50, 'final_price' => 50, 'min_price' => 60, 'max_price' => 75, 'tier_price' => null],
             ['simple1' => 60, 'simple2' => 62.5, 'simple3' => 75]
         );
@@ -197,19 +143,14 @@ class PriceTest extends TestCase
 
     /**
      * Dynamic Bundle Product without discount + options without discounts
-     * @magentoDataFixture Magento\Catalog\Test\Fixture\Product with:{"sku":"simple1000","price":10} as:p1
-     * @magentoDataFixture Magento\Catalog\Test\Fixture\Product with:{"sku":"simple1001","price":20} as:p2
-     * @magentoDataFixture Magento\Bundle\Test\Fixture\Option as:opt1
-     * @magentoDataFixture Magento\Bundle\Test\Fixture\Product as:bundle1
-     * @magentoDataFixtureDataProvider {"opt1":{"product_links":["$p1$","$p2$"]}}
-     * @magentoDataFixtureDataProvider {"bundle1":{"sku":"bundle1","_options":["$opt1$"]}}
+     * @magentoDataFixture Magento/Bundle/_files/dynamic_bundle_product_without_discounts.php
      *
      * @return void
      */
     public function testDynamicBundleProductWithoutDiscountAndOptionsWithoutDiscounts(): void
     {
         $this->checkBundlePrices(
-            'bundle1',
+            'dynamic_bundle_product_without_discounts',
             ['price' => 0, 'final_price' => 0, 'min_price' => 10, 'max_price' => 20, 'tier_price' => null],
             ['simple1000' => 10, 'simple1001' => 20]
         );
@@ -450,77 +391,6 @@ class PriceTest extends TestCase
             ['price' => 0, 'final_price' => 0, 'min_price' => 8, 'max_price' => 17, 'tier_price' => null],
             ['simple1000' => 8, 'simple1001' => 17]
         );
-    }
-
-    /**
-     * Check bundle prices from index table and final bundle option price.
-     *
-     * @param string $sku
-     * @param array $indexPrices
-     * @param array $expectedPrices
-     * @return void
-     */
-    private function checkBundlePrices(string $sku, array $indexPrices, array $expectedPrices): void
-    {
-        $product = $this->productRepository->get($sku);
-        $this->assertIndexTableData((int)$product->getId(), $indexPrices);
-        $this->assertPriceWithChosenOption($product, $expectedPrices);
-    }
-
-    /**
-     * Asserts price data in index table.
-     *
-     * @param int $productId
-     * @param array $expectedPrices
-     * @return void
-     */
-    private function assertIndexTableData(int $productId, array $expectedPrices): void
-    {
-        $data = $this->getPriceIndexDataByProductId->execute(
-            $productId,
-            Group::NOT_LOGGED_IN_ID,
-            (int)$this->websiteRepository->get('base')->getId()
-        );
-        $data = reset($data);
-        foreach ($expectedPrices as $column => $price) {
-            $this->assertEquals($price, $data[$column]);
-        }
-    }
-
-    /**
-     * Assert bundle final price with chosen option.
-     *
-     * @param ProductInterface $bundle
-     * @param array $expectedPrices
-     * @return void
-     */
-    private function assertPriceWithChosenOption(ProductInterface $bundle, array $expectedPrices): void
-    {
-        $option = $bundle->getExtensionAttributes()->getBundleProductOptions()[0] ?? null;
-        $this->assertNotNull($option);
-        foreach ($option->getProductLinks() as $productLink) {
-            $bundle->addCustomOption('bundle_selection_ids', $this->json->serialize([$productLink->getId()]));
-            $bundle->addCustomOption('selection_qty_' . $productLink->getId(), 1);
-            $this->assertEquals(
-                round((float) $expectedPrices[$productLink->getSku()], 2),
-                round((float) $this->priceModel->getFinalPrice(1, $bundle), 2)
-            );
-        }
-    }
-
-    /**
-     * Update products.
-     *
-     * @param array $products
-     * @return void
-     */
-    private function updateProducts(array $products): void
-    {
-        foreach ($products as $sku => $updateData) {
-            $product = $this->productRepository->get($sku);
-            $product->addData($updateData);
-            $this->productRepository->save($product);
-        }
     }
 
     /**

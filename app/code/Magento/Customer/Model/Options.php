@@ -49,7 +49,7 @@ class Options
     {
         return $this->prepareNamePrefixSuffixOptions(
             $this->addressHelper->getConfig('prefix_options', $store),
-            $this->addressHelper->getConfig('prefix_show', $store) === NooptreqSource::VALUE_OPTIONAL
+            $this->addressHelper->getConfig('prefix_show', $store) == NooptreqSource::VALUE_OPTIONAL
         );
     }
 
@@ -63,7 +63,7 @@ class Options
     {
         return $this->prepareNamePrefixSuffixOptions(
             $this->addressHelper->getConfig('suffix_options', $store),
-            $this->addressHelper->getConfig('suffix_show', $store) === NooptreqSource::VALUE_OPTIONAL
+            $this->addressHelper->getConfig('suffix_show', $store) == NooptreqSource::VALUE_OPTIONAL
         );
     }
 
@@ -93,18 +93,18 @@ class Options
      */
     private function prepareNamePrefixSuffixOptions($options, $isOptional = false)
     {
-        if ($options === null || empty(trim($options))) {
+        $options = trim($options);
+        if (empty($options)) {
             return false;
         }
         $result = [];
-        $options = explode(';', trim($options));
-
+        $options = array_filter(explode(';', $options));
         foreach ($options as $value) {
-            $result[] = $this->escaper->escapeHtml(trim($value)) ?: ' ';
+            $value = $this->escaper->escapeHtml(trim($value));
+            $result[$value] = $value;
         }
-
         if ($isOptional && trim(current($options))) {
-            $result = array_merge([' '], $result);
+            $result = array_merge([' ' => ' '], $result);
         }
 
         return $result;

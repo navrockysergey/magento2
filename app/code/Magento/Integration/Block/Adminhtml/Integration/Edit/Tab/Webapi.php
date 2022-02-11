@@ -26,6 +26,8 @@ class Webapi extends \Magento\Backend\Block\Widget\Form\Generic implements
     protected $rootResource;
 
     /**
+     * Acl resource provider
+     *
      * @var \Magento\Framework\Acl\AclResource\ProviderInterface
      */
     protected $aclResourceProvider;
@@ -180,7 +182,7 @@ class Webapi extends \Magento\Backend\Block\Widget\Form\Generic implements
      */
     public function getTree()
     {
-        return $this->integrationData->mapResources($this->getAclResources(), $this->getSelectedResources());
+        return $this->integrationData->mapResources($this->getAclResources());
     }
 
     /**

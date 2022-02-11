@@ -1,5 +1,7 @@
 <?php
 /**
+ * Form Element Text Data Model
+ *
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
@@ -124,7 +126,7 @@ class Text extends AbstractData
         // validate length
         $label = __($attribute->getStoreLabel());
 
-        $length = $value ? $this->_string->strlen(trim($value)) : 0;
+        $length = $this->_string->strlen(trim($value));
 
         $validateRules = $attribute->getValidationRules();
 

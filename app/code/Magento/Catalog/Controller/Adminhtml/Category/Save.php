@@ -12,7 +12,7 @@ use Magento\Framework\App\ObjectManager;
 use Magento\Store\Model\StoreManagerInterface;
 
 /**
- * Category save controller
+ * Class Save
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
@@ -144,10 +144,10 @@ class Save extends \Magento\Catalog\Controller\Adminhtml\Category implements Htt
         $categoryPostData = $this->stringToBoolConverting($categoryPostData);
         $categoryPostData = $this->imagePreprocessing($categoryPostData);
         $categoryPostData = $this->dateTimePreprocessing($category, $categoryPostData);
-        $storeId = $categoryPostData['store_id'] ?? null;
+        $storeId = isset($categoryPostData['store_id']) ? $categoryPostData['store_id'] : null;
         $store = $this->storeManager->getStore($storeId);
         $this->storeManager->setCurrentStore($store->getCode());
-        $parentId = $categoryPostData['parent'] ?? null;
+        $parentId = isset($categoryPostData['parent']) ? $categoryPostData['parent'] : null;
         if ($categoryPostData) {
             $category->addData($categoryPostData);
             if ($parentId) {
@@ -220,11 +220,7 @@ class Save extends \Magento\Catalog\Controller\Adminhtml\Category implements Htt
                                 __('The "%1" attribute is required. Enter and try again.', $attribute)
                             );
                         } else {
-                            $this->messageManager->addErrorMessage(
-                                __(
-                                    'Something went wrong while saving the category.'
-                                )
-                            );
+                            $this->messageManager->addErrorMessage(__('Something went wrong while saving the category.'));
                             $this->logger->critical('Something went wrong while saving the category.');
                             $this->_getSession()->setCategoryData($categoryPostData);
                         }

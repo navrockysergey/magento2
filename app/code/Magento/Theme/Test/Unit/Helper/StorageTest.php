@@ -3,48 +3,37 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
-namespace Magento\Theme\Test\Unit\Helper;
-
-use Magento\Backend\Model\Session;
-use Magento\Framework\App\Helper\Context;
-use Magento\Framework\App\Request\Http;
-use Magento\Framework\Filesystem;
-use Magento\Framework\Filesystem\Directory\Write;
-use Magento\Framework\Filesystem\DriverInterface;
-use Magento\Framework\Url\DecoderInterface;
-use Magento\Framework\Url\EncoderInterface;
-use Magento\Framework\View\Design\Theme\Customization;
-use Magento\Framework\View\Design\Theme\FlyweightFactory;
-use Magento\Theme\Helper\Storage;
-use Magento\Theme\Model\Theme;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
 /**
- * Storage helper test.
+ * Storage helper test
+ */
+namespace Magento\Theme\Test\Unit\Helper;
+
+use Magento\Framework\Filesystem\DriverInterface;
+use Magento\Theme\Helper\Storage;
+
+/**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class StorageTest extends TestCase
+class StorageTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var Filesystem|MockObject
+     * @var \Magento\Framework\Filesystem|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $filesystem;
 
     /**
-     * @var Session|MockObject
+     * @var \Magento\Backend\Model\Session|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $session;
 
     /**
-     * @var FlyweightFactory|MockObject
+     * @var \Magento\Framework\View\Design\Theme\FlyweightFactory|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $themeFactory;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $request;
 
@@ -59,37 +48,39 @@ class StorageTest extends TestCase
     protected $customizationPath;
 
     /**
-     * @var Write|MockObject
+     * @var \Magento\Framework\Filesystem\Directory\Write|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $directoryWrite;
 
     /**
-     * @var Context|MockObject
+     * @var \Magento\Framework\App\Helper\Context|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $contextHelper;
 
     /**
-     * @var Theme|MockObject
+     * @var \Magento\Theme\Model\Theme|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $theme;
 
     /**
-     * @var Customization|MockObject
+     * @var \Magento\Framework\View\Design\Theme\Customization|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $customization;
 
     /**
-     * @var EncoderInterface|MockObject
+     * @var \Magento\Framework\Url\EncoderInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $urlEncoder;
 
     /**
-     * @var DecoderInterface|MockObject
+     * @var \Magento\Framework\Url\DecoderInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $urlDecoder;
 
+    protected $requestParams;
+
     /**
-     * @var DriverInterface|MockObject
+     * @var DriverInterface|\PHPUnit_Framework_MockObject_MockObject
      */
     private $filesystemDriver;
 
@@ -100,24 +91,20 @@ class StorageTest extends TestCase
     {
         $this->customizationPath = '/' . implode('/', ['var', 'theme']);
 
-        $this->request = $this->createMock(Http::class);
-        $this->filesystem = $this->createMock(Filesystem::class);
-        $this->session = $this->createMock(Session::class);
-        $this->contextHelper = $this->createMock(Context::class);
-        $this->directoryWrite = $this->createMock(Write::class);
-        $this->themeFactory = $this->createMock(FlyweightFactory::class);
-        $this->theme = $this->createMock(Theme::class);
-        $this->customization = $this->createMock(Customization::class);
+        $this->request = $this->createMock(\Magento\Framework\App\Request\Http::class);
+        $this->filesystem = $this->createMock(\Magento\Framework\Filesystem::class);
+        $this->session = $this->createMock(\Magento\Backend\Model\Session::class);
+        $this->contextHelper = $this->createMock(\Magento\Framework\App\Helper\Context::class);
+        $this->directoryWrite = $this->createMock(\Magento\Framework\Filesystem\Directory\Write::class);
+        $this->themeFactory = $this->createMock(\Magento\Framework\View\Design\Theme\FlyweightFactory::class);
+        $this->theme = $this->createMock(\Magento\Theme\Model\Theme::class);
+        $this->customization = $this->createMock(\Magento\Framework\View\Design\Theme\Customization::class);
 
         $this->filesystem->expects($this->any())
             ->method('getDirectoryWrite')
             ->willReturn($this->directoryWrite);
-        $this->urlEncoder = $this->getMockBuilder(EncoderInterface::class)
-            ->getMock();
-        $this->urlDecoder = $this->getMockBuilder(DecoderInterface::class)
-            ->getMock();
-
-        $this->initializeDefaultRequestMock();
+        $this->urlEncoder = $this->getMockBuilder(\Magento\Framework\Url\EncoderInterface::class)->getMock();
+        $this->urlDecoder = $this->getMockBuilder(\Magento\Framework\Url\DecoderInterface::class)->getMock();
 
         $this->directoryWrite->expects($this->any())->method('create')->willReturn(true);
         $this->contextHelper->expects($this->any())->method('getRequest')->willReturn($this->request);
@@ -130,19 +117,30 @@ class StorageTest extends TestCase
             ->method('getCustomization')
             ->willReturn($this->customization);
 
-        $this->helper = new Storage(
-            $this->contextHelper,
-            $this->filesystem,
-            $this->session,
-            $this->themeFactory,
-            null,
-            $this->filesystemDriver
+        $this->request->expects($this->at(0))
+            ->method('getParam')
+            ->with(Storage::PARAM_THEME_ID)
+            ->willReturn(6);
+        $this->request->expects($this->at(1))
+            ->method('getParam')
+            ->with(Storage::PARAM_CONTENT_TYPE)
+            ->willReturn(\Magento\Theme\Model\Wysiwyg\Storage::TYPE_IMAGE);
+
+        $objectManager = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
+
+        $this->helper = $objectManager->getObject(
+            Storage::class,
+            [
+                'context' => $this->contextHelper,
+                'filesystem' => $this->filesystem,
+                'session' => $this->session,
+                'themeFactory' => $this->themeFactory,
+                'file' => null,
+                'filesystemDriver' => $this->filesystemDriver,
+            ]
         );
     }
 
-    /**
-     * @inheritDoc
-     */
     protected function tearDown(): void
     {
         $this->request = null;
@@ -156,34 +154,24 @@ class StorageTest extends TestCase
     }
 
     /**
-     * @return void
      * @covers \Magento\Theme\Helper\Storage::getShortFilename
      * @covers \Magento\Theme\Helper\Storage::__construct
      */
-    public function testGetShortFilename(): void
+    public function testGetShortFilename()
     {
-        $this->initializeDefaultRequestMock();
         $longFileName = 'veryLongFileNameMoreThanTwenty';
         $expectedFileName = 'veryLongFileNameMore...';
         $this->assertEquals($expectedFileName, $this->helper->getShortFilename($longFileName, 20));
     }
 
-    /**
-     * @return void
-     */
-    public function testGetStorageRoot(): void
+    public function testGetStorageRoot()
     {
-        $this->initializeDefaultRequestMock();
         $expectedStorageRoot = '/' . \Magento\Theme\Model\Wysiwyg\Storage::TYPE_IMAGE;
         $this->assertEquals($expectedStorageRoot, $this->helper->getStorageRoot());
     }
 
-    /**
-     * @return void
-     */
-    public function testGetThumbnailDirectory(): void
+    public function testGetThumbnailDirectory()
     {
-        $this->initializeDefaultRequestMock();
         $imagePath = implode('/', ['root', 'image', 'image_name.jpg']);
         $thumbnailDir = implode(
             '/',
@@ -193,10 +181,7 @@ class StorageTest extends TestCase
         $this->assertEquals($thumbnailDir, $this->helper->getThumbnailDirectory($imagePath));
     }
 
-    /**
-     * @return void
-     */
-    public function testGetThumbnailPath(): void
+    public function testGetThumbnailPath()
     {
         $image = 'image_name.jpg';
         $thumbnailPath = '/' . implode(
@@ -221,41 +206,65 @@ class StorageTest extends TestCase
         $this->assertEquals($thumbnailPath, $this->helper->getThumbnailPath($image));
     }
 
-    /**
-     * @return void
-     */
-    public function testGetRequestParams(): void
+    public function testGetRequestParams()
     {
-        $withArgs = [
-            [Storage::PARAM_THEME_ID],
-            [Storage::PARAM_CONTENT_TYPE],
-            [Storage::PARAM_NODE]
-        ];
-        $willReturnArgs = [6, 'image', 'node'];
-        $this->resetRequestMock($withArgs, $willReturnArgs);
+        $this->request->expects(
+            $this->at(0)
+        )->method(
+            'getParam'
+        )->with(
+            Storage::PARAM_THEME_ID
+        )->willReturn(
+            6
+        );
+        $this->request->expects(
+            $this->at(1)
+        )->method(
+            'getParam'
+        )->with(
+            Storage::PARAM_CONTENT_TYPE
+        )->willReturn(
+            'image'
+        );
+        $this->request->expects(
+            $this->at(2)
+        )->method(
+            'getParam'
+        )->with(
+            Storage::PARAM_NODE
+        )->willReturn(
+            'node'
+        );
 
         $expectedResult = [
             Storage::PARAM_THEME_ID => 6,
             Storage::PARAM_CONTENT_TYPE => \Magento\Theme\Model\Wysiwyg\Storage::TYPE_IMAGE,
-            Storage::PARAM_NODE => 'node'
+            Storage::PARAM_NODE => 'node',
         ];
         $this->assertEquals($expectedResult, $this->helper->getRequestParams());
     }
 
-    /**
-     * @return void
-     */
-    public function testGetAllowedExtensionsByType(): void
+    public function testGetAllowedExtensionsByType()
     {
-        $withArgs = [
-            [Storage::PARAM_CONTENT_TYPE],
-            [Storage::PARAM_CONTENT_TYPE]
-        ];
-        $willReturnArgs = [
-            \Magento\Theme\Model\Wysiwyg\Storage::TYPE_FONT,
+        $this->request->expects(
+            $this->at(0)
+        )->method(
+            'getParam'
+        )->with(
+            Storage::PARAM_CONTENT_TYPE
+        )->willReturn(
+            \Magento\Theme\Model\Wysiwyg\Storage::TYPE_FONT
+        );
+
+        $this->request->expects(
+            $this->at(1)
+        )->method(
+            'getParam'
+        )->with(
+            Storage::PARAM_CONTENT_TYPE
+        )->willReturn(
             \Magento\Theme\Model\Wysiwyg\Storage::TYPE_IMAGE
-        ];
-        $this->resetRequestMock($withArgs, $willReturnArgs);
+        );
 
         $fontTypes = $this->helper->getAllowedExtensionsByType();
         $this->assertEquals(['ttf', 'otf', 'eot', 'svg', 'woff'], $fontTypes);
@@ -268,40 +277,37 @@ class StorageTest extends TestCase
      * @test
      * @return void
      */
-    public function testGetThumbnailPathNotFound(): void
+    public function testGetThumbnailPathNotFound()
     {
-        $this->expectException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('The image not found');
 
-        $this->filesystemDriver->method('getRealpathSafety')
-            ->willReturnArgument(0);
+        $this->filesystemDriver->method('getRealpathSafety')->willReturnArgument(0);
         $image = 'notFoundImage.png';
         $root = '/image';
         $sourceNode = '/not/a/root';
         $node = base64_encode($sourceNode);
-
-        $withArgs = [];
-        $willReturnArg = $this->returnValueMap(
-            [
+        $this->request->expects($this->at(0))
+            ->method('getParam')
+            ->willReturnMap(
                 [
-                    Storage::PARAM_THEME_ID,
-                    null,
-                    6,
-                ],
-                [
-                    Storage::PARAM_CONTENT_TYPE,
-                    null,
-                    \Magento\Theme\Model\Wysiwyg\Storage::TYPE_IMAGE
-                ],
-                [
-                    Storage::PARAM_NODE,
-                    null,
-                    $node
+                    [
+                        Storage::PARAM_THEME_ID,
+                        null,
+                        6,
+                    ],
+                    [
+                        Storage::PARAM_CONTENT_TYPE,
+                        null,
+                        \Magento\Theme\Model\Wysiwyg\Storage::TYPE_IMAGE
+                    ],
+                    [
+                        Storage::PARAM_NODE,
+                        null,
+                        $node
+                    ],
                 ]
-            ]
-        );
-        $this->resetRequestMock($withArgs, [$willReturnArg]);
-
+            );
         $this->urlDecoder->expects($this->once())
             ->method('decode')
             ->with($node)
@@ -324,13 +330,11 @@ class StorageTest extends TestCase
     }
 
     /**
-     * @return void
      * @covers \Magento\Theme\Helper\Storage::convertPathToId
      * @covers \Magento\Theme\Helper\Storage::convertIdToPath
      */
-    public function testConvertPathToIdAndIdToPath(): void
+    public function testConvertPathToIdAndIdToPath()
     {
-        $this->initializeDefaultRequestMock();
         $path = '/image/path/to';
         $this->urlEncoder->expects($this->once())
             ->method('encode')
@@ -350,32 +354,47 @@ class StorageTest extends TestCase
         $this->assertEquals($path, $this->helper->convertIdToPath($value));
     }
 
-    /**
-     * @return void
-     */
-    public function testGetSession(): void
+    public function testGetSession()
     {
-        $this->initializeDefaultRequestMock();
-        $this->assertInstanceOf(Session::class, $this->helper->getSession());
+        $this->assertInstanceOf(\Magento\Backend\Model\Session::class, $this->helper->getSession());
     }
 
-    /**
-     * @return void
-     */
-    public function testGetRelativeUrl(): void
+    public function testGetRelativeUrl()
     {
         $filename = base64_encode('filename.ext');
         $notRoot = base64_encode('not/a/root');
-        $withArgs = [[Storage::PARAM_CONTENT_TYPE], [Storage::PARAM_NODE], [Storage::PARAM_FILENAME]];
-        $willReturnArgs = [\Magento\Theme\Model\Wysiwyg\Storage::TYPE_IMAGE, $notRoot, $filename];
-        $this->resetRequestMock($withArgs, $willReturnArgs);
+        $this->request->expects($this->any())
+            ->method('getParam')
+            ->willReturnMap(
+                [
+                    'type' => [
+                        Storage::PARAM_CONTENT_TYPE,
+                        null,
+                        \Magento\Theme\Model\Wysiwyg\Storage::TYPE_IMAGE,
+                    ],
+                    'node' => [
+                        Storage::PARAM_NODE,
+                        null,
+                        $notRoot,
+                    ],
+                    'filenaem' => [
+                        Storage::PARAM_FILENAME,
+                        null,
+                        $filename,
+                    ],
+                ]
+            );
         $decode = function ($value) {
             return base64_decode($value);
         };
-        $this->urlDecoder
+        $this->urlDecoder->expects($this->at(0))
             ->method('decode')
-            ->withConsecutive([$notRoot], [$filename])
-            ->willReturnOnConsecutiveCalls($this->returnCallback($decode), $this->returnCallback($decode));
+            ->with($notRoot)
+            ->willReturnCallback($decode);
+        $this->urlDecoder->expects($this->at(1))
+            ->method('decode')
+            ->with($filename)
+            ->willReturnCallback($decode);
 
         $this->assertEquals(
             '../image/not/a/root/filename.ext',
@@ -386,11 +405,11 @@ class StorageTest extends TestCase
     /**
      * @return array
      */
-    public function getStorageTypeForNameDataProvider(): array
+    public function getStorageTypeForNameDataProvider()
     {
         return [
             'font' => [\Magento\Theme\Model\Wysiwyg\Storage::TYPE_FONT, Storage::FONTS],
-            'image' => [\Magento\Theme\Model\Wysiwyg\Storage::TYPE_IMAGE, Storage::IMAGES]
+            'image' => [\Magento\Theme\Model\Wysiwyg\Storage::TYPE_IMAGE, Storage::IMAGES],
         ];
     }
 
@@ -398,13 +417,15 @@ class StorageTest extends TestCase
      * @test
      * @param string $type
      * @param string $name
-     *
      * @return void
      * @dataProvider getStorageTypeForNameDataProvider
      */
-    public function testGetStorageTypeName($type, $name): void
+    public function testGetStorageTypeName($type, $name)
     {
-        $this->resetRequestMock([[Storage::PARAM_CONTENT_TYPE]], [$type]);
+        $this->request->expects($this->once())
+            ->method('getParam')
+            ->with(Storage::PARAM_CONTENT_TYPE)
+            ->willReturn($type);
 
         $this->assertEquals($name, $this->helper->getStorageTypeName());
     }
@@ -413,10 +434,11 @@ class StorageTest extends TestCase
      * @test
      * @return void
      */
-    public function testGetStorageTypeNameInvalid(): void
+    public function testGetStorageTypeNameInvalid()
     {
-        $this->expectException('Magento\Framework\Exception\LocalizedException');
+        $this->expectException(\Magento\Framework\Exception\LocalizedException::class);
         $this->expectExceptionMessage('Invalid type');
+
         $this->helper->getStorageTypeName();
     }
 
@@ -424,11 +446,11 @@ class StorageTest extends TestCase
      * @test
      * @return void
      */
-    public function testGetThemeNotFound(): void
+    public function testGetThemeNotFound()
     {
-        $this->initializeDefaultRequestMock();
-        $this->expectException('InvalidArgumentException');
+        $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Theme was not found');
+
         $this->themeFactory->expects($this->once())
             ->method('create')
             ->willReturn(null);
@@ -443,6 +465,8 @@ class StorageTest extends TestCase
 
     /**
      * @dataProvider getCurrentPathDataProvider
+     *
+     * @return void
      */
     public function testGetCurrentPathCachesResult(): void
     {
@@ -456,8 +480,9 @@ class StorageTest extends TestCase
     }
 
     /**
-     * @return void
      * @dataProvider getCurrentPathDataProvider
+     *
+     * @return void
      */
     public function testGetCurrentPath(
         string $expectedPath,
@@ -482,7 +507,10 @@ class StorageTest extends TestCase
             $this->filesystemDriver->method('getRealpathSafety')
                 ->willReturnArgument(0);
         }
-        $this->resetRequestMock([[Storage::PARAM_NODE]], [$requestedPath]);
+
+        $this->request->method('getParam')
+            ->with(Storage::PARAM_NODE)
+            ->willReturn($requestedPath);
 
         $actualPath = $this->helper->getCurrentPath();
 
@@ -501,54 +529,7 @@ class StorageTest extends TestCase
             'non-existent directory should default to the base path' => [$rootPath, $rootPath . '/foo'],
             'requested path that resolves to a bad path should default to root' =>
                 [$rootPath, $rootPath . '/something', true, null, '/bar'],
-            'real path should resolve to relative path' => ['foo/', $rootPath . '/foo', true, 'foo/']
+            'real path should resolve to relative path' => ['foo/', $rootPath . '/foo', true, 'foo/'],
         ];
-    }
-
-    /**
-     * @return void
-     */
-    private function initializeDefaultRequestMock(): void
-    {
-        $this->request
-            ->method('getParam')
-            ->withConsecutive(
-                [Storage::PARAM_THEME_ID],
-                [Storage::PARAM_CONTENT_TYPE]
-            )
-            ->willReturnOnConsecutiveCalls(
-                6,
-                \Magento\Theme\Model\Wysiwyg\Storage::TYPE_IMAGE
-            );
-    }
-
-    /**
-     * @param array $withArgs
-     * @param array $willReturnArgs
-     *
-     * @return void
-     */
-    private function resetRequestMock(array $withArgs, array $willReturnArgs): void
-    {
-        array_unshift($withArgs, [Storage::PARAM_THEME_ID], [Storage::PARAM_CONTENT_TYPE]);
-        array_unshift($willReturnArgs, 6, \Magento\Theme\Model\Wysiwyg\Storage::TYPE_IMAGE);
-        $this->request = $this->createMock(Http::class);
-        $this->contextHelper = $this->createMock(Context::class);
-        $this->contextHelper->expects($this->any())->method('getUrlEncoder')->willReturn($this->urlEncoder);
-        $this->contextHelper->expects($this->any())->method('getUrlDecoder')->willReturn($this->urlDecoder);
-        $this->contextHelper->expects($this->any())->method('getRequest')->willReturn($this->request);
-        $this->request
-            ->method('getParam')
-            ->withConsecutive(...$withArgs)
-            ->willReturnOnConsecutiveCalls(...$willReturnArgs);
-
-        $this->helper = new Storage(
-            $this->contextHelper,
-            $this->filesystem,
-            $this->session,
-            $this->themeFactory,
-            null,
-            $this->filesystemDriver
-        );
     }
 }

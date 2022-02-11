@@ -40,9 +40,9 @@ class AddressesPostTest extends AbstractController
     }
 
     /**
-     * @magentoDataFixture Magento/Checkout/_files/quote_with_address.php
+     * @magentoDataFixture Magento/Checkout/_files/quote_with_address_saved.php
      */
-    public function testExecute()
+    public function testExecute(): void
     {
         $quote = $this->getQuote('test_order_1');
         $this->setMultiShippingToQuote($quote);
@@ -72,9 +72,9 @@ class AddressesPostTest extends AbstractController
     }
 
     /**
-     * @magentoDataFixture Magento/Checkout/_files/quote_with_address.php
+     * @magentoDataFixture Magento/Checkout/_files/quote_with_address_saved.php
      */
-    public function testExecuteFail()
+    public function testExecuteFail(): void
     {
         $msg = 'Verify the shipping address information and continue.';
 
@@ -88,7 +88,7 @@ class AddressesPostTest extends AbstractController
                 1 => [
                     $quoteItemId => [
                         'qty' => 1,
-                        'address' => $quoteItemId,
+                        'address' => $quoteItemId . 'zb3',
                     ],
                 ],
             ],

@@ -111,8 +111,19 @@ class PriceTest extends TestCase
      */
     public function testGetPrice(): void
     {
-        $objectWithPrice = $this->objectManager->create(DataObject::class, ['data' => ['price' => 'test']]);
-        $this->assertEquals('test', $this->productPrice->getPrice($objectWithPrice));
+        $objectWithPrice = $this->objectManager->create(DataObject::class, ['data' => ['price' => 9.0]]);
+        $this->assertEquals(9.0, $this->productPrice->getPrice($objectWithPrice));
+    }
+
+    /**
+     * Get base price from product.
+     *
+     * @return void
+     */
+    public function testGetBasePrice(): void
+    {
+        $product = $this->productRepository->get('simple');
+        $this->assertSame(10.0, $this->productPrice->getBasePrice($product));
     }
 
     /**
@@ -175,13 +186,13 @@ class PriceTest extends TestCase
      */
     public function testCalculateSpecialPrice(): void
     {
-        $this->assertEquals(
-            10,
-            $this->productPrice->calculateSpecialPrice(10, 8, '1970-12-12 23:59:59', '1971-01-01 01:01:01')
+        $this->assertSame(
+            10.0,
+            $this->productPrice->calculateSpecialPrice(10.0, 8.0, '1970-12-12 23:59:59', '1971-01-01 01:01:01')
         );
-        $this->assertEquals(
-            8,
-            $this->productPrice->calculateSpecialPrice(10, 8, '1970-12-12 23:59:59', '2034-01-01 01:01:01')
+        $this->assertSame(
+            8.0,
+            $this->productPrice->calculateSpecialPrice(10.0, 8.0, '1970-12-12 23:59:59', '2034-01-01 01:01:01')
         );
     }
 
@@ -221,18 +232,5 @@ class PriceTest extends TestCase
         }
 
         return $this->objectManager->create(DataObject::class, ['data' => ['qty' => 1, 'options' => $options]]);
-    }
-
-    /**
-     * Assert price for different product with decimal qty.
-     *
-     * @magentoDataFixture Magento/Catalog/_files/simple_product_with_tier_price_and_decimal_qty.php
-     * @magentoAppIsolation enabled
-     * @return void
-     */
-    public function testTierPriceWithDecimalInventory(): void
-    {
-        $product = $this->productRepository->get('simple');
-        $this->assertEquals(2.99, $this->productPrice->getFinalPrice(0.5, $product));
     }
 }

@@ -9,7 +9,6 @@ namespace Magento\GraphQl;
 
 use Magento\Framework\GraphQl\Schema\Type\InputObjectType;
 use Magento\Framework\GraphQl\Schema\Type\ObjectType;
-use Magento\Framework\GraphQl\Type\TypeManagement;
 use Magento\Framework\ObjectManagerInterface;
 
 class GraphQlIntrospectionTest extends \PHPUnit\Framework\TestCase
@@ -28,8 +27,6 @@ class GraphQlIntrospectionTest extends \PHPUnit\Framework\TestCase
 
     public function testIntrospectionQuery()
     {
-        $typeManagement = new TypeManagement();
-        $typeManagement->overrideStandardGraphQLTypes();
         $emptySchema = $this->schemaFactory->create(
             [
                 'query' => new ObjectType(
@@ -94,7 +91,7 @@ QUERY;
                     ]
                 ]
             ];
-        $this->assertContains($expectedFragment, $output['types']);
+        $this->assertContains($expectedFragment,$output['types']);
     }
 
     /**
@@ -233,7 +230,7 @@ QUERY;
                 ]
             ];
         $output = $response->toArray()['data']['__schema']['types'];
-        $this->assertContains($expectedResult, $output);
+        $this->assertContains($expectedResult,$output);
     }
 
     /**

@@ -16,17 +16,13 @@ class Converter implements \Magento\Framework\Config\ConverterInterface
     /**#@+
      * Array keys for config internal representation.
      */
-    public const KEY_SERVICES = 'services';
-    public const KEY_METHOD = 'method';
-    public const KEY_METHODS = 'methods';
-    public const KEY_SYNCHRONOUS_INVOCATION_ONLY = 'synchronousInvocationOnly';
-    public const KEY_ROUTES = 'routes';
-    public const KEY_INPUT_ARRAY_SIZE_LIMIT = 'input-array-size-limit';
+    const KEY_SERVICES = 'services';
+    const KEY_METHOD = 'method';
+    const KEY_METHODS = 'methods';
+    const KEY_SYNCHRONOUS_INVOCATION_ONLY = 'synchronousInvocationOnly';
+    const KEY_ROUTES = 'routes';
     /**#@-*/
 
-    /**
-     * @var array
-     */
     private $allowedRouteMethods = [
         \Magento\Webapi\Model\Rest\Config::HTTP_METHOD_GET,
         \Magento\Webapi\Model\Rest\Config::HTTP_METHOD_POST,
@@ -36,8 +32,7 @@ class Converter implements \Magento\Framework\Config\ConverterInterface
     ];
 
     /**
-     * @inheritDoc
-     *
+     * {@inheritdoc}
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
@@ -86,10 +81,7 @@ class Converter implements \Magento\Framework\Config\ConverterInterface
     }
 
     /**
-     * Checks if xml node can be converted
-     *
      * @param \DOMElement $node
-     *
      * @return bool
      */
     private function canConvertXmlNode(\DOMElement $node)
@@ -128,10 +120,7 @@ class Converter implements \Magento\Framework\Config\ConverterInterface
     }
 
     /**
-     * Returns service class
-     *
      * @param \DOMElement $service
-     *
      * @return null|string
      */
     private function getServiceClass(\DOMElement $service)
@@ -142,10 +131,7 @@ class Converter implements \Magento\Framework\Config\ConverterInterface
     }
 
     /**
-     * Returns service method
-     *
      * @param \DOMElement $service
-     *
      * @return null|string
      */
     private function getServiceMethod(\DOMElement $service)
@@ -156,10 +142,7 @@ class Converter implements \Magento\Framework\Config\ConverterInterface
     }
 
     /**
-     * Checks if synchronous method invocation only
-     *
      * @param \DOMElement $serviceNode
-     *
      * @return bool
      */
     private function isSynchronousMethodInvocationOnly(\DOMElement $serviceNode)
@@ -170,10 +153,7 @@ class Converter implements \Magento\Framework\Config\ConverterInterface
     }
 
     /**
-     * Checks if synchronous invocation only true
-     *
      * @param \DOMElement $synchronousInvocationOnlyNode
-     *
      * @return bool|mixed
      */
     private function isSynchronousInvocationOnlyTrue(\DOMElement $synchronousInvocationOnlyNode = null)
@@ -191,9 +171,7 @@ class Converter implements \Magento\Framework\Config\ConverterInterface
 
     /**
      * Convert and merge "route" nodes, which represent route customizations
-     *
      * @param \DOMDocument $source
-     *
      * @return array
      */
     private function convertRouteCustomizations($source)
@@ -205,23 +183,18 @@ class Converter implements \Magento\Framework\Config\ConverterInterface
             $routeUrl = $this->getRouteUrl($route);
             $routeMethod = $this->getRouteMethod($route);
             $routeAlias = $this->getRouteAlias($route);
-            $inputArraySizeLimit =$this->getInputArraySizeLimit($route);
             if ($routeUrl && $routeMethod && $routeAlias) {
                 if (!isset($customRoutes[$routeAlias])) {
                     $customRoutes[$routeAlias] = [];
                 }
                 $customRoutes[$routeAlias][$routeMethod] = $routeUrl;
-                $customRoutes[$routeAlias][self::KEY_INPUT_ARRAY_SIZE_LIMIT] = $inputArraySizeLimit;
             }
         }
         return $customRoutes;
     }
 
     /**
-     * Returns route url
-     *
      * @param \DOMElement $route
-     *
      * @return null|string
      */
     private function getRouteUrl($route)
@@ -231,10 +204,7 @@ class Converter implements \Magento\Framework\Config\ConverterInterface
     }
 
     /**
-     * Returns route alias
-     *
      * @param \DOMElement $route
-     *
      * @return null|string
      */
     private function getRouteAlias($route)
@@ -244,10 +214,7 @@ class Converter implements \Magento\Framework\Config\ConverterInterface
     }
 
     /**
-     * Returns route method
-     *
      * @param \DOMElement $route
-     *
      * @return null|string
      */
     private function getRouteMethod($route)
@@ -258,36 +225,11 @@ class Converter implements \Magento\Framework\Config\ConverterInterface
     }
 
     /**
-     * Validates method of route
-     *
      * @param string $method
-     *
      * @return bool
      */
     private function validateRouteMethod($method)
     {
         return in_array($method, $this->allowedRouteMethods);
-    }
-
-    /**
-     * Returns array size limit of input data
-     *
-     * @param \DOMElement $routeDOMElement
-     * @return int|null
-     */
-    private function getInputArraySizeLimit(\DOMElement $routeDOMElement): ?int
-    {
-        /** @var \DOMElement $dataDOMElement */
-        foreach ($routeDOMElement->getElementsByTagName('data') as $dataDOMElement) {
-            if ($dataDOMElement->nodeType === XML_ELEMENT_NODE) {
-                $inputArraySizeLimitDOMNode = $dataDOMElement->attributes
-                    ->getNamedItem(self::KEY_INPUT_ARRAY_SIZE_LIMIT);
-                return ($inputArraySizeLimitDOMNode instanceof \DOMNode)
-                    ? (int)$inputArraySizeLimitDOMNode->nodeValue
-                    : null;
-            }
-        }
-
-        return null;
     }
 }

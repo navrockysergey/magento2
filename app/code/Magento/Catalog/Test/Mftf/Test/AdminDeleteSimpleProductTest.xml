@@ -14,12 +14,12 @@
             <stories value="Delete products"/>
             <title value="Delete Simple Product"/>
             <description value="Admin should be able to delete a simple product"/>
-            <severity value="BLOCKER"/>
+            <severity value="CRITICAL"/>
             <testCaseId value="MC-11013"/>
             <group value="mtf_migrated"/>
         </annotations>
         <before>
-            <actionGroup ref="AdminLoginActionGroup" stepKey="loginAsAdmin"/>
+            <actionGroup ref="LoginAsAdmin" stepKey="loginAsAdmin"/>
             <createData entity="_defaultCategory" stepKey="createCategory"/>
             <createData entity="_defaultProduct" stepKey="createSimpleProduct">
                 <requiredEntity createDataKey="createCategory"/>
@@ -27,40 +27,27 @@
         </before>
         <after>
             <deleteData createDataKey="createCategory" stepKey="deleteCategory"/>
-            <actionGroup ref="AdminLogoutActionGroup" stepKey="logout"/>
+            <actionGroup ref="logout" stepKey="logout"/>
         </after>
-        <actionGroup ref="DeleteProductUsingProductGridActionGroup" stepKey="deleteSimpleProductFilteredBySkuAndName">
+        <actionGroup ref="deleteProductUsingProductGrid" stepKey="deleteSimpleProductFilteredBySkuAndName">
             <argument name="product" value="$$createSimpleProduct$$"/>
         </actionGroup>
-        <actionGroup ref="AssertMessageInAdminPanelActionGroup" stepKey="deleteMessage">
-            <argument name="message" value="A total of 1 record(s) have been deleted."/>
-        </actionGroup>
-
+        <see selector="{{AdminCategoryMessagesSection.SuccessMessage}}" userInput="A total of 1 record(s) have been deleted." stepKey="deleteMessage"/>
         <!--Verify product on Product Page -->
-        <actionGroup ref="StorefrontOpenProductPageActionGroup" stepKey="amOnSimpleProductPage">
-            <argument name="productUrl" value="$$createSimpleProduct.custom_attributes[url_key]$$"/>
-        </actionGroup>
-        <actionGroup ref="StorefrontAssertPageNotFoundErrorOnProductDetailPageActionGroup" stepKey="seeWhoops">
-            <argument name="product" value="$$createSimpleProduct$$"/>
-        </actionGroup>
-
+        <amOnPage url="{{StorefrontProductPage.url($$createSimpleProduct.name$$)}}" stepKey="amOnSimpleProductPage"/>
+        <see selector="{{StorefrontProductInfoMainSection.productName}}" userInput="Whoops, our bad..." stepKey="seeWhoops"/>
         <!-- Search for the product by sku -->
-        <actionGroup ref="StoreFrontQuickSearchActionGroup" stepKey="searchByCreatedTerm">
-            <argument name="query" value="$$createSimpleProduct.sku$$"/>
-        </actionGroup>
+        <fillField selector="{{StorefrontQuickSearchSection.searchPhrase}}" userInput="$$createSimpleProduct.sku$$" stepKey="fillSearchBarByProductSku"/>
+        <waitForPageLoad stepKey="waitForSearchButton"/>
+        <click selector="{{StorefrontQuickSearchSection.searchButton}}" stepKey="clickSearchButton"/>
+        <waitForPageLoad stepKey="waitForSearchResults"/>
         <!-- Should not see any search results -->
-        <actionGroup ref="AssertStorefrontProductIsMissingOnSearchResultPageActionGroup" stepKey="dontSeeProduct">
-            <argument name="productSku" value="$$createSimpleProduct.sku$$"/>
-        </actionGroup>
-        <actionGroup ref="AssertStorefrontNoResultsMessageOnSearchPageActionGroup" stepKey="seeCantFindProductOneMessage"/>
-
+        <dontSee userInput="$$createSimpleProduct.sku$$" selector="{{StorefrontCatalogSearchMainSection.searchResults}}" stepKey="dontSeeProduct"/>
+        <see selector="{{StorefrontCatalogSearchMainSection.message}}" userInput="Your search returned no results." stepKey="seeCantFindProductOneMessage"/>
         <!-- Go to the category page that we created in the before block -->
-        <comment userInput="Comment is added to preserve the step key for backward compatibility" stepKey="onCategoryPage"/>
+        <amOnPage url="{{StorefrontCategoryPage.url($$createCategory.name$$)}}" stepKey="onCategoryPage"/>
         <!-- Should not see the product -->
-        <actionGroup ref="AssertStorefrontProductAbsentOnCategoryPageActionGroup" stepKey="dontSeeProductInCategory">
-            <argument name="categoryUrlKey" value="$$createCategory.name$$"/>
-            <argument name="productName" value="$$createSimpleProduct.name$$"/>
-        </actionGroup>
-        <actionGroup ref="AssertStorefrontNoProductsFoundActionGroup" stepKey="seeEmptyProductMessage"/>
+        <dontSee userInput="$$createSimpleProduct.name$$" selector="{{StorefrontCategoryMainSection.productsList}}" stepKey="dontSeeProductInCategory"/>
+        <see selector="{{StorefrontCategoryMainSection.emptyProductMessage}}" userInput="We can't find products matching the selection." stepKey="seeEmptyProductMessage"/>
     </test>
 </tests>

@@ -101,11 +101,6 @@ class Product extends AbstractResource
     private $eavAttributeManagement;
 
     /**
-     * @var MediaImageDeleteProcessor
-     */
-    private $mediaImageDeleteProcessor;
-
-    /**
      * @param \Magento\Eav\Model\Entity\Context $context
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Catalog\Model\Factory $modelFactory
@@ -119,7 +114,6 @@ class Product extends AbstractResource
      * @param TableMaintainer|null $tableMaintainer
      * @param UniqueValidationInterface|null $uniqueValidator
      * @param AttributeManagementInterface|null $eavAttributeManagement
-     * @param MediaImageDeleteProcessor|null $mediaImageDeleteProcessor
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
@@ -135,8 +129,7 @@ class Product extends AbstractResource
         $data = [],
         TableMaintainer $tableMaintainer = null,
         UniqueValidationInterface $uniqueValidator = null,
-        AttributeManagementInterface $eavAttributeManagement = null,
-        ?MediaImageDeleteProcessor $mediaImageDeleteProcessor = null
+        AttributeManagementInterface $eavAttributeManagement = null
     ) {
         $this->_categoryCollectionFactory = $categoryCollectionFactory;
         $this->_catalogCategory = $catalogCategory;
@@ -155,8 +148,6 @@ class Product extends AbstractResource
         $this->tableMaintainer = $tableMaintainer ?: ObjectManager::getInstance()->get(TableMaintainer::class);
         $this->eavAttributeManagement = $eavAttributeManagement
             ?? ObjectManager::getInstance()->get(AttributeManagementInterface::class);
-        $this->mediaImageDeleteProcessor = $mediaImageDeleteProcessor
-            ?? ObjectManager::getInstance()->get(MediaImageDeleteProcessor::class);
     }
 
     /**
@@ -236,16 +227,12 @@ class Product extends AbstractResource
      */
     public function getWebsiteIdsByProductIds($productIds)
     {
-        if (!is_array($productIds) || empty($productIds)) {
-            return [];
-        }
         $select = $this->getConnection()->select()->from(
             $this->getProductWebsiteTable(),
             ['product_id', 'website_id']
         )->where(
             'product_id IN (?)',
-            $productIds,
-            \Zend_Db::INT_TYPE
+            $productIds
         );
         $productsWebsites = [];
         foreach ($this->getConnection()->fetchAll($select) as $productInfo) {
@@ -370,7 +357,7 @@ class Product extends AbstractResource
         $entityId = $product->getData($entityIdField);
         foreach ($backendTables as $backendTable => $attributes) {
             $connection = $this->getConnection();
-            $where = $connection->quoteInto('attribute_id IN (?)', $attributes, \Zend_Db::INT_TYPE);
+            $where = $connection->quoteInto('attribute_id IN (?)', $attributes);
             $where .= $connection->quoteInto(" AND {$entityIdField} = ?", $entityId);
             $connection->delete($backendTable, $where);
         }
@@ -463,7 +450,6 @@ class Product extends AbstractResource
         // fetching all parent IDs, including those are higher on the tree
         $entityId = (int)$object->getEntityId();
         if (!isset($this->availableCategoryIdsCache[$entityId])) {
-            $unionTables = [];
             foreach ($this->_storeManager->getStores() as $store) {
                 $unionTables[] = $this->getAvailableInCategoriesSelect(
                     $entityId,
@@ -608,8 +594,7 @@ class Product extends AbstractResource
             ['entity_id', 'sku']
         )->where(
             'entity_id IN (?)',
-            $productIds,
-            \Zend_Db::INT_TYPE
+            $productIds
         );
         return $this->getConnection()->fetchAll($select);
     }
@@ -827,17 +812,5 @@ class Product extends AbstractResource
         $data = parent::getAttributeRow($entity, $object, $attribute);
         $data['store_id'] = $object->getStoreId();
         return $data;
-    }
-
-    /**
-     * After delete entity process
-     *
-     * @param DataObject $object
-     * @return $this
-     */
-    protected function _afterDelete(DataObject $object)
-    {
-        $this->mediaImageDeleteProcessor->execute($object);
-        return parent::_afterDelete($object);
     }
 }

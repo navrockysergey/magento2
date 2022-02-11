@@ -25,27 +25,27 @@ class SaveRole extends \Magento\User\Controller\Adminhtml\User\Role implements H
     /**
      * Session keys for Info form data
      */
-    public const ROLE_EDIT_FORM_DATA_SESSION_KEY = 'role_edit_form_data';
+    const ROLE_EDIT_FORM_DATA_SESSION_KEY = 'role_edit_form_data';
 
     /**
      * Session keys for Users form data
      */
-    public const IN_ROLE_USER_FORM_DATA_SESSION_KEY = 'in_role_user_form_data';
+    const IN_ROLE_USER_FORM_DATA_SESSION_KEY = 'in_role_user_form_data';
 
     /**
      * Session keys for original Users form data
      */
-    public const IN_ROLE_OLD_USER_FORM_DATA_SESSION_KEY = 'in_role_old_user_form_data';
+    const IN_ROLE_OLD_USER_FORM_DATA_SESSION_KEY = 'in_role_old_user_form_data';
 
     /**
      * Session keys for Use all resources flag form data
      */
-    public const RESOURCE_ALL_FORM_DATA_SESSION_KEY = 'resource_all_form_data';
+    const RESOURCE_ALL_FORM_DATA_SESSION_KEY = 'resource_all_form_data';
 
     /**
      * Session keys for Resource form data
      */
-    public const RESOURCE_FORM_DATA_SESSION_KEY = 'resource_form_data';
+    const RESOURCE_FORM_DATA_SESSION_KEY = 'resource_form_data';
 
     /**
      * @var SecurityCookie
@@ -155,7 +155,7 @@ class SaveRole extends \Magento\User\Controller\Adminhtml\User\Role implements H
      */
     private function parseRequestVariable($paramName): array
     {
-        $value = $this->getRequest()->getParam($paramName, '');
+        $value = $this->getRequest()->getParam($paramName, null);
         // phpcs:ignore Magento2.Functions.DiscouragedFunction
         parse_str($value, $value);
         $value = array_keys($value);

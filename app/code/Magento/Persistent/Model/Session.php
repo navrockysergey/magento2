@@ -20,14 +20,16 @@ class Session extends \Magento\Framework\Model\AbstractModel
     /**
      * Persistent cookie key length
      */
-    public const KEY_LENGTH = 50;
+    const KEY_LENGTH = 50;
 
     /**
      * Persistent cookie name
      */
-    public const COOKIE_NAME = 'persistent_shopping_cart';
+    const COOKIE_NAME = 'persistent_shopping_cart';
 
     /**
+     * Fields which model does not save into `info` db field
+     *
      * @var string[]
      */
     protected $_unserializableFields = [
@@ -40,16 +42,22 @@ class Session extends \Magento\Framework\Model\AbstractModel
     ];
 
     /**
+     * If model loads expired sessions
+     *
      * @var bool
      */
     protected $_loadExpired = false;
 
     /**
+     * Persistent data
+     *
      * @var \Magento\Persistent\Helper\Data
      */
     protected $_persistentData;
 
     /**
+     * Json Helper
+     *
      * @var \Magento\Framework\Json\Helper\Data
      */
     protected $jsonHelper;
@@ -60,16 +68,22 @@ class Session extends \Magento\Framework\Model\AbstractModel
     protected $_coreConfig;
 
     /**
+     * Store manager
+     *
      * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
     /**
+     * Cookie manager
+     *
      * @var \Magento\Framework\Stdlib\CookieManagerInterface
      */
     protected $_cookieManager;
 
     /**
+     * Cookie metadata factory
+     *
      * @var \Magento\Framework\Stdlib\Cookie\CookieMetadataFactory
      */
     protected $_cookieMetadataFactory;
@@ -85,6 +99,8 @@ class Session extends \Magento\Framework\Model\AbstractModel
     protected $sessionConfig;
 
     /**
+     * Request
+     *
      * @var \Magento\Framework\App\Request\Http
      */
     private $request;
@@ -281,6 +297,7 @@ class Session extends \Magento\Framework\Model\AbstractModel
      * Remove persistent cookie
      *
      * @return $this
+     * @api
      */
     public function removePersistentCookie()
     {
@@ -296,6 +313,7 @@ class Session extends \Magento\Framework\Model\AbstractModel
      * @param int $duration Time in seconds.
      * @param string $path
      * @return $this
+     * @api
      */
     public function setPersistentCookie($duration, $path)
     {

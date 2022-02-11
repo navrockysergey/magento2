@@ -8,10 +8,8 @@ declare(strict_types=1);
 
 namespace Magento\Framework\GraphQl\Query\Resolver\Argument\Validator;
 
-use Magento\Framework\App\ObjectManager;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
-use Magento\Framework\GraphQl\Query\Resolver\Argument\Validator\IOLimit\IOLimitConfigProvider;
 use Magento\Framework\GraphQl\Query\Resolver\Argument\ValidatorInterface;
 
 /**
@@ -25,19 +23,11 @@ class SearchCriteriaValidator implements ValidatorInterface
     private $maxPageSize;
 
     /**
-     * @var IOLimitConfigProvider|null
-     */
-    private $configProvider;
-
-    /**
      * @param int $maxPageSize
-     * @param IOLimitConfigProvider|null $configProvider
      */
-    public function __construct(int $maxPageSize, ?IOLimitConfigProvider $configProvider = null)
+    public function __construct(int $maxPageSize)
     {
         $this->maxPageSize = $maxPageSize;
-        $this->configProvider = $configProvider ?? ObjectManager::getInstance()
-            ->get(IOLimitConfigProvider::class);
     }
 
     /**
@@ -45,15 +35,9 @@ class SearchCriteriaValidator implements ValidatorInterface
      */
     public function validate(Field $field, $args): void
     {
-        if (!$this->configProvider->isInputLimitingEnabled()) {
-            return;
-        }
-
-        $max = $this->configProvider->getMaximumPageSize() ?? $this->maxPageSize;
-
-        if (isset($args['pageSize']) && $args['pageSize'] > $max) {
+        if (isset($args['pageSize']) && $args['pageSize'] > $this->maxPageSize) {
             throw new GraphQlInputException(
-                __("Maximum pageSize is %max", ['max' => $max])
+                __("Maximum pageSize is %max", ['max' => $this->maxPageSize])
             );
         }
     }

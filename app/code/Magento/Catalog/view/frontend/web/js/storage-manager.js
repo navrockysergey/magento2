@@ -233,7 +233,6 @@ define([
 
             delete params.typeId;
             delete params.url;
-            this.requestSent = 1;
 
             return utils.ajaxSubmit({
                 url: url,

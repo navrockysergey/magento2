@@ -5,39 +5,35 @@
  */
 namespace Magento\Framework\Code\Test\Unit\Generator;
 
-use PHPUnit\Framework\TestCase;
-use Magento\Framework\Code\Generator\EntityAbstract;
-use PHPUnit\Framework\MockObject\MockObject;
-use Magento\Framework\DataObject;
-use Magento\Framework\Code\Generator\Io;
-use Magento\Framework\Code\Generator\ClassGenerator;
-use Magento\Framework\Code\Generator\DefinedClasses;
-
-class EntityAbstractTest extends TestCase
+class EntityAbstractTest extends \PHPUnit\Framework\TestCase
 {
-    /**
+    /**#@+
      * Source and result class parameters
      */
-    public const RESULT_FILE = 'MyResult/MyResult.php';
+    const RESULT_FILE = 'MyResult/MyResult.php';
 
-    public const RESULT_DIRECTORY = 'MyResult';
+    const RESULT_DIRECTORY = 'MyResult';
+
+    /**#@-*/
 
     /**
      * Basic code generation directory
      */
-    public const GENERATION_DIRECTORY = 'generation';
+    const GENERATION_DIRECTORY = 'generation';
 
-    /**
+    /**#@+
      * Generated code before and after code style fix
      */
-    public const SOURCE_CODE = "a = 1; b = array (); {\n\n some source code \n\n}";
+    const SOURCE_CODE = "a = 1; b = array (); {\n\n some source code \n\n}";
 
-    public const RESULT_CODE = "a = 1; b = array(); {\n some generated php code \n}";
+    const RESULT_CODE = "a = 1; b = array(); {\n some generated php code \n}";
+
+    /**#@-*/
 
     /**
      * Model under test
      *
-     * @var EntityAbstract|MockObject
+     * @var \Magento\Framework\Code\Generator\EntityAbstract| \PHPUnit\Framework\MockObject\MockObject
      */
     protected $_model;
 
@@ -53,9 +49,10 @@ class EntityAbstractTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->sourceClass = '\\' . DataObject::class;
-        $this->resultClass = '\\Magento\\Framework\\DataObject_MyResult';
-        $this->_model = $this->getMockForAbstractClass(EntityAbstract::class);
+        $this->sourceClass = '\\' . \Magento\Framework\DataObject::class;
+        // @phpstan-ignore-next-line
+        $this->resultClass = '\\' . \Magento\Framework\DataObject_MyResult::class;
+        $this->_model = $this->getMockForAbstractClass(\Magento\Framework\Code\Generator\EntityAbstract::class);
     }
 
     protected function tearDown(): void
@@ -68,44 +65,44 @@ class EntityAbstractTest extends TestCase
         $this->markTestSkipped('Skipped in #27500 due to testing protected/private methods and properties');
 
         // without parameters
-        $this->assertAttributeEmpty('_sourceClassName', $this->_model);
-        $this->assertAttributeEmpty('_resultClassName', $this->_model);
-        $this->assertAttributeInstanceOf(Io::class, '_ioObject', $this->_model);
-        $this->assertAttributeInstanceOf(
-            ClassGenerator::class,
-            '_classGenerator',
-            $this->_model
-        );
-        $this->assertAttributeInstanceOf(
-            DefinedClasses::class,
-            'definedClasses',
-            $this->_model
-        );
+        //$this->assertAttributeEmpty('_sourceClassName', $this->_model);
+        //$this->assertAttributeEmpty('_resultClassName', $this->_model);
+        //$this->assertAttributeInstanceOf(\Magento\Framework\Code\Generator\Io::class, '_ioObject', $this->_model);
+        //$this->assertAttributeInstanceOf(
+        //    \Magento\Framework\Code\Generator\ClassGenerator::class,
+        //    '_classGenerator',
+        //    $this->_model
+        //);
+        //$this->assertAttributeInstanceOf(
+        //    \Magento\Framework\Code\Generator\DefinedClasses::class,
+        //    'definedClasses',
+        //    $this->_model
+        //);
 
         // with source class name
         $this->_model = $this->getMockForAbstractClass(
-            EntityAbstract::class,
+            \Magento\Framework\Code\Generator\EntityAbstract::class,
             [$this->sourceClass]
         );
-        $this->assertAttributeEquals($this->sourceClass, '_sourceClassName', $this->_model);
-        $this->assertAttributeEquals($this->sourceClass . 'Abstract', '_resultClassName', $this->_model);
+        //$this->assertAttributeEquals($this->sourceClass, '_sourceClassName', $this->_model);
+        //$this->assertAttributeEquals($this->sourceClass . 'Abstract', '_resultClassName', $this->_model);
 
         // with all arguments
         // Configure IoObject mock
-        $ioObject = $this->getMockBuilder(Io::class)
+        $ioObject = $this->getMockBuilder(\Magento\Framework\Code\Generator\Io::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $codeGenerator = $this->getMockBuilder(ClassGenerator::class)
+        $codeGenerator = $this->getMockBuilder(\Magento\Framework\Code\Generator\ClassGenerator::class)
             ->disableOriginalConstructor()
             ->getMock();
 
         $this->_model = $this->getMockForAbstractClass(
-            EntityAbstract::class,
+            \Magento\Framework\Code\Generator\EntityAbstract::class,
             [$this->sourceClass, $this->resultClass, $ioObject, $codeGenerator]
         );
-        $this->assertAttributeEquals($this->resultClass, '_resultClassName', $this->_model);
-        $this->assertAttributeEquals($ioObject, '_ioObject', $this->_model);
-        $this->assertAttributeEquals($codeGenerator, '_classGenerator', $this->_model);
+        //$this->assertAttributeEquals($this->resultClass, '_resultClassName', $this->_model);
+        //$this->assertAttributeEquals($ioObject, '_ioObject', $this->_model);
+        //$this->assertAttributeEquals($codeGenerator, '_classGenerator', $this->_model);
     }
 
     /**
@@ -192,7 +189,7 @@ class EntityAbstractTest extends TestCase
         }
         $abstractGetters = ['_getClassProperties', '_getClassMethods'];
         $this->_model = $this->getMockForAbstractClass(
-            EntityAbstract::class,
+            \Magento\Framework\Code\Generator\EntityAbstract::class,
             $arguments,
             '',
             true,
@@ -232,7 +229,7 @@ class EntityAbstractTest extends TestCase
         $resultFileExists = false
     ) {
         // Configure DefinedClasses mock
-        $definedClassesMock = $this->createMock(DefinedClasses::class);
+        $definedClassesMock = $this->createMock(\Magento\Framework\Code\Generator\DefinedClasses::class);
         $definedClassesMock->expects($this->once())
             ->method('isClassLoadable')
             ->with($this->sourceClass)
@@ -245,7 +242,7 @@ class EntityAbstractTest extends TestCase
         }
 
         // Configure IoObject mock
-        $ioObject = $this->getMockBuilder(Io::class)
+        $ioObject = $this->getMockBuilder(\Magento\Framework\Code\Generator\Io::class)
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -259,10 +256,10 @@ class EntityAbstractTest extends TestCase
         }
 
         return [
-            'sourceClassName' => $this->sourceClass,
-            'resultClassName' => $this->resultClass,
-            'ioObject' => $ioObject,
-            'classGenerator' => null,
+            'source_class' => $this->sourceClass,
+            'result_class' => $this->resultClass,
+            'io_object' => $ioObject,
+            'code_generator' => null,
             'definedClasses' => $definedClassesMock,
         ];
     }
@@ -278,7 +275,7 @@ class EntityAbstractTest extends TestCase
         // Configure mocks for the validation step
         $mocks = $this->_prepareMocksForValidateData();
 
-        $codeGenerator = $this->getMockBuilder(ClassGenerator::class)
+        $codeGenerator = $this->getMockBuilder(\Magento\Framework\Code\Generator\ClassGenerator::class)
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -287,25 +284,26 @@ class EntityAbstractTest extends TestCase
         $codeGenerator->expects($this->once())->method('addMethods')->willReturnSelf();
         $codeGenerator->expects($this->once())
             ->method('setClassDocBlock')
-            ->with($this->isType('array'))->willReturnSelf();
+            ->with($this->isType('array'))
+            ->willReturnSelf();
 
         $codeGenerator->expects($this->once())
             ->method('generate')
-            ->willReturn($willWriteCode ? self::RESULT_CODE : '');
+            ->willReturn($willWriteCode ? self::RESULT_CODE : null);
 
         // Add configuration for the generation step
-        /** @var \PHPUnit\Framework\MockObject\MockObject $ioObject */
-        $ioObject = $mocks['ioObject'];
+        /** @var $ioObject \PHPUnit\Framework\MockObject\MockObject */
+        $ioObject = $mocks['io_object'];
         if ($willWriteCode) {
             $ioObject->expects($this->once())->method('writeResultFile')->with(self::RESULT_FILE, self::RESULT_CODE);
         }
         $ioObject->expects($this->any())->method('generateResultFileName')->willReturn(self::RESULT_FILE);
 
         return [
-            'sourceClassName' => $mocks['sourceClassName'],
-            'resultClassName' => $mocks['resultClassName'],
-            'ioObject' => $ioObject,
-            'classGenerator' => $codeGenerator,
+            'source_class' => $mocks['source_class'],
+            'result_class' => $mocks['result_class'],
+            'io_object' => $ioObject,
+            'code_generator' => $codeGenerator,
             'definedClasses' => $mocks['definedClasses'],
         ];
     }

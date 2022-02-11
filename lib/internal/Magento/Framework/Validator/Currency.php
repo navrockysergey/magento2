@@ -10,8 +10,6 @@ use Magento\Framework\Setup\Lists;
 
 /**
  * Currency validator model
- *
- * @api
  */
 class Currency
 {
@@ -35,6 +33,7 @@ class Currency
      *
      * @param string $currencyCode
      * @return bool
+     * @api
      */
     public function isValid($currencyCode)
     {

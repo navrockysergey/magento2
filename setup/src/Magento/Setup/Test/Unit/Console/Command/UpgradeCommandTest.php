@@ -3,8 +3,6 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Setup\Test\Unit\Console\Command;
 
 use Magento\Framework\App\DeploymentConfig;
@@ -13,38 +11,29 @@ use Magento\Framework\Console\Cli;
 use Magento\Setup\Console\Command\UpgradeCommand;
 use Magento\Setup\Model\Installer;
 use Magento\Setup\Model\InstallerFactory;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-use Magento\Setup\Model\SearchConfig;
-use Magento\Setup\Model\SearchConfigFactory;
 use Symfony\Component\Console\Tester\CommandTester;
 
-class UpgradeCommandTest extends TestCase
+class UpgradeCommandTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var DeploymentConfig|MockObject
+     * @var DeploymentConfig|\PHPUnit\Framework\MockObject\MockObject
      */
     private $deploymentConfigMock;
 
     /**
-     * @var InstallerFactory|MockObject
+     * @var InstallerFactory|\PHPUnit\Framework\MockObject\MockObject
      */
     private $installerFactoryMock;
 
     /**
-     * @var Installer|MockObject
+     * @var Installer|\PHPUnit\Framework\MockObject\MockObject
      */
     private $installerMock;
 
     /**
-     * @var AppState|MockObject
+     * @var AppState|\PHPUnit\Framework\MockObject\MockObject
      */
     private $appStateMock;
-
-    /**
-     * @var SearchConfig|MockObject
-     */
-    private $searchConfigMock;
 
     /**
      * @var UpgradeCommand
@@ -56,7 +45,7 @@ class UpgradeCommandTest extends TestCase
     private $commandTester;
 
     /**
-     * @inheritdoc
+     * @return void
      */
     protected function setUp(): void
     {
@@ -75,18 +64,9 @@ class UpgradeCommandTest extends TestCase
         $this->appStateMock = $this->getMockBuilder(AppState::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->searchConfigMock = $this->getMockBuilder(SearchConfig::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        /** @var MockObject|SearchConfigFactory $searchConfigFactoryMock */
-        $searchConfigFactoryMock = $this->getMockBuilder(SearchConfigFactory::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $searchConfigFactoryMock->expects($this->once())->method('create')->willReturn($this->searchConfigMock);
 
         $this->upgradeCommand = new UpgradeCommand(
             $this->installerFactoryMock,
-            $searchConfigFactoryMock,
             $this->deploymentConfigMock,
             $this->appStateMock
         );
@@ -94,99 +74,94 @@ class UpgradeCommandTest extends TestCase
     }
 
     /**
+     * @dataProvider executeDataProvider
      * @param array $options
      * @param string $deployMode
      * @param string $expectedString
      * @param array $expectedOptions
-     *
-     * @return void
-     * @dataProvider executeDataProvider
      */
-    public function testExecute($options, $deployMode, $expectedString, $expectedOptions): void
+    public function testExecute($options, $deployMode, $expectedString, $expectedOptions)
     {
         $this->appStateMock->method('getMode')->willReturn($deployMode);
+        $this->installerMock->expects($this->at(0))
+            ->method('updateModulesSequence');
         $this->installerMock->expects($this->once())
             ->method('installSchema')
             ->with($expectedOptions);
-        $this->installerMock
-            ->method('updateModulesSequence');
-        $this->installerMock
-        ->method('installDataFixtures');
+        $this->installerMock->expects($this->at(2))
+            ->method('installDataFixtures');
 
         $this->assertSame(Cli::RETURN_SUCCESS, $this->commandTester->execute($options));
-        $this->assertEquals($expectedString, $this->commandTester->getDisplay());
+        $display = $this->commandTester->getDisplay();
+        $this->assertStringContainsString($expectedString, $display);
     }
 
     /**
      * @return array
      */
-    public function executeDataProvider(): array
+    public function executeDataProvider()
     {
-        $mediaGalleryNotice = "Media files stored outside of 'Media Gallery Allowed' folders will not be available "
-        . "to the media gallery.\n"
-        . "Please refer to Developer Guide for more details.\n";
-
         return [
             [
                 'options' => [
                     '--magento-init-params' => '',
-                    '--convert-old-scripts' => false
+                    '--convert-old-scripts' => false,
                 ],
-                'deployMode' => AppState::MODE_PRODUCTION,
+                'deployMode' => \Magento\Framework\App\State::MODE_PRODUCTION,
                 'expectedString' => 'Please re-run Magento compile command. Use the command "setup:di:compile"'
-                    . PHP_EOL . $mediaGalleryNotice,
+                    . PHP_EOL,
                 'expectedOptions' => [
                     'keep-generated' => false,
                     'convert-old-scripts' => false,
                     'safe-mode' => false,
                     'data-restore' => false,
                     'dry-run' => false,
-                    'magento-init-params' => ''
+                    'magento-init-params' => '',
                 ]
             ],
             [
                 'options' => [
                     '--magento-init-params' => '',
                     '--convert-old-scripts' => false,
-                    '--keep-generated' => true
+                    '--keep-generated' => true,
                 ],
-                'deployMode' => AppState::MODE_PRODUCTION,
-                'expectedString' => $mediaGalleryNotice,
+                'deployMode' => \Magento\Framework\App\State::MODE_PRODUCTION,
+                'expectedString' => '',
                 'expectedOptions' => [
                     'keep-generated' => true,
                     'convert-old-scripts' => false,
                     'safe-mode' => false,
                     'data-restore' => false,
                     'dry-run' => false,
-                    'magento-init-params' => ''
+                    'magento-init-params' => '',
                 ]
             ],
             [
                 'options' => ['--magento-init-params' => '', '--convert-old-scripts' => false],
-                'deployMode' => AppState::MODE_DEVELOPER,
-                'expectedString' => $mediaGalleryNotice,
+                'deployMode' => \Magento\Framework\App\State::MODE_DEVELOPER,
+                'expectedString' => '',
                 'expectedOptions' => [
                     'keep-generated' => false,
                     'convert-old-scripts' => false,
                     'safe-mode' => false,
                     'data-restore' => false,
                     'dry-run' => false,
-                    'magento-init-params' => ''
+                    'magento-init-params' => '',
                 ]
             ],
             [
                 'options' => ['--magento-init-params' => '', '--convert-old-scripts' => false],
-                'deployMode' => AppState::MODE_DEFAULT,
-                'expectedString' => $mediaGalleryNotice,
+                'deployMode' => \Magento\Framework\App\State::MODE_DEFAULT,
+                'expectedString' => '',
                 'expectedOptions' => [
                     'keep-generated' => false,
                     'convert-old-scripts' => false,
                     'safe-mode' => false,
                     'data-restore' => false,
                     'dry-run' => false,
-                    'magento-init-params' => ''
+                    'magento-init-params' => '',
                 ]
-            ]
+            ],
         ];
     }
 }

@@ -1,34 +1,21 @@
 <?php
-
 /**
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Quote\Test\Unit\Model\ResourceModel\Quote;
 
-use Magento\Framework\App\ResourceConnection;
-use Magento\Framework\DB\Adapter\AdapterInterface;
-use Magento\Framework\DB\Adapter\Pdo\Mysql;
-use Magento\Framework\Model\ResourceModel\Db\Context;
-use Magento\Framework\Model\ResourceModel\Db\ObjectRelationProcessor;
-use Magento\Framework\Model\ResourceModel\Db\VersionControl\AbstractDb;
 use Magento\Framework\Model\ResourceModel\Db\VersionControl\RelationComposite;
-use Magento\Framework\Model\ResourceModel\Db\VersionControl\Snapshot;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManagerHelper;
-use Magento\Quote\Model\Quote\Item as QuoteItem;
-use Magento\Quote\Model\Quote\Item\Option;
 use Magento\Quote\Model\ResourceModel\Quote\Item;
-use Magento\Quote\Model\ResourceModel\Quote\Item\Option as OptionResourceModel;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
 /**
+ * Class ItemTest
+ *
  * @SuppressWarnings(PHPMD.TooManyFields)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class ItemTest extends TestCase
+class ItemTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var Item
@@ -36,32 +23,32 @@ class ItemTest extends TestCase
     protected $model;
 
     /**
-     * @var ResourceConnection|MockObject
+     * @var \Magento\Framework\App\ResourceConnection|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $resourceMock;
 
     /**
-     * @var QuoteItem|MockObject
+     * @var \Magento\Quote\Model\Quote\Item|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $quoteItemMock;
 
     /**
-     * @var AdapterInterface|MockObject
+     * @var \Magento\Framework\DB\Adapter\AdapterInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $connectionMock;
 
     /**
-     * @var Snapshot|MockObject
+     * @var \Magento\Framework\Model\ResourceModel\Db\VersionControl\Snapshot|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $entitySnapshotMock;
 
     /**
-     * @var RelationComposite|MockObject
+     * @var RelationComposite|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $relationCompositeMock;
 
     /**
-     * @var ObjectRelationProcessor|MockObject
+     * @var \Magento\Framework\Model\ResourceModel\Db\ObjectRelationProcessor|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $objectRelationProcessorMock;
 
@@ -70,33 +57,28 @@ class ItemTest extends TestCase
      */
     protected function setUp(): void
     {
-        $this->resourceMock = $this->createMock(ResourceConnection::class);
-        $this->quoteItemMock = $this->createMock(QuoteItem::class);
-        $this->connectionMock = $this->getMockBuilder(Mysql::class)
-            ->onlyMethods(
-                [
-                    'rollback',
-                    'describeTable',
-                    'insert',
-                    'lastInsertId',
-                    'beginTransaction',
-                    'commit',
-                    'quoteInto',
-                    'update'
-                ]
-            )
-            ->disableOriginalConstructor()
-            ->getMock();
+        $this->resourceMock = $this->createMock(\Magento\Framework\App\ResourceConnection::class);
+        $this->quoteItemMock = $this->createMock(\Magento\Quote\Model\Quote\Item::class);
+        $this->connectionMock = $this->createPartialMock(\Magento\Framework\DB\Adapter\Pdo\Mysql::class, [
+                'describeTable',
+                'insert',
+                'lastInsertId',
+                'beginTransaction',
+                'rollback',
+                'commit',
+                'quoteInto',
+                'update'
+            ]);
         $this->entitySnapshotMock = $this->createMock(
-            Snapshot::class
+            \Magento\Framework\Model\ResourceModel\Db\VersionControl\Snapshot::class
         );
         $this->relationCompositeMock = $this->createMock(
-            RelationComposite::class
+            \Magento\Framework\Model\ResourceModel\Db\VersionControl\RelationComposite::class
         );
         $this->objectRelationProcessorMock = $this->createMock(
-            ObjectRelationProcessor::class
+            \Magento\Framework\Model\ResourceModel\Db\ObjectRelationProcessor::class
         );
-        $contextMock = $this->createMock(Context::class);
+        $contextMock = $this->createMock(\Magento\Framework\Model\ResourceModel\Db\Context::class);
         $contextMock->expects($this->once())->method('getResources')->willReturn($this->resourceMock);
         $contextMock->expects($this->once())
             ->method('getObjectRelationProcessor')
@@ -116,7 +98,7 @@ class ItemTest extends TestCase
     public function testInstanceOf()
     {
         $this->assertInstanceOf(
-            AbstractDb::class,
+            \Magento\Framework\Model\ResourceModel\Db\VersionControl\AbstractDb::class,
             $this->model
         );
     }
@@ -128,7 +110,7 @@ class ItemTest extends TestCase
             ->with($this->quoteItemMock)
             ->willReturn(false);
 
-        $this->quoteItemMock->expects($this->once())
+        $this->quoteItemMock->expects($this->never())
             ->method('isOptionsSaved');
         $this->quoteItemMock->expects($this->never())
             ->method('saveItemOptions');
@@ -176,63 +158,6 @@ class ItemTest extends TestCase
         $this->resourceMock->expects($this->any())
             ->method('getConnection')
             ->willReturn($this->connectionMock);
-
-        $this->assertEquals($this->model, $this->model->save($this->quoteItemMock));
-    }
-
-    public function testSaveWithNewOption(): void
-    {
-        $this->entitySnapshotMock->expects($this->exactly(2))
-            ->method('isModified')
-            ->with($this->quoteItemMock)
-            ->willReturn(false);
-
-        $this->quoteItemMock->expects($this->once())
-            ->method('isOptionsSaved')
-            ->willReturn(false);
-        $this->quoteItemMock->expects($this->once())
-            ->method('saveItemOptions');
-
-        $this->resourceMock->expects($this->any())
-            ->method('getConnection')
-            ->willReturn($this->connectionMock);
-        $optionMock = $this->createMock(Option::class);
-        $this->quoteItemMock->expects($this->once())
-            ->method('getOptions')
-            ->willReturn([$optionMock]);
-
-        $this->assertEquals($this->model, $this->model->save($this->quoteItemMock));
-    }
-
-    public function testSaveWithModifiedOption(): void
-    {
-        $this->entitySnapshotMock->expects($this->exactly(2))
-            ->method('isModified')
-            ->with($this->quoteItemMock)
-            ->willReturn(false);
-
-        $this->quoteItemMock->expects($this->once())
-            ->method('isOptionsSaved')
-            ->willReturn(false);
-        $this->quoteItemMock->expects($this->once())
-            ->method('saveItemOptions');
-
-        $this->resourceMock->expects($this->any())
-            ->method('getConnection')
-            ->willReturn($this->connectionMock);
-        $optionMock = $this->createMock(Option::class);
-        $optionMock->method('getId')
-            ->willReturn(1);
-        $optionResourceModelMock = $this->createMock(OptionResourceModel::class);
-        $optionResourceModelMock->expects($this->once())
-            ->method('hasDataChanged')
-            ->with($optionMock)
-            ->willReturn(true);
-        $optionMock->method('getResource')
-            ->willReturn($optionResourceModelMock);
-        $this->quoteItemMock->expects($this->once())
-            ->method('getOptions')
-            ->willReturn([$optionMock]);
 
         $this->assertEquals($this->model, $this->model->save($this->quoteItemMock));
     }

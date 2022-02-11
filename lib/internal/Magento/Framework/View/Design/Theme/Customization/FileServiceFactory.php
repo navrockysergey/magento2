@@ -18,11 +18,6 @@ class FileServiceFactory
     protected $_objectManager;
 
     /**
-     * @var array
-     */
-    private $_types;
-
-    /**
      * Constructor
      *
      * @param \Magento\Framework\ObjectManagerInterface $objectManager

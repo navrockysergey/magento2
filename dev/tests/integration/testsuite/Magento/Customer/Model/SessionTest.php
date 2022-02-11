@@ -16,6 +16,7 @@ use Magento\TestFramework\Helper\Bootstrap;
 /**
  * @magentoDataFixture Magento/Customer/_files/customer.php
  * @magentoAppIsolation enabled
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class SessionTest extends \PHPUnit\Framework\TestCase
 {

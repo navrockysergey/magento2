@@ -8,22 +8,21 @@ declare(strict_types=1);
 
 namespace Magento\Catalog\Controller\Adminhtml\Product;
 
-use Magento\Backend\App\Action\Context;
-use Magento\Backend\Model\View\Result\Redirect;
-use Magento\Catalog\Api\ProductRepositoryInterface;
-use Magento\Catalog\Controller\Adminhtml\Product;
-use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
 use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterface;
-use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Controller\ResultFactory;
-use Magento\Framework\Exception\LocalizedException;
+use Magento\Backend\App\Action\Context;
 use Magento\Ui\Component\MassAction\Filter;
+use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Framework\Exception\CouldNotSaveException;
+use Magento\Framework\Exception\StateException;
+use Magento\Framework\Exception\LocalizedException;
 use Psr\Log\LoggerInterface;
 
 /**
  * Class \Magento\Catalog\Controller\Adminhtml\Product\MassDelete
  */
-class MassDelete extends Product implements HttpPostActionInterface
+class MassDelete extends \Magento\Catalog\Controller\Adminhtml\Product implements HttpPostActionInterface
 {
     /**
      * Massactions filter
@@ -52,8 +51,8 @@ class MassDelete extends Product implements HttpPostActionInterface
      * @param Builder $productBuilder
      * @param Filter $filter
      * @param CollectionFactory $collectionFactory
-     * @param ProductRepositoryInterface|null $productRepository
-     * @param LoggerInterface|null $logger
+     * @param ProductRepositoryInterface $productRepository
+     * @param LoggerInterface $logger
      */
     public function __construct(
         Context $context,
@@ -66,23 +65,20 @@ class MassDelete extends Product implements HttpPostActionInterface
         $this->filter = $filter;
         $this->collectionFactory = $collectionFactory;
         $this->productRepository = $productRepository ?:
-            ObjectManager::getInstance()->create(ProductRepositoryInterface::class);
+            \Magento\Framework\App\ObjectManager::getInstance()->create(ProductRepositoryInterface::class);
         $this->logger = $logger ?:
-            ObjectManager::getInstance()->create(LoggerInterface::class);
+            \Magento\Framework\App\ObjectManager::getInstance()->create(LoggerInterface::class);
         parent::__construct($context, $productBuilder);
     }
 
     /**
      * Mass Delete Action
      *
-     * @return Redirect
-     * @throws LocalizedException
+     * @return \Magento\Backend\Model\View\Result\Redirect
      */
     public function execute()
     {
         $collection = $this->filter->getCollection($this->collectionFactory->create());
-        $collection->addMediaGalleryData();
-
         $productDeleted = 0;
         $productDeletedError = 0;
         /** @var \Magento\Catalog\Model\Product $product */

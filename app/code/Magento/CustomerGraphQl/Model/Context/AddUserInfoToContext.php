@@ -8,16 +8,13 @@ declare(strict_types=1);
 namespace Magento\CustomerGraphQl\Model\Context;
 
 use Magento\Authorization\Model\UserContextInterface;
-use Magento\Customer\Api\Data\CustomerInterface;
-use Magento\Customer\Model\ResourceModel\CustomerRepository;
-use Magento\Customer\Model\Session;
 use Magento\GraphQl\Model\Query\ContextParametersInterface;
-use Magento\GraphQl\Model\Query\UserContextParametersProcessorInterface;
+use Magento\GraphQl\Model\Query\ContextParametersProcessorInterface;
 
 /**
- * @SuppressWarnings(PHPMD.CookieAndSessionMisuse)
+ * @inheritdoc
  */
-class AddUserInfoToContext implements UserContextParametersProcessorInterface
+class AddUserInfoToContext implements ContextParametersProcessorInterface
 {
     /**
      * @var UserContextInterface
@@ -25,40 +22,11 @@ class AddUserInfoToContext implements UserContextParametersProcessorInterface
     private $userContext;
 
     /**
-     * @var Session
-     */
-    private $session;
-
-    /**
-     * @var CustomerRepository
-     */
-    private $customerRepository;
-
-    /**
-     * @var CustomerInterface|null
-     */
-    private $loggedInCustomerData = null;
-
-    /**
      * @param UserContextInterface $userContext
-     * @param Session $session
-     * @param CustomerRepository $customerRepository
      */
     public function __construct(
-        UserContextInterface $userContext,
-        Session $session,
-        CustomerRepository $customerRepository
+        UserContextInterface $userContext
     ) {
-        $this->userContext = $userContext;
-        $this->session = $session;
-        $this->customerRepository = $customerRepository;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function setUserContext(UserContextInterface $userContext): void
-    {
         $this->userContext = $userContext;
     }
 
@@ -79,29 +47,8 @@ class AddUserInfoToContext implements UserContextParametersProcessorInterface
         }
         $contextParameters->setUserType($currentUserType);
 
-        $isCustomer = $this->isCustomer($currentUserId, $currentUserType);
-        $contextParameters->addExtensionAttribute('is_customer', $isCustomer);
-
-        if ($this->session->isLoggedIn()) {
-            $this->loggedInCustomerData = $this->session->getCustomerData();
-        }
-
-        if ($isCustomer) {
-            $customer = $this->customerRepository->getById($currentUserId);
-            $this->session->setCustomerData($customer);
-            $this->session->setCustomerGroupId($customer->getGroupId());
-        }
+        $contextParameters->addExtensionAttribute('is_customer', $this->isCustomer($currentUserId, $currentUserType));
         return $contextParameters;
-    }
-
-    /**
-     * Get logged in customer data
-     *
-     * @return CustomerInterface
-     */
-    public function getLoggedInCustomerData(): ?CustomerInterface
-    {
-        return $this->loggedInCustomerData;
     }
 
     /**

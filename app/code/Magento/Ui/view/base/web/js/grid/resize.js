@@ -92,7 +92,7 @@ define([
             if ($(table).is(this.mainTableSelector)) {
                 this.table = table;
                 this.tableWidth = $(table).outerWidth();
-                $(window).on('resize', this.checkAfterResize);
+                $(window).resize(this.checkAfterResize);
             }
 
             //TODO - Must be deleted when Firefox fixed problem with table-layout: fixed
@@ -244,7 +244,7 @@ define([
 
             setTimeout(function () {
                 if (self.layoutFixedPolyfillIterator < 20) {
-                    $(window).trigger('resize');
+                    $(window).resize();
                     self.layoutFixedPolyfillIterator++;
                     self._layoutFixedPolyfill();
                 } else {
@@ -444,8 +444,8 @@ define([
             cfg.curResizeElem.model.width = $(cfg.curResizeElem.elems[0]).outerWidth();
             cfg.depResizeElem.model.width = $(cfg.depResizeElem.elems[0]).outerWidth();
             body.addClass(this.inResizeClass);
-            body.on('mousemove', this.mousemoveHandler);
-            $(window).on('mouseup', this.mouseupHandler);
+            body.bind('mousemove', this.mousemoveHandler);
+            $(window).bind('mouseup', this.mouseupHandler);
         },
 
         /**
@@ -528,8 +528,8 @@ define([
             this.store('storageColumnsData');
 
             body.removeClass(this.inResizeClass);
-            body.off('mousemove', this.mousemoveHandler);
-            $(window).off('mouseup', this.mouseupHandler);
+            body.unbind('mousemove', this.mousemoveHandler);
+            $(window).unbind('mouseup', this.mouseupHandler);
         },
 
         /**

@@ -14,11 +14,15 @@ namespace Magento\Cms\Block\Adminhtml\Wysiwyg\Images;
 class Tree extends \Magento\Backend\Block\Template
 {
     /**
+     * Core registry
+     *
      * @var \Magento\Framework\Registry
      */
     protected $_coreRegistry = null;
 
     /**
+     * Cms wysiwyg images
+     *
      * @var \Magento\Cms\Helper\Wysiwyg\Images
      */
     protected $_cmsWysiwygImages = null;
@@ -54,7 +58,6 @@ class Tree extends \Magento\Backend\Block\Template
      * Json tree builder
      *
      * @return string
-     * @throws \Magento\Framework\Exception\ValidatorException
      */
     public function getTreeJson()
     {
@@ -72,36 +75,17 @@ class Tree extends \Magento\Backend\Block\Template
                 'path' => substr($item->getFilename(), strlen($storageRoot)),
                 'cls' => 'folder',
             ];
-            $hasNestedDirectories = $this->hasNestedDirectories($storageRoot, $item->getFilename());
 
-            // Display node as closed and enable lazy loading
-            if ($hasNestedDirectories) {
-                $data['children'] = true;
+            $hasNestedDirectories = count(glob($item->getFilename() . '/*', GLOB_ONLYDIR)) > 0;
+
+            // if no nested directories inside dir, add 'leaf' state so that jstree hides dropdown arrow next to dir
+            if (!$hasNestedDirectories) {
+                $data['state'] = 'leaf';
             }
 
             $jsonArray[] = $data;
         }
         return $this->serializer->serialize($jsonArray);
-    }
-
-    /**
-     * Check if directory has nested directories
-     *
-     * @param string $storageRoot
-     * @param string $fileName
-     * @return bool
-     */
-    private function hasNestedDirectories(string $storageRoot, string $fileName): bool
-    {
-        $pathList = $this->getMediaDirectory()->read($fileName);
-        foreach ($pathList as $directoryPath) {
-            $file = $this->_filesystem->getDirectoryReadByPath($storageRoot . $directoryPath);
-            if ($file->isDirectory()) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -115,7 +99,7 @@ class Tree extends \Magento\Backend\Block\Template
 
         $currentTreePath = $this->getRequest()->getParam('current_tree_path');
 
-        if ($currentTreePath !== null && strlen($currentTreePath)) {
+        if (strlen($currentTreePath)) {
             $params['current_tree_path'] = $currentTreePath;
         }
 
@@ -150,7 +134,7 @@ class Tree extends \Magento\Backend\Block\Template
             $path = $this->_coreRegistry->registry('storage')->getSession()->getCurrentPath();
         }
 
-        if ($path) {
+        if (strlen($path)) {
             $path = str_replace($this->_cmsWysiwygImages->getStorageRoot(), '', $path);
             $relative = [];
             foreach (explode('/', $path) as $dirName) {

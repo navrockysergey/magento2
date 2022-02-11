@@ -3,110 +3,82 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
 
 namespace Magento\Framework\Test\Unit;
 
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\App\Request\Http;
-use Magento\Framework\App\Route\ConfigInterface;
-use Magento\Framework\Escaper;
-use Magento\Framework\Session\Generic;
-use Magento\Framework\Session\SidResolverInterface;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use Magento\Framework\Url;
 use Magento\Framework\Url\HostChecker;
-use Magento\Framework\Url\ModifierInterface;
-use Magento\Framework\Url\QueryParamsResolverInterface;
-use Magento\Framework\Url\RouteParamsPreprocessorInterface;
-use Magento\Framework\Url\RouteParamsResolver;
-use Magento\Framework\Url\RouteParamsResolverFactory;
-use Magento\Framework\Url\ScopeInterface;
-use Magento\Framework\Url\ScopeResolverInterface;
-use Magento\Framework\Url\SecurityInfoInterface;
-use Magento\Framework\UrlInterface;
-use Magento\Framework\ZendEscaper;
-use Magento\Store\Api\Data\StoreInterface;
-use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 /**
  * Test class for Magento\Framework\Url
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class UrlTest extends TestCase
+class UrlTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var RouteParamsResolver|MockObject
+     * @var \Magento\Framework\Url\RouteParamsResolver|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $routeParamsResolverMock;
 
     /**
-     * @var RouteParamsPreprocessorInterface|MockObject
+     * @var \Magento\Framework\Url\RouteParamsPreprocessorInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $routeParamsPreprocessorMock;
 
     /**
-     * @var ScopeResolverInterface|MockObject
+     * @var \Magento\Framework\Url\ScopeResolverInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $scopeResolverMock;
 
     /**
-     * @var ScopeInterface|MockObject
+     * @var \Magento\Framework\Url\ScopeInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $scopeMock;
 
     /**
-     * @var QueryParamsResolverInterface|MockObject
+     * @var \Magento\Framework\Url\QueryParamsResolverInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $queryParamsResolverMock;
 
     /**
-     * @var SidResolverInterface|MockObject
+     * @var \Magento\Framework\Session\SidResolverInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $sidResolverMock;
 
     /**
-     * @var Generic|MockObject
+     * @var \Magento\Framework\Session\Generic|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $sessionMock;
 
     /**
-     * @var ScopeConfigInterface|MockObject
+     * @var \Magento\Framework\App\Config\ScopeConfigInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $scopeConfig;
 
     /**
-     * @var ModifierInterface|MockObject
+     * @var \Magento\Framework\Url\ModifierInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $urlModifier;
 
     /**
-     * @var HostChecker|MockObject
+     * @var HostChecker|\PHPUnit\Framework\MockObject\MockObject
      */
     private $hostChecker;
 
-    /**
-     * @inheritdoc
-     */
     protected function setUp(): void
     {
-        $this->routeParamsResolverMock = $this->getMockBuilder(RouteParamsResolver::class)
-            ->addMethods(['getType'])
-            ->onlyMethods(['hasData', 'getData', 'getRouteParams', 'unsetData'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        $this->routeParamsResolverMock = $this->createPartialMock(
+            \Magento\Framework\Url\RouteParamsResolver::class,
+            ['getType', 'hasData', 'getData', 'getRouteParams', 'unsetData']
+        );
 
-        $escaperMock = $this->createMock(ZendEscaper::class);
+        $escaperMock = $this->createMock(\Magento\Framework\ZendEscaper::class);
 
-        $objectManager = new ObjectManager($this);
+        $objectManager = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
 
         $objectManager->setBackwardCompatibleProperty($this->routeParamsResolverMock, 'escaper', $escaperMock);
 
         $this->routeParamsPreprocessorMock = $this->getMockForAbstractClass(
-            RouteParamsPreprocessorInterface::class,
+            \Magento\Framework\Url\RouteParamsPreprocessorInterface::class,
             ['unsetData'],
             '',
             false,
@@ -115,14 +87,14 @@ class UrlTest extends TestCase
             []
         );
 
-        $this->scopeResolverMock = $this->getMockForAbstractClass(ScopeResolverInterface::class);
-        $this->scopeMock = $this->getMockForAbstractClass(ScopeInterface::class);
-        $this->queryParamsResolverMock = $this->getMockForAbstractClass(QueryParamsResolverInterface::class);
-        $this->sidResolverMock = $this->getMockForAbstractClass(SidResolverInterface::class);
-        $this->sessionMock = $this->createMock(Generic::class);
-        $this->scopeConfig = $this->getMockForAbstractClass(ScopeConfigInterface::class);
+        $this->scopeResolverMock = $this->createMock(\Magento\Framework\Url\ScopeResolverInterface::class);
+        $this->scopeMock = $this->createMock(\Magento\Framework\Url\ScopeInterface::class);
+        $this->queryParamsResolverMock = $this->createMock(\Magento\Framework\Url\QueryParamsResolverInterface::class);
+        $this->sidResolverMock = $this->createMock(\Magento\Framework\Session\SidResolverInterface::class);
+        $this->sessionMock = $this->createMock(\Magento\Framework\Session\Generic::class);
+        $this->scopeConfig = $this->createMock(\Magento\Framework\App\Config\ScopeConfigInterface::class);
 
-        $this->urlModifier = $this->getMockForAbstractClass(ModifierInterface::class);
+        $this->urlModifier = $this->createMock(\Magento\Framework\Url\ModifierInterface::class);
         $this->urlModifier->expects($this->any())
             ->method('execute')
             ->willReturnArgument(0);
@@ -130,47 +102,46 @@ class UrlTest extends TestCase
 
     /**
      * @param bool $resolve
-     * @return RouteParamsResolverFactory|MockObject
+     * @return \Magento\Framework\Url\RouteParamsResolverFactory|\PHPUnit\Framework\MockObject\MockObject
      */
-    protected function getRouteParamsResolverFactory($resolve = true): RouteParamsResolverFactory
+    protected function getRouteParamsResolverFactory($resolve = true)
     {
-        $routeParamsResolverFactoryMock = $this->createMock(RouteParamsResolverFactory::class);
+        $routeParamsResolverFactoryMock = $this->createMock(\Magento\Framework\Url\RouteParamsResolverFactory::class);
         if ($resolve) {
             $routeParamsResolverFactoryMock->expects($this->any())->method('create')
                 ->willReturn($this->routeParamsResolverMock);
         }
-
         return $routeParamsResolverFactoryMock;
     }
 
     /**
-     * @return Http|MockObject
+     * @param array $mockMethods
+     * @return \Magento\Framework\App\Request\Http|\PHPUnit\Framework\MockObject\MockObject
      */
-    protected function getRequestMock(): Http
+    protected function getRequestMock()
     {
-        return $this->getMockBuilder(Http::class)
-            ->disableOriginalConstructor()
-            ->getMock();
+        return $this->getMockBuilder(\Magento\Framework\App\Request\Http::class)
+            ->disableOriginalConstructor()->getMock();
     }
 
     /**
      * @param array $arguments
-     * @return object
+     * @return \Magento\Framework\Url
      */
     protected function getUrlModel($arguments = [])
     {
-        $arguments = array_merge($arguments, ['scopeType' => StoreScopeInterface::SCOPE_STORE]);
-        $objectManager = new ObjectManager($this);
-        $model = $objectManager->getObject(Url::class, $arguments);
+        $arguments = array_merge($arguments, ['scopeType' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE]);
+        $objectManager = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
+        $model = $objectManager->getObject(\Magento\Framework\Url::class, $arguments);
 
-        $modelProperty = (new ReflectionClass(get_class($model)))
+        $modelProperty = (new \ReflectionClass(get_class($model)))
             ->getProperty('urlModifier');
 
         $modelProperty->setAccessible(true);
         $modelProperty->setValue($model, $this->urlModifier);
 
-        $zendEscaper = new ZendEscaper();
-        $escaper = new Escaper();
+        $zendEscaper = new \Magento\Framework\ZendEscaper();
+        $escaper = new \Magento\Framework\Escaper();
         $objectManager->setBackwardCompatibleProperty($escaper, 'escaper', $zendEscaper);
         $objectManager->setBackwardCompatibleProperty($model, 'escaper', $escaper);
 
@@ -180,11 +151,9 @@ class UrlTest extends TestCase
     /**
      * @param string $httpHost
      * @param string $url
-     *
-     * @return void
      * @dataProvider getCurrentUrlProvider
      */
-    public function testGetCurrentUrl($httpHost, $url): void
+    public function testGetCurrentUrl($httpHost, $url)
     {
         $requestMock = $this->getRequestMock();
         $requestMock->expects($this->once())->method('getRequestUri')->willReturn('/fancy_uri');
@@ -197,7 +166,7 @@ class UrlTest extends TestCase
     /**
      * @return array
      */
-    public function getCurrentUrlProvider(): array
+    public function getCurrentUrlProvider()
     {
         return [
             'without_port' => ['example.com', 'http://example.com/fancy_uri'],
@@ -206,10 +175,7 @@ class UrlTest extends TestCase
         ];
     }
 
-    /**
-     * @return void
-     */
-    public function testGetBaseUrlNotLinkType(): void
+    public function testGetBaseUrlNotLinkType()
     {
         $model = $this->getUrlModel(
             [
@@ -230,10 +196,7 @@ class UrlTest extends TestCase
         $this->assertEquals($baseUrl, $model->getBaseUrl($baseUrlParams));
     }
 
-    /**
-     * @return void
-     */
-    public function testGetUrlValidateFilter(): void
+    public function testGetUrlValidateFilter()
     {
         $model = $this->getUrlModel();
         $this->assertEquals('http://test.com', $model->getUrl('http://test.com'));
@@ -243,14 +206,12 @@ class UrlTest extends TestCase
      * @param string|array|bool $query
      * @param string $queryResult
      * @param string $returnUri
-     *
-     * @return void
      * @dataProvider getUrlDataProvider
      */
-    public function testGetUrl($query, $queryResult, $returnUri): void
+    public function testGetUrl($query, $queryResult, $returnUri)
     {
         $requestMock = $this->getRequestMock();
-        $routeConfigMock = $this->getMockForAbstractClass(ConfigInterface::class);
+        $routeConfigMock = $this->createMock(\Magento\Framework\App\Route\ConfigInterface::class);
         $model = $this->getUrlModel(
             [
                 'scopeResolver' => $this->scopeResolverMock,
@@ -263,7 +224,7 @@ class UrlTest extends TestCase
         );
 
         $baseUrl = 'http://localhost/index.php/';
-        $urlType = UrlInterface::URL_TYPE_LINK;
+        $urlType = \Magento\Framework\UrlInterface::URL_TYPE_LINK;
 
         $this->scopeMock->expects($this->once())->method('getBaseUrl')->willReturn($baseUrl);
         $this->scopeResolverMock->expects($this->any())
@@ -283,7 +244,7 @@ class UrlTest extends TestCase
             ->willReturn($queryResult);
 
         $url = $model->getUrl('catalog/product/view', [
-            '_scope' => $this->getMockForAbstractClass(StoreInterface::class),
+            '_scope' => $this->getMockForAbstractClass(\Magento\Store\Api\Data\StoreInterface::class),
             '_fragment' => 'anchor',
             '_escape' => 1,
             '_query' => $query,
@@ -293,10 +254,7 @@ class UrlTest extends TestCase
         $this->assertEquals($returnUri, $url);
     }
 
-    /**
-     * @return void
-     */
-    public function testGetUrlIdempotentSetRoutePath(): void
+    public function testGetUrlIdempotentSetRoutePath()
     {
         $model = $this->getUrlModel([
             'scopeResolver' => $this->scopeResolverMock,
@@ -313,10 +271,7 @@ class UrlTest extends TestCase
         $this->assertEquals('catalog/product/view', $model->getUrl('catalog/product/view'));
     }
 
-    /**
-     * @return void
-     */
-    public function testGetUrlIdempotentSetRouteName(): void
+    public function testGetUrlIdempotentSetRouteName()
     {
         $model = $this->getUrlModel([
             'scopeResolver' => $this->scopeResolverMock,
@@ -332,10 +287,7 @@ class UrlTest extends TestCase
         $this->assertEquals('/product/view/', $model->getUrl('catalog/product/view'));
     }
 
-    /**
-     * @return void
-     */
-    public function testGetUrlRouteHasParams(): void
+    public function testGetUrlRouteHasParams()
     {
         $this->routeParamsResolverMock->expects($this->any())->method('getRouteParams')
             ->willReturn(['foo' => 'bar', 'true' => false]);
@@ -352,10 +304,7 @@ class UrlTest extends TestCase
         $this->assertEquals('/index/index/foo/bar/', $model->getUrl('catalog'));
     }
 
-    /**
-     * @return void
-     */
-    public function testGetUrlRouteUseRewrite(): void
+    public function testGetUrlRouteUseRewrite()
     {
         $this->routeParamsResolverMock->expects($this->any())->method('getRouteParams')
             ->willReturn(['foo' => 'bar']);
@@ -383,45 +332,42 @@ class UrlTest extends TestCase
     /**
      * @return array
      */
-    public function getUrlDataProvider(): array
+    public function getUrlDataProvider()
     {
         return [
             'string query' => [
                 'foo=bar',
                 'foo=bar',
-                'http://localhost/index.php/catalog/product/view/id/100/?foo=bar#anchor'
+                'http://localhost/index.php/catalog/product/view/id/100/?foo=bar#anchor',
             ],
             'array query' => [
                 ['foo' => 'bar'],
                 'foo=bar',
-                'http://localhost/index.php/catalog/product/view/id/100/?foo=bar#anchor'
+                'http://localhost/index.php/catalog/product/view/id/100/?foo=bar#anchor',
             ],
             'without query' => [
                 false,
                 '',
                 'http://localhost/index.php/catalog/product/view/id/100/#anchor'
-            ]
+            ],
         ];
     }
 
-    /**
-     * @return void
-     */
-    public function testGetUrlWithAsterisksPath(): void
+    public function testGetUrlWithAsterisksPath()
     {
         $requestMock = $this->getRequestMock();
-        $routeConfigMock = $this->getMockForAbstractClass(ConfigInterface::class);
+        $routeConfigMock = $this->createMock(\Magento\Framework\App\Route\ConfigInterface::class);
         $model = $this->getUrlModel(
             [
                 'scopeResolver' => $this->scopeResolverMock,
                 'routeParamsResolverFactory' => $this->getRouteParamsResolverFactory(),
                 'queryParamsResolver' => $this->queryParamsResolverMock,
-                'request' => $requestMock, 'routeConfig' => $routeConfigMock
+                'request' => $requestMock, 'routeConfig' => $routeConfigMock,
             ]
         );
 
         $baseUrl = 'http://localhost/index.php/';
-        $urlType = UrlInterface::URL_TYPE_LINK;
+        $urlType = \Magento\Framework\UrlInterface::URL_TYPE_LINK;
 
         $this->scopeMock->expects($this->once())->method('getBaseUrl')->willReturn($baseUrl);
         $this->scopeResolverMock->expects($this->any())
@@ -443,13 +389,10 @@ class UrlTest extends TestCase
         $this->assertEquals('http://localhost/index.php/catalog/product/view/key/value/', $url);
     }
 
-    /**
-     * @return void
-     */
-    public function testGetDirectUrl(): void
+    public function testGetDirectUrl()
     {
         $requestMock = $this->getRequestMock();
-        $routeConfigMock = $this->getMockForAbstractClass(ConfigInterface::class);
+        $routeConfigMock = $this->createMock(\Magento\Framework\App\Route\ConfigInterface::class);
         $model = $this->getUrlModel(
             [
                 'scopeResolver' => $this->scopeResolverMock,
@@ -462,7 +405,7 @@ class UrlTest extends TestCase
         );
 
         $baseUrl = 'http://localhost/index.php/';
-        $urlType = UrlInterface::URL_TYPE_LINK;
+        $urlType = \Magento\Framework\UrlInterface::URL_TYPE_LINK;
 
         $this->scopeMock->expects($this->once())->method('getBaseUrl')->willReturn($baseUrl);
         $this->scopeResolverMock->expects($this->any())
@@ -481,13 +424,10 @@ class UrlTest extends TestCase
     }
 
     /**
-     * @param $inputUrl
-     * @param $outputUrl
-     *
-     * @return void
+     * @param string $inputUrl
      * @dataProvider getRebuiltUrlDataProvider
      */
-    public function testGetRebuiltUrl($inputUrl, $outputUrl): void
+    public function testGetRebuiltUrl($inputUrl, $outputUrl)
     {
         $requestMock = $this->getRequestMock();
         $model = $this->getUrlModel([
@@ -496,7 +436,7 @@ class UrlTest extends TestCase
             'sidResolver' => $this->sidResolverMock,
             'scopeResolver' => $this->scopeResolverMock,
             'routeParamsResolverFactory' => $this->getRouteParamsResolverFactory(false),
-            'queryParamsResolver' => $this->queryParamsResolverMock
+            'queryParamsResolver' => $this->queryParamsResolverMock,
         ]);
 
         $this->queryParamsResolverMock->expects($this->once())->method('getQuery')
@@ -505,10 +445,7 @@ class UrlTest extends TestCase
         $this->assertEquals($outputUrl, $model->getRebuiltUrl($inputUrl));
     }
 
-    /**
-     * @return void
-     */
-    public function testGetRedirectUrl(): void
+    public function testGetRedirectUrl()
     {
         $model = $this->getUrlModel(
             [
@@ -532,17 +469,14 @@ class UrlTest extends TestCase
         $this->assertEquals('http://example.com/?foo=bar', $model->getRedirectUrl('http://example.com/'));
     }
 
-    /**
-     * @return void
-     */
-    public function testGetRedirectUrlWithSessionId(): void
+    public function testGetRedirectUrlWithSessionId()
     {
         $model = $this->getUrlModel(
             [
                 'routeParamsResolverFactory' => $this->getRouteParamsResolverFactory(false),
                 'session' => $this->sessionMock,
                 'sidResolver' => $this->sidResolverMock,
-                'queryParamsResolver' => $this->queryParamsResolverMock
+                'queryParamsResolver' => $this->queryParamsResolverMock,
             ]
         );
 
@@ -561,7 +495,7 @@ class UrlTest extends TestCase
     /**
      * @return array
      */
-    public function getRebuiltUrlDataProvider(): array
+    public function getRebuiltUrlDataProvider()
     {
         return [
             'with port' => [
@@ -579,10 +513,7 @@ class UrlTest extends TestCase
         ];
     }
 
-    /**
-     * @return void
-     */
-    public function testGetRouteUrlWithValidUrl(): void
+    public function testGetRouteUrlWithValidUrl()
     {
         $model = $this->getUrlModel(['routeParamsResolverFactory' => $this->getRouteParamsResolverFactory(false)]);
 
@@ -593,16 +524,13 @@ class UrlTest extends TestCase
     /**
      * @param bool $result
      * @param string $referrer
-     *
-     * @return void
      * @dataProvider isOwnOriginUrlDataProvider
      */
-    public function testIsOwnOriginUrl($result, $referrer): void
+    public function testIsOwnOriginUrl($result, $referrer)
     {
         $requestMock = $this->getRequestMock();
         $this->hostChecker = $this->getMockBuilder(HostChecker::class)
-            ->disableOriginalConstructor()
-            ->getMock();
+            ->disableOriginalConstructor()->getMock();
         $this->hostChecker->expects($this->once())->method('isOwnOrigin')->with($referrer)->willReturn($result);
         $model = $this->getUrlModel(['hostChecker' => $this->hostChecker, 'request' => $requestMock]);
 
@@ -615,11 +543,11 @@ class UrlTest extends TestCase
     /**
      * @return array
      */
-    public function isOwnOriginUrlDataProvider(): array
+    public function isOwnOriginUrlDataProvider()
     {
         return [
             'is origin url' => [true, 'http://localhost/'],
-            'is not origin url' => [false, 'http://example.com/']
+            'is not origin url' => [false, 'http://example.com/'],
         ];
     }
 
@@ -629,32 +557,30 @@ class UrlTest extends TestCase
      * @param bool $isSecure
      * @param int $isSecureCallCount
      * @param string $key
-     *
-     * @return void
      * @dataProvider getConfigDataDataProvider
      */
-    public function testGetConfigData($urlType, $configPath, $isSecure, $isSecureCallCount, $key): void
+    public function testGetConfigData($urlType, $configPath, $isSecure, $isSecureCallCount, $key)
     {
-        $urlSecurityInfoMock = $this->getMockForAbstractClass(SecurityInfoInterface::class);
+        $urlSecurityInfoMock = $this->createMock(\Magento\Framework\Url\SecurityInfoInterface::class);
         $model = $this->getUrlModel([
             'urlSecurityInfo' => $urlSecurityInfoMock,
             'routeParamsResolverFactory' => $this->getRouteParamsResolverFactory(),
             'scopeResolver' => $this->scopeResolverMock,
-            'scopeConfig' => $this->scopeConfig
+            'scopeConfig' => $this->scopeConfig,
         ]);
 
         $this->scopeConfig->expects($this->any())
             ->method('getValue')
-            ->with($configPath, StoreScopeInterface::SCOPE_STORE, $this->scopeMock)
+            ->with($this->equalTo($configPath), \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $this->scopeMock)
             ->willReturn('http://localhost/');
+        $this->routeParamsResolverMock->expects($this->at(0))->method('hasData')->with('secure_is_forced')
+            ->willReturn(false);
         $this->scopeResolverMock->expects($this->any())
             ->method('getScope')
             ->willReturn($this->scopeMock);
         $this->scopeMock->expects($this->once())->method('isUrlSecure')->willReturn(true);
-        $this->routeParamsResolverMock
-            ->method('hasData')
-            ->withConsecutive(['secure_is_forced'], ['secure'])
-            ->willReturnOnConsecutiveCalls(false, false);
+        $this->routeParamsResolverMock->expects($this->at(1))->method('hasData')->with('secure')
+            ->willReturn(false);
         $this->routeParamsResolverMock->expects($this->any())->method('getType')
             ->willReturn($urlType);
         $this->routeParamsResolverMock->expects($this->once())
@@ -669,36 +595,33 @@ class UrlTest extends TestCase
     /**
      * @return array
      */
-    public function getConfigDataDataProvider(): array
+    public function getConfigDataDataProvider()
     {
         return [
             'secure url' => ['some-type', 'web/secure/base_url_secure', true, 0, 'base_url_secure'],
             'unsecure url' => [
-                UrlInterface::URL_TYPE_LINK,
+                \Magento\Framework\UrlInterface::URL_TYPE_LINK,
                 'web/unsecure/base_url_unsecure',
                 false,
                 1,
-                'base_url_unsecure'
-            ]
+                'base_url_unsecure',
+            ],
         ];
     }
 
-    /**
-     * @return void
-     */
-    public function testGetConfigDataWithSecureIsForcedParam(): void
+    public function testGetConfigDataWithSecureIsForcedParam()
     {
         $model = $this->getUrlModel([
             'routeParamsResolverFactory' => $this->getRouteParamsResolverFactory(),
             'scopeResolver' => $this->scopeResolverMock,
-            'scopeConfig' => $this->scopeConfig
+            'scopeConfig' => $this->scopeConfig,
         ]);
 
         $this->scopeConfig->expects($this->any())
             ->method('getValue')
             ->with(
                 'web/secure/base_url_secure_forced',
-                StoreScopeInterface::SCOPE_STORE,
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
                 $this->scopeMock
             )
             ->willReturn('http://localhost/');
@@ -716,11 +639,9 @@ class UrlTest extends TestCase
     /**
      * @param string $html
      * @param string $result
-     *
-     * @return void
      * @dataProvider sessionUrlVarWithMatchedHostsAndBaseUrlDataProvider
      */
-    public function testSessionUrlVarWithMatchedHostsAndBaseUrl($html, $result): void
+    public function testSessionUrlVarWithMatchedHostsAndBaseUrl($html, $result)
     {
         $requestMock = $this->getRequestMock();
         $model = $this->getUrlModel(
@@ -729,7 +650,7 @@ class UrlTest extends TestCase
                 'request' => $requestMock,
                 'sidResolver' => $this->sidResolverMock,
                 'scopeResolver' => $this->scopeResolverMock,
-                'routeParamsResolverFactory' => $this->getRouteParamsResolverFactory()
+                'routeParamsResolverFactory' => $this->getRouteParamsResolverFactory(),
             ]
         );
 
@@ -748,10 +669,7 @@ class UrlTest extends TestCase
         $this->assertEquals($result, $model->sessionUrlVar($html));
     }
 
-    /**
-     * @return void
-     */
-    public function testSessionUrlVarWithoutMatchedHostsAndBaseUrl(): void
+    public function testSessionUrlVarWithoutMatchedHostsAndBaseUrl()
     {
         $requestMock = $this->getRequestMock();
         $model = $this->getUrlModel(
@@ -760,7 +678,7 @@ class UrlTest extends TestCase
                 'request' => $requestMock,
                 'sidResolver' => $this->sidResolverMock,
                 'scopeResolver' => $this->scopeResolverMock,
-                'routeParamsResolverFactory' => $this->getRouteParamsResolverFactory()
+                'routeParamsResolverFactory' => $this->getRouteParamsResolverFactory(),
             ]
         );
 
@@ -785,32 +703,29 @@ class UrlTest extends TestCase
     /**
      * @return array
      */
-    public function sessionUrlVarWithMatchedHostsAndBaseUrlDataProvider(): array
+    public function sessionUrlVarWithMatchedHostsAndBaseUrlDataProvider()
     {
         return [
             [
                 '<a href="http://example.com/?___SID=U?SID=session-id">www.example.com</a>',
-                '<a href="http://example.com/?SID=session-id">www.example.com</a>'
+                '<a href="http://example.com/?SID=session-id">www.example.com</a>',
             ],
             [
                 '<a href="http://example.com/?___SID=U&SID=session-id">www.example.com</a>',
-                '<a href="http://example.com/?SID=session-id">www.example.com</a>'
+                '<a href="http://example.com/?SID=session-id">www.example.com</a>',
             ],
             [
                 '<a href="http://example.com/?foo=bar&___SID=U?SID=session-id">www.example.com</a>',
-                '<a href="http://example.com/?foo=bar?SID=session-id">www.example.com</a>'
+                '<a href="http://example.com/?foo=bar?SID=session-id">www.example.com</a>',
             ],
             [
                 '<a href="http://example.com/?foo=bar&___SID=U&SID=session-id">www.example.com</a>',
-                '<a href="http://example.com/?foo=bar&SID=session-id">www.example.com</a>'
-            ]
+                '<a href="http://example.com/?foo=bar&SID=session-id">www.example.com</a>',
+            ],
         ];
     }
 
-    /**
-     * @return void
-     */
-    public function testSetRequest(): void
+    public function testSetRequest()
     {
         $initRequestMock = $this->getRequestMock();
         $requestMock = $this->getRequestMock();

@@ -16,10 +16,11 @@ define([
             url: '',
             data: [],
             tree: {
-                core: {
-                    themes: {
-                        dots: false
-                    }
+                plugins: ['themes', 'json_data', 'ui', 'hotkeys'],
+                themes: {
+                    theme: 'default',
+                    dots: false,
+                    icons: true
                 }
             }
         },
@@ -32,8 +33,27 @@ define([
                     {},
                     options.tree,
                     {
-                        core: {
-                            data: this._convertData(this.options.data).children
+                        'json_data': {
+                            ajax: {
+                                url: options.url,
+                                type: 'POST',
+                                success: $.proxy(function (nodes) {
+                                    return this._convertDataNodes(nodes);
+                                }, this),
+
+                                /**
+                                 * @param {HTMLElement} node
+                                 * @return {Object}
+                                 */
+                                data: function (node) {
+                                    return {
+                                        id: $(node).data('id'),
+                                        'form_key': window.FORM_KEY
+                                    };
+                                }
+                            },
+                            data: this._convertData(options.data).children,
+                            'progressive_render': true
                         }
                     }
                 );
@@ -48,9 +68,9 @@ define([
          * @private
          */
         _selectNode: function (event, data) {
-            var node = data.node;
+            var node = data.rslt.obj.data();
 
-            if (!node.state.disabled) {
+            if (!node.disabled) {
                 window.location = window.location + '/' + node.id;
             } else {
                 event.preventDefault();
@@ -65,7 +85,7 @@ define([
         _convertDataNodes: function (nodes) {
             var nodesData = [];
 
-            nodes.children.forEach(function (node) {
+            nodes.forEach(function (node) {
                 nodesData.push(this._convertData(node));
             }, this);
 
@@ -84,19 +104,25 @@ define([
             if (!node) {
                 return result;
             }
-            // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
             result = {
-                id: node.id,
-                text: utils.unescape(node.name) + ' (' + node.product_count + ')',
-                li_attr: {
-                    class: node.cls + (!!node.disabled ? ' disabled' : '') //eslint-disable-line no-extra-boolean-cast
+                data: {
+                    title: utils.unescape(node.name) + ' (' + node['product_count'] + ')'
                 },
-                state: {
-                    disabled: node.disabled,
-                    opened:  !!node.children_count && node.expanded
+                attr: {
+                    'class': node.cls + (!!node.disabled ? ' disabled' : '') //eslint-disable-line no-extra-boolean-cast
+                },
+                metadata: {
+                    id: node.id,
+                    disabled: node.disabled
                 }
             };
-            // jscs:enable requireCamelCaseOrUpperCaseIdentifiers
+
+            if (node['children_count'] && !node.expanded) {
+                result.state = 'closed';
+            } else {
+                result.state = 'open';
+            }
+
             if (node.children) {
                 result.children = [];
                 $.each(node.children, function () {

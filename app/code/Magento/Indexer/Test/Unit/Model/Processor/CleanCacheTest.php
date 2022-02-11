@@ -3,93 +3,97 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Indexer\Test\Unit\Model\Processor;
 
-use Magento\Indexer\Model\Indexer\DeferredCacheCleaner;
-use Magento\Indexer\Model\Processor;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Indexer\Model\Processor\CleanCache;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-/**
- * Test cache clean plugin
- */
-class CleanCacheTest extends TestCase
+class CleanCacheTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * Tested plugin
      *
-     * @var CleanCache
+     * @var \Magento\Indexer\Model\Processor\CleanCache
      */
-    private $plugin;
+    protected $plugin;
 
     /**
      * Mock for context
      *
-     * @var DeferredCacheCleaner|MockObject
+     * @var \Magento\Framework\Indexer\CacheContext|\PHPUnit\Framework\MockObject\MockObject
      */
-    private $cacheCleaner;
+    protected $contextMock;
 
     /**
      * Subject mock
      *
-     * @var Processor|MockObject
+     * @var \Magento\Framework\Indexer\ActionInterface|\PHPUnit\Framework\MockObject\MockObject
      */
-    private $subjectMock;
+    protected $subjectMock;
 
     /**
-     * @inheritDoc
+     * Event manager mock
+     *
+     * @var \Magento\Framework\Event\Manager|\PHPUnit\Framework\MockObject\MockObject
+     */
+    protected $eventManagerMock;
+
+    /**
+     * Cache mock
+     *
+     * @var \Magento\Framework\App\CacheInterface|\PHPUnit\Framework\MockObject\MockObject
+     */
+    protected $cacheMock;
+
+    /**
+     * @var ObjectManager
+     */
+    protected $objectManager;
+
+    /**
+     * Set up
      */
     protected function setUp(): void
     {
-        $this->subjectMock = $this->createMock(Processor::class);
-        $this->cacheCleaner = $this->createMock(DeferredCacheCleaner::class);
-        $this->plugin = new CleanCache($this->cacheCleaner);
+        $this->objectManager = new ObjectManager($this);
+        $this->subjectMock = $this->createMock(\Magento\Indexer\Model\Processor::class);
+        $this->contextMock = $this->createMock(\Magento\Framework\Indexer\CacheContext::class);
+        $this->eventManagerMock = $this->createMock(\Magento\Framework\Event\Manager::class);
+        $this->cacheMock = $this->createMock(\Magento\Framework\App\CacheInterface::class);
+        $this->plugin = new CleanCache(
+            $this->contextMock,
+            $this->eventManagerMock
+        );
+        $this->objectManager->setBackwardCompatibleProperty(
+            $this->plugin,
+            'cache',
+            $this->cacheMock
+        );
     }
 
     /**
-     * Test beforeUpdateMview()
+     * Test afterUpdateMview
+     *
+     * @return void
      */
-    public function testBeforeUpdateMview(): void
+    public function testAfterUpdateMview()
     {
-        $this->cacheCleaner->expects($this->once())
-            ->method('start');
+        $tags = ['tag_name1', 'tag_name2'];
+        $this->eventManagerMock->expects($this->once())
+            ->method('dispatch')
+            ->with(
+                $this->equalTo('clean_cache_after_reindex'),
+                $this->equalTo(['object' => $this->contextMock])
+            );
 
-        $this->plugin->beforeUpdateMview($this->subjectMock);
-    }
+        $this->contextMock->expects($this->atLeastOnce())
+            ->method('getIdentities')
+            ->willReturn($tags);
 
-    /**
-     * Test afterUpdateMview()
-     */
-    public function testAfterUpdateMview(): void
-    {
-        $this->cacheCleaner->expects($this->once())
-            ->method('flush');
+        $this->cacheMock->expects($this->once())
+            ->method('clean')
+            ->with($tags);
 
         $this->plugin->afterUpdateMview($this->subjectMock);
-    }
-
-    /**
-     * Test beforeReindexAllInvalid()
-     */
-    public function testBeforeReindexAllInvalid(): void
-    {
-        $this->cacheCleaner->expects($this->once())
-            ->method('start');
-
-        $this->plugin->beforeReindexAllInvalid($this->subjectMock);
-    }
-
-    /**
-     * Test afterReindexAllInvalid()
-     */
-    public function testAfterReindexAllInvalid(): void
-    {
-        $this->cacheCleaner->expects($this->once())
-            ->method('flush');
-
-        $this->plugin->afterReindexAllInvalid($this->subjectMock);
     }
 }

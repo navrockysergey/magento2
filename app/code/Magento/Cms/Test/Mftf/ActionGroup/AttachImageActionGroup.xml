@@ -17,10 +17,9 @@
             <argument name="Image"/>
         </arguments>
 
-        <waitForElement selector="{{MediaGallerySection.BrowseUploadImage}}" stepKey="waitForUploadImageElement"/>
         <attachFile selector="{{MediaGallerySection.BrowseUploadImage}}" userInput="{{Image.value}}" stepKey="uploadImage"/>
         <waitForPageLoad stepKey="waitForPageLoad"/>
-        <waitForPageLoad stepKey="waitForLoadingMaskToDisappear"/>
+        <waitForLoadingMaskToDisappear stepKey="waitForLoadingMaskToDisappear"/>
         <waitForElementVisible  selector="{{MediaGallerySection.imageOrImageCopy(Image.fileName, Image.extension)}}" stepKey="waitForUploadImage"/>
     </actionGroup>
 </actionGroups>

@@ -70,18 +70,15 @@ class ConfigTest extends \PHPUnit\Framework\TestCase
 
         /** @var \Magento\Framework\MessageQueue\Publisher\Config\PublisherConnectionInterface $connection */
         $connection = $publisher->getConnection();
-        $this->assertEquals('db', $connection->getName(), 'Incorrect default connection name');
+        $this->assertEquals('amqp', $connection->getName(), 'Incorrect default connection name');
         $this->assertEquals('magento', $connection->getExchange(), 'Incorrect default exchange name');
         $this->assertFalse($connection->isDisabled(), 'Incorrect connection status');
     }
 
-    /**
-     */
     public function testGetDisabledPublisherThrowsException()
     {
+        $this->expectExceptionMessage("Publisher 'topic.message.queue.config.03' is not declared.");
         $this->expectException(\Magento\Framework\Exception\LocalizedException::class);
-        $this->expectExceptionMessage('Publisher \'topic.message.queue.config.03\' is not declared.');
-
         /** @var \Magento\Framework\MessageQueue\Publisher\ConfigInterface $config */
         $config = $this->objectManager->create(\Magento\Framework\MessageQueue\Publisher\ConfigInterface::class);
         $config->getPublisher('topic.message.queue.config.03');

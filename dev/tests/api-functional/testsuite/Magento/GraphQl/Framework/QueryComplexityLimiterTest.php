@@ -56,7 +56,10 @@ class QueryComplexityLimiterTest extends GraphQlAbstract
                 file
               }
               name
+              special_from_date
               special_to_date
+              new_to_date
+              new_from_date
               tier_price
               manufacturer
               thumbnail {
@@ -69,6 +72,8 @@ class QueryComplexityLimiterTest extends GraphQlAbstract
                 label
               }
               canonical_url
+              updated_at
+              created_at
               categories {
                 id
                 position
@@ -84,11 +89,14 @@ class QueryComplexityLimiterTest extends GraphQlAbstract
                 products {
                   items {
                     name
+                    special_from_date
                     special_to_date
+                    new_to_date
                     thumbnail {
                       url
                       label
                     }
+                    new_from_date
                     tier_price
                     manufacturer
                     sku
@@ -97,6 +105,8 @@ class QueryComplexityLimiterTest extends GraphQlAbstract
                       label
                     }
                     canonical_url
+                    updated_at
+                    created_at
                     media_gallery_entries {
                       position
                       id
@@ -117,7 +127,10 @@ class QueryComplexityLimiterTest extends GraphQlAbstract
                       products {
                         items {
                           name
+                          special_from_date
                           special_to_date
+                          new_to_date
+                          new_from_date
                           tier_price
                           manufacturer
                           thumbnail {
@@ -130,6 +143,8 @@ class QueryComplexityLimiterTest extends GraphQlAbstract
                             label
                           }
                           canonical_url
+                          updated_at
+                          created_at
                           categories {
                             id
                             position
@@ -145,7 +160,10 @@ class QueryComplexityLimiterTest extends GraphQlAbstract
                             products {
                               items {
                                 name
+                                special_from_date
                                 special_to_date
+                                new_to_date
+                                new_from_date
                                 tier_price
                                 manufacturer
                                 sku
@@ -154,6 +172,8 @@ class QueryComplexityLimiterTest extends GraphQlAbstract
                                   label
                                 }
                                 canonical_url
+                                updated_at
+                                created_at
                                 categories {
                                   id
                                   position
@@ -169,6 +189,7 @@ class QueryComplexityLimiterTest extends GraphQlAbstract
                                   products {
                                     items {
                                       name
+                                      special_from_date
                                       special_to_date
                                       price {
                                         minimalPrice {
@@ -318,6 +339,8 @@ class QueryComplexityLimiterTest extends GraphQlAbstract
                                         percentage_value
                                         website_id
                                       }
+                                      new_to_date
+                                      new_from_date
                                       tier_price
                                       manufacturer
                                       sku
@@ -330,18 +353,10 @@ class QueryComplexityLimiterTest extends GraphQlAbstract
                                         label
                                       }
                                       canonical_url
+                                      updated_at
+                                      created_at
                                       categories {
                                         id
-                                        position
-                                        position
-                                        position
-                                        position
-                                        position
-                                        position
-                                        position
-                                        position
-                                        position
-                                        position
                                         position
                                         position
                                         position
@@ -403,7 +418,7 @@ fragment configurableFields on ConfigurableProduct {
 }
 QUERY;
 
-        self::expectExceptionMessageMatches('/Max query complexity should be 300 but got 302/');
+        self::expectExceptionMessageMatches('/Max query complexity should be 300 but got 317/');
         //Use POST request because request uri is too large for some servers
         $this->graphQlMutation($query);
     }

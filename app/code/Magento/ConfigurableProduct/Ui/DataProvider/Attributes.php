@@ -6,9 +6,6 @@
 
 namespace Magento\ConfigurableProduct\Ui\DataProvider;
 
-use Magento\Catalog\Model\Product\Type;
-use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
-
 class Attributes extends \Magento\Ui\DataProvider\AbstractDataProvider
 {
     /**
@@ -33,12 +30,11 @@ class Attributes extends \Magento\Ui\DataProvider\AbstractDataProvider
         array $data = []
     ) {
         parent::__construct($name, $primaryFieldName, $requestFieldName, $meta, $data);
+        $this->configurableAttributeHandler = $configurableAttributeHandler;
         $this->collection = $configurableAttributeHandler->getApplicableAttributes();
     }
 
     /**
-     * Getting the product attribute collection.
-     *
      * @return \Magento\Catalog\Model\ResourceModel\Product\Attribute\Collection
      */
     public function getCollection()
@@ -47,33 +43,21 @@ class Attributes extends \Magento\Ui\DataProvider\AbstractDataProvider
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getData()
     {
         $items = [];
-        $this->getCollection()->getSelect()->where(
-            '(`apply_to` IS NULL) OR
-            (
-                FIND_IN_SET(' .
-            sprintf("'%s'", Type::TYPE_SIMPLE) . ',
-                    `apply_to`
-                ) AND
-                FIND_IN_SET(' .
-            sprintf("'%s'", Type::TYPE_VIRTUAL) . ',
-                    `apply_to`
-                ) AND
-                FIND_IN_SET(' .
-            sprintf("'%s'", Configurable::TYPE_CODE) . ',
-                    `apply_to`
-                )
-             )'
-        );
+        $skippedItems = 0;
         foreach ($this->getCollection()->getItems() as $attribute) {
-            $items[] = $attribute->toArray();
+            if ($this->configurableAttributeHandler->isAttributeApplicable($attribute)) {
+                $items[] = $attribute->toArray();
+            } else {
+                $skippedItems++;
+            }
         }
         return [
-            'totalRecords' => $this->collection->getSize(),
+            'totalRecords' => $this->collection->getSize() - $skippedItems,
             'items' => $items
         ];
     }

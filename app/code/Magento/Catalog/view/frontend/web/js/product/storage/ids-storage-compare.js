@@ -28,7 +28,7 @@ define([
                 this.data = ko.observable({});
             }
 
-            if (this.provider && window.checkout && window.checkout.baseUrl) {
+            if (this.provider) {
                 this.providerDataHandler(customerData.get(this.provider)());
                 this.initProviderListener();
             }

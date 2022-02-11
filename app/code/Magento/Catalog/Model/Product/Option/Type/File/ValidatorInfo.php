@@ -164,7 +164,8 @@ class ValidatorInfo extends Validator
      */
     protected function buildSecretKey($fileRelativePath)
     {
-        return substr(hash('sha256', $this->rootDirectory->readFile($fileRelativePath)), 0, 20);
+        // phpcs:ignore Magento2.Security.InsecureFunction
+        return substr(md5($this->rootDirectory->readFile($fileRelativePath)), 0, 20);
     }
 
     /**

@@ -3,41 +3,33 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Setup\Test\Unit\Model;
 
-use Composer\Package\Version\VersionParser;
-use Composer\Semver\Constraint\ConstraintInterface;
-use Magento\Framework\Composer\ComposerInformation;
-use Magento\Framework\Convert\DataSize;
 use Magento\Setup\Controller\ResponseTypeInterface;
-use Magento\Setup\Model\PhpInformation;
 use Magento\Setup\Model\PhpReadinessCheck;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Magento\Framework\Convert\DataSize;
 
-class PhpReadinessCheckTest extends TestCase
+class PhpReadinessCheckTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var MockObject|ComposerInformation
+     * @var \PHPUnit\Framework\MockObject\MockObject|\Magento\Framework\Composer\ComposerInformation
      */
     private $composerInfo;
 
     /**
-     * @var MockObject|PhpInformation
+     * @var \PHPUnit\Framework\MockObject\MockObject|\Magento\Setup\Model\PhpInformation
      */
     private $phpInfo;
 
     /**
-     * @var MockObject|VersionParser
+     * @var \PHPUnit\Framework\MockObject\MockObject|\Composer\Package\Version\VersionParser
      */
     private $versionParser;
 
     /**
      * Data size converter
      *
-     * @var DataSize|MockObject
+     * @var DataSize|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $dataSize;
 
@@ -46,15 +38,12 @@ class PhpReadinessCheckTest extends TestCase
      */
     private $phpReadinessCheck;
 
-    /**
-     * @inheritdoc
-     */
     protected function setUp(): void
     {
-        $this->composerInfo = $this->createMock(ComposerInformation::class);
-        $this->phpInfo = $this->createMock(PhpInformation::class);
-        $this->versionParser = $this->createMock(VersionParser::class);
-        $this->dataSize = $this->createMock(DataSize::class);
+        $this->composerInfo = $this->createMock(\Magento\Framework\Composer\ComposerInformation::class);
+        $this->phpInfo = $this->createMock(\Magento\Setup\Model\PhpInformation::class);
+        $this->versionParser = $this->createMock(\Composer\Package\Version\VersionParser::class);
+        $this->dataSize = $this->createMock(\Magento\Framework\Convert\DataSize::class);
         $this->phpReadinessCheck = new PhpReadinessCheck(
             $this->composerInfo,
             $this->phpInfo,
@@ -63,10 +52,7 @@ class PhpReadinessCheckTest extends TestCase
         );
     }
 
-    /**
-     * @return void
-     */
-    public function testCheckPhpVersionNoRequiredVersion(): void
+    public function testCheckPhpVersionNoRequiredVersion()
     {
         $this->composerInfo->expects($this->once())
             ->method('getRequiredPhpVersion')
@@ -81,106 +67,91 @@ class PhpReadinessCheckTest extends TestCase
         $this->assertEquals($expected, $this->phpReadinessCheck->checkPhpVersion());
     }
 
-    /**
-     * @return void
-     */
-    public function testCheckPhpVersionPrettyVersion(): void
+    public function testCheckPhpVersionPrettyVersion()
     {
         $this->composerInfo->expects($this->once())->method('getRequiredPhpVersion')->willReturn('1.0');
         $multipleConstraints = $this->getMockForAbstractClass(
-            ConstraintInterface::class,
+            \Composer\Semver\Constraint\ConstraintInterface::class,
             [],
             '',
             false
         );
-        $currentPhpVersion = $this->getMockForAbstractClass(
-            ConstraintInterface::class,
-            [],
-            '',
-            false
-        );
-        $this->versionParser
-            ->method('parseConstraints')
-            ->willReturnOnConsecutiveCalls($multipleConstraints, $currentPhpVersion);
-        $this->versionParser
+        $this->versionParser->expects($this->at(0))->method('parseConstraints')->willReturn($multipleConstraints);
+        $this->versionParser->expects($this->at(1))
             ->method('normalize')
-            ->willReturn('1.0');
+            ->willThrowException(new \UnexpectedValueException());
+        $this->versionParser->expects($this->at(2))->method('normalize')->willReturn('1.0');
+        $currentPhpVersion = $this->getMockForAbstractClass(
+            \Composer\Semver\Constraint\ConstraintInterface::class,
+            [],
+            '',
+            false
+        );
+        $this->versionParser->expects($this->at(3))->method('parseConstraints')->willReturn($currentPhpVersion);
         $multipleConstraints->expects($this->once())->method('matches')->willReturn(true);
         $expected = [
             'responseType' => ResponseTypeInterface::RESPONSE_TYPE_SUCCESS,
             'data' => [
                 'required' => 1.0,
-                'current' => PHP_VERSION
-            ]
+                'current' => PHP_VERSION,
+            ],
         ];
         $this->assertEquals($expected, $this->phpReadinessCheck->checkPhpVersion());
     }
 
-    /**
-     * @return void
-     */
-    public function testCheckPhpVersionPrettyVersionFailed(): void
+    public function testCheckPhpVersionPrettyVersionFailed()
     {
         $this->composerInfo->expects($this->once())->method('getRequiredPhpVersion')->willReturn('1.0');
         $multipleConstraints = $this->getMockForAbstractClass(
-            ConstraintInterface::class,
+            \Composer\Semver\Constraint\ConstraintInterface::class,
             [],
             '',
             false
         );
-        $currentPhpVersion = $this->getMockForAbstractClass(
-            ConstraintInterface::class,
-            [],
-            '',
-            false
-        );
-        $this->versionParser
-            ->method('parseConstraints')
-            ->willReturnOnConsecutiveCalls($multipleConstraints, $currentPhpVersion);
-        $this->versionParser
+        $this->versionParser->expects($this->at(0))->method('parseConstraints')->willReturn($multipleConstraints);
+        $this->versionParser->expects($this->at(1))
             ->method('normalize')
-            ->willReturn('1.0');
+            ->willThrowException(new \UnexpectedValueException());
+        $this->versionParser->expects($this->at(2))->method('normalize')->willReturn('1.0');
+        $currentPhpVersion = $this->getMockForAbstractClass(
+            \Composer\Semver\Constraint\ConstraintInterface::class,
+            [],
+            '',
+            false
+        );
+        $this->versionParser->expects($this->at(3))->method('parseConstraints')->willReturn($currentPhpVersion);
         $multipleConstraints->expects($this->once())->method('matches')->willReturn(false);
         $expected = [
             'responseType' => ResponseTypeInterface::RESPONSE_TYPE_ERROR,
             'data' => [
                 'required' => 1.0,
-                'current' => PHP_VERSION
-            ]
+                'current' => PHP_VERSION,
+            ],
         ];
         $this->assertEquals($expected, $this->phpReadinessCheck->checkPhpVersion());
     }
 
-    /**
-     * @return void
-     */
-    private function setUpNoPrettyVersionParser(): void
+    private function setUpNoPrettyVersionParser()
     {
         $multipleConstraints = $this->getMockForAbstractClass(
-            ConstraintInterface::class,
+            \Composer\Semver\Constraint\ConstraintInterface::class,
             [],
             '',
             false
         );
+        $this->versionParser->expects($this->at(0))->method('parseConstraints')->willReturn($multipleConstraints);
+        $this->versionParser->expects($this->at(1))->method('normalize')->willReturn('1.0');
         $currentPhpVersion = $this->getMockForAbstractClass(
-            ConstraintInterface::class,
+            \Composer\Semver\Constraint\ConstraintInterface::class,
             [],
             '',
             false
         );
-        $this->versionParser
-            ->method('parseConstraints')
-            ->willReturnOnConsecutiveCalls($multipleConstraints, $currentPhpVersion);
-        $this->versionParser
-            ->method('normalize')
-            ->willReturn('1.0');
+        $this->versionParser->expects($this->at(2))->method('parseConstraints')->willReturn($currentPhpVersion);
         $multipleConstraints->expects($this->once())->method('matches')->willReturn(true);
     }
 
-    /**
-     * @return void
-     */
-    public function testCheckPhpVersion(): void
+    public function testCheckPhpVersion()
     {
         $this->composerInfo->expects($this->once())->method('getRequiredPhpVersion')->willReturn('1.0');
 
@@ -189,51 +160,42 @@ class PhpReadinessCheckTest extends TestCase
             'responseType' => ResponseTypeInterface::RESPONSE_TYPE_SUCCESS,
             'data' => [
                 'required' => 1.0,
-                'current' => PHP_VERSION
-            ]
+                'current' => PHP_VERSION,
+            ],
         ];
         $this->assertEquals($expected, $this->phpReadinessCheck->checkPhpVersion());
     }
 
-    /**
-     * @return void
-     */
-    public function testCheckPhpVersionFailed(): void
+    public function testCheckPhpVersionFailed()
     {
         $this->composerInfo->expects($this->once())->method('getRequiredPhpVersion')->willReturn('1.0');
         $multipleConstraints = $this->getMockForAbstractClass(
-            ConstraintInterface::class,
+            \Composer\Semver\Constraint\ConstraintInterface::class,
             [],
             '',
             false
         );
+        $this->versionParser->expects($this->at(0))->method('parseConstraints')->willReturn($multipleConstraints);
+        $this->versionParser->expects($this->at(1))->method('normalize')->willReturn('1.0');
         $currentPhpVersion = $this->getMockForAbstractClass(
-            ConstraintInterface::class,
+            \Composer\Semver\Constraint\ConstraintInterface::class,
             [],
             '',
             false
         );
-        $this->versionParser
-            ->method('parseConstraints')
-            ->willReturnOnConsecutiveCalls($multipleConstraints, $currentPhpVersion);
-        $this->versionParser
-            ->method('normalize')
-            ->willReturn('1.0');
+        $this->versionParser->expects($this->at(2))->method('parseConstraints')->willReturn($currentPhpVersion);
         $multipleConstraints->expects($this->once())->method('matches')->willReturn(false);
         $expected = [
             'responseType' => ResponseTypeInterface::RESPONSE_TYPE_ERROR,
             'data' => [
                 'required' => 1.0,
-                'current' => PHP_VERSION
-            ]
+                'current' => PHP_VERSION,
+            ],
         ];
         $this->assertEquals($expected, $this->phpReadinessCheck->checkPhpVersion());
     }
 
-    /**
-     * @return void
-     */
-    public function testCheckPhpSettings(): void
+    public function testCheckPhpSettings()
     {
         $this->phpInfo->expects($this->once())->method('getCurrent')->willReturn(['xdebug']);
         $this->phpInfo->expects($this->once())->method('getRequiredMinimumXDebugNestedLevel')->willReturn(50);
@@ -258,14 +220,14 @@ class PhpReadinessCheckTest extends TestCase
             'data' => [
                 'xdebug_max_nesting_level' => [
                     'message' => $xdebugMessage,
-                    'error' => false
+                    'error' => false,
                 ],
                 'missed_function_imagecreatefromjpeg' => [
                     'message' => 'You must have installed GD library with --with-jpeg-dir=DIR option.',
                     'helpUrl' => 'http://php.net/manual/en/image.installation.php',
-                    'error' => false
-                ]
-            ]
+                    'error' => false,
+                ],
+            ],
         ];
         if (!$this->isPhp7OrHhvm()) {
             $this->setUpNoPrettyVersionParser();
@@ -278,10 +240,7 @@ class PhpReadinessCheckTest extends TestCase
         $this->assertEquals($expected, $this->phpReadinessCheck->checkPhpSettings());
     }
 
-    /**
-     * @return void
-     */
-    public function testCheckPhpSettingsFailed(): void
+    public function testCheckPhpSettingsFailed()
     {
         $this->phpInfo->expects($this->once())->method('getCurrent')->willReturn(['xdebug']);
         $this->phpInfo->expects($this->once())->method('getRequiredMinimumXDebugNestedLevel')->willReturn(200);
@@ -306,14 +265,14 @@ class PhpReadinessCheckTest extends TestCase
             'data' => [
                 'xdebug_max_nesting_level' => [
                     'message' => $xdebugMessage,
-                    'error' => true
+                    'error' => true,
                 ],
                 'missed_function_imagecreatefromjpeg' => [
                     'message' => 'You must have installed GD library with --with-jpeg-dir=DIR option.',
                     'helpUrl' => 'http://php.net/manual/en/image.installation.php',
-                    'error' => false
-                ]
-            ]
+                    'error' => false,
+                ],
+            ],
         ];
         if (!$this->isPhp7OrHhvm()) {
             $this->setUpNoPrettyVersionParser();
@@ -326,10 +285,7 @@ class PhpReadinessCheckTest extends TestCase
         $this->assertEquals($expected, $this->phpReadinessCheck->checkPhpSettings());
     }
 
-    /**
-     * @return void
-     */
-    public function testCheckPhpSettingsNoXDebug(): void
+    public function testCheckPhpSettingsNoXDebug()
     {
         $this->phpInfo->expects($this->once())->method('getCurrent')->willReturn([]);
 
@@ -359,22 +315,21 @@ class PhpReadinessCheckTest extends TestCase
         $expected['data']['missed_function_imagecreatefromjpeg'] = [
             'message' => 'You must have installed GD library with --with-jpeg-dir=DIR option.',
             'helpUrl' => 'http://php.net/manual/en/image.installation.php',
-            'error' => false
+            'error' => false,
         ];
 
         $this->assertEquals($expected, $this->phpReadinessCheck->checkPhpSettings());
     }
 
-    /**
-     * @return void
-     */
-    public function testCheckPhpSettingsMemoryLimitError(): void
+    public function testCheckPhpSettingsMemoryLimitError()
     {
+
         $this->dataSize->expects($this->any())->method('convertSizeToBytes')->willReturnMap(
             [
-                ['512M', 512],
-                ['756M', 756],
-                ['2G', 2048]
+               ['512M', 512],
+               ['756M', 756],
+               ['2G', 2048],
+
             ]
         );
 
@@ -388,16 +343,13 @@ class PhpReadinessCheckTest extends TestCase
         $expected['memory_limit'] = [
             'message' => $rawPostMessage,
             'error' => true,
-            'warning' => false
+            'warning' => false,
         ];
 
         $this->assertEquals($expected, $this->phpReadinessCheck->checkMemoryLimit());
     }
 
-    /**
-     * @return void
-     */
-    public function testCheckPhpExtensionsNoRequired(): void
+    public function testCheckPhpExtensionsNoRequired()
     {
         $this->composerInfo->expects($this->once())
             ->method('getRequiredExtensions')
@@ -407,15 +359,12 @@ class PhpReadinessCheckTest extends TestCase
             'data' => [
                 'error' => 'phpExtensionError',
                 'message' => 'Cannot determine required PHP extensions: '
-            ]
+            ],
         ];
         $this->assertEquals($expected, $this->phpReadinessCheck->checkPhpExtensions());
     }
 
-    /**
-     * @return void
-     */
-    public function testCheckPhpExtensions(): void
+    public function testCheckPhpExtensions()
     {
         $this->composerInfo->expects($this->once())
             ->method('getRequiredExtensions')
@@ -427,16 +376,13 @@ class PhpReadinessCheckTest extends TestCase
             'responseType' => ResponseTypeInterface::RESPONSE_TYPE_SUCCESS,
             'data' => [
                 'required' => ['a', 'b', 'c'],
-                'missing' => []
+                'missing' => [],
             ]
         ];
         $this->assertEquals($expected, $this->phpReadinessCheck->checkPhpExtensions());
     }
 
-    /**
-     * @return void
-     */
-    public function testCheckPhpExtensionsFailed(): void
+    public function testCheckPhpExtensionsFailed()
     {
         $this->composerInfo->expects($this->once())
             ->method('getRequiredExtensions')
@@ -448,16 +394,16 @@ class PhpReadinessCheckTest extends TestCase
             'responseType' => ResponseTypeInterface::RESPONSE_TYPE_ERROR,
             'data' => [
                 'required' => ['a', 'b', 'c'],
-                'missing' => ['c']
+                'missing' => ['c'],
             ]
         ];
         $this->assertEquals($expected, $this->phpReadinessCheck->checkPhpExtensions());
     }
-
+    
     /**
      * @return bool
      */
-    protected function isPhp7OrHhvm(): bool
+    protected function isPhp7OrHhvm()
     {
         return version_compare(PHP_VERSION, '7.0.0-beta') >= 0 || defined('HHVM_VERSION');
     }
@@ -467,7 +413,7 @@ namespace Magento\Setup\Model;
 
 /**
  * @param $param
- * @return int|string|bool
+ * @return int|string
  */
 function ini_get($param)
 {
@@ -478,5 +424,4 @@ function ini_get($param)
     } elseif ($param === 'memory_limit') {
         return '512M';
     }
-    return false;
 }

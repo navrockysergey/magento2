@@ -13,12 +13,9 @@ use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Controller\Result\Json as JsonResponse;
 use Magento\Framework\App\Response\HttpFactory as ResponseFactory;
 use Magento\Framework\App\Response\Http as Response;
-use Magento\Framework\Filesystem\Driver\File;
 
 /**
  * Test for \Magento\Cms\Controller\Adminhtml\Wysiwyg\Images\Upload class.
- *
- * @magentoAppArea adminhtml
  */
 class UploadTest extends \PHPUnit\Framework\TestCase
 {
@@ -87,8 +84,7 @@ class UploadTest extends \PHPUnit\Framework\TestCase
         /** @var \Magento\Cms\Helper\Wysiwyg\Images $imagesHelper */
         $this->imagesHelper = $this->objectManager->get(\Magento\Cms\Helper\Wysiwyg\Images::class);
         $this->mediaDirectory = $this->filesystem->getDirectoryWrite(DirectoryList::MEDIA);
-        $this->fullDirectoryPath = rtrim($this->imagesHelper->getStorageRoot(), '/')
-            . DIRECTORY_SEPARATOR . $directoryName;
+        $this->fullDirectoryPath = $this->imagesHelper->getStorageRoot() . DIRECTORY_SEPARATOR . $directoryName;
         $this->fullExcludedDirectoryPath = $this->imagesHelper->getStorageRoot()
             . DIRECTORY_SEPARATOR . $excludedDirName;
         $this->mediaDirectory->create($this->mediaDirectory->getRelativePath($this->fullDirectoryPath));
@@ -201,13 +197,9 @@ class UploadTest extends \PHPUnit\Framework\TestCase
      */
     public function testExecuteWithLinkedMedia()
     {
-        if (!$this->mediaDirectory->getDriver() instanceof File) {
-            self::markTestSkipped('Remote storages like AWS S3 doesn\'t support symlinks');
-        }
-
         $directoryName = 'linked_media';
         $fullDirectoryPath = $this->filesystem->getDirectoryRead(DirectoryList::PUB)
-                ->getAbsolutePath() . $directoryName;
+                ->getAbsolutePath() . DIRECTORY_SEPARATOR . $directoryName;
         $wysiwygDir = $this->mediaDirectory->getAbsolutePath() . '/wysiwyg';
         $this->model->getRequest()->setParams(['type' => 'image/png']);
         $this->model->getStorage()->getSession()->setCurrentPath($wysiwygDir);

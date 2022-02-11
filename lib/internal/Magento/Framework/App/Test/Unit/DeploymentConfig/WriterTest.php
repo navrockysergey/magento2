@@ -3,14 +3,13 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
 
 namespace Magento\Framework\App\Test\Unit\DeploymentConfig;
 
 use Magento\Framework\App\DeploymentConfig;
-use Magento\Framework\App\DeploymentConfig\CommentParser;
 use Magento\Framework\App\DeploymentConfig\Reader;
 use Magento\Framework\App\DeploymentConfig\Writer;
+use Magento\Framework\App\DeploymentConfig\CommentParser;
 use Magento\Framework\App\DeploymentConfig\Writer\FormatterInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Config\File\ConfigFilePool;
@@ -19,13 +18,12 @@ use Magento\Framework\Filesystem;
 use Magento\Framework\Filesystem\Directory\ReadInterface;
 use Magento\Framework\Filesystem\Directory\WriteInterface;
 use Magento\Framework\Phrase;
-use PHPUnit\Framework\MockObject\MockObject as Mock;
-use PHPUnit\Framework\TestCase;
+use \PHPUnit\Framework\MockObject\MockObject as Mock;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class WriterTest extends TestCase
+class WriterTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var Writer
@@ -175,8 +173,7 @@ class WriterTest extends TestCase
             ->method('getFiles')
             ->willReturn('test.php');
         $this->dirRead->expects($this->any())
-            ->method('getAbsolutePath')
-            ->willReturn('');
+            ->method('getAbsolutePath');
         $this->filesystem->expects($this->any())
             ->method('getDirectoryWrite')
             ->with(DirectoryList::CONFIG)
@@ -232,8 +229,7 @@ class WriterTest extends TestCase
             ->method('getFiles')
             ->willReturn('test.php');
         $this->dirRead->expects($this->any())
-            ->method('getAbsolutePath')
-            ->willReturn('');
+            ->method('getAbsolutePath');
         $this->filesystem->expects($this->any())
             ->method('getDirectoryWrite')
             ->with(DirectoryList::CONFIG)
@@ -246,10 +242,13 @@ class WriterTest extends TestCase
         $this->object->saveConfig($testSetUpdate, true);
     }
 
+    /**
+     */
     public function testSaveConfigException()
     {
-        $this->expectException('Magento\Framework\Exception\FileSystemException');
+        $this->expectException(\Magento\Framework\Exception\FileSystemException::class);
         $this->expectExceptionMessage('The "env.php" deployment config file isn\'t writable.');
+
         $exception = new FileSystemException(new Phrase('error when writing file config file'));
 
         $this->configFilePool->method('getPaths')

@@ -3,46 +3,35 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Sales\Test\Unit\Model\Order\Email\Sender;
 
-use Magento\Sales\Api\Data\OrderInterface;
-use Magento\Sales\Model\Order\Address;
-use Magento\Sales\Model\Order\Email\Container\OrderIdentity;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
-use Magento\Sales\Model\ResourceModel\EntityAbstract;
-use Magento\Sales\Model\ResourceModel\Order;
-use PHPUnit\Framework\MockObject\MockObject;
 
 class OrderSenderTest extends AbstractSenderTest
 {
     private const ORDER_ID = 1;
 
     /**
-     * @var OrderSender
+     * @var \Magento\Sales\Model\Order\Email\Sender\OrderSender
      */
     protected $sender;
 
     /**
-     * @var EntityAbstract|MockObject
+     * @var \Magento\Sales\Model\ResourceModel\EntityAbstract|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $orderResourceMock;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
         $this->stepMockSetup();
 
         $this->orderResourceMock = $this->createPartialMock(
-            Order::class,
+            \Magento\Sales\Model\ResourceModel\Order::class,
             ['saveAttribute']
         );
 
         $this->identityContainerMock = $this->createPartialMock(
-            OrderIdentity::class,
+            \Magento\Sales\Model\Order\Email\Container\OrderIdentity::class,
             ['getStore', 'isEnabled', 'getConfigValue', 'getTemplateId', 'getGuestTemplateId', 'getCopyMethod']
         );
         $this->identityContainerMock->expects($this->any())
@@ -67,20 +56,15 @@ class OrderSenderTest extends AbstractSenderTest
 
     /**
      * @param int $configValue
-     * @param int|null $forceSyncMode
+     * @param bool|null $forceSyncMode
      * @param bool|null $emailSendingResult
-     * @param bool $senderSendException
-     *
+     * @param $senderSendException
      * @return void
-     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      * @dataProvider sendDataProvider
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    public function testSend(
-        int $configValue,
-        ?int $forceSyncMode,
-        ?bool $emailSendingResult,
-        bool $senderSendException
-    ): void {
+    public function testSend($configValue, $forceSyncMode, $emailSendingResult, $senderSendException)
+    {
         $address = 'address_test';
         $configPath = 'sales_email/general/async_sending';
         $createdAtFormatted='Oct 14, 2019, 4:11:58 PM';
@@ -107,7 +91,7 @@ class OrderSenderTest extends AbstractSenderTest
                     ->method('getCopyMethod')
                     ->willReturn('copy');
 
-                $addressMock = $this->createMock(Address::class);
+                $addressMock = $this->createMock(\Magento\Sales\Model\Order\Address::class);
 
                 $this->addressRenderer->expects($this->any())
                     ->method('format')
@@ -161,6 +145,7 @@ class OrderSenderTest extends AbstractSenderTest
                                 'email_customer_note' => '',
                                 'frontend_status_label' => $frontendStatusLabel
                             ]
+
                         ]
                     );
 
@@ -197,12 +182,12 @@ class OrderSenderTest extends AbstractSenderTest
                 );
             }
         } else {
-            $this->orderResourceMock
+            $this->orderResourceMock->expects($this->at(0))
                 ->method('saveAttribute')
-                ->withConsecutive(
-                    [$this->orderMock, 'email_sent'],
-                    [$this->orderMock, 'send_email']
-                );
+                ->with($this->orderMock, 'email_sent');
+            $this->orderResourceMock->expects($this->at(1))
+                ->method('saveAttribute')
+                ->with($this->orderMock, 'send_email');
 
             $this->assertFalse(
                 $this->sender->send($this->orderMock)
@@ -215,7 +200,7 @@ class OrderSenderTest extends AbstractSenderTest
      *
      * @return void
      */
-    protected function checkSenderSendExceptionCase(): void
+    protected function checkSenderSendExceptionCase()
     {
         $this->senderMock->expects($this->once())
             ->method('send')
@@ -233,7 +218,7 @@ class OrderSenderTest extends AbstractSenderTest
     /**
      * @return array
      */
-    public function sendDataProvider(): array
+    public function sendDataProvider()
     {
         return [
             [0, 0, true, false],
@@ -253,17 +238,12 @@ class OrderSenderTest extends AbstractSenderTest
      * @param bool $isVirtualOrder
      * @param int $formatCallCount
      * @param string|null $expectedShippingAddress
-     *
-     * @return void
      * @dataProvider sendVirtualOrderDataProvider
      */
-    public function testSendVirtualOrder(
-        bool $isVirtualOrder,
-        int $formatCallCount,
-        ?string $expectedShippingAddress
-    ): void {
+    public function testSendVirtualOrder($isVirtualOrder, $formatCallCount, $expectedShippingAddress)
+    {
         $address = 'address_test';
-        $this->orderMock->setData(OrderInterface::IS_VIRTUAL, $isVirtualOrder);
+        $this->orderMock->setData(\Magento\Sales\Api\Data\OrderInterface::IS_VIRTUAL, $isVirtualOrder);
         $createdAtFormatted='Oct 14, 2019, 4:11:58 PM';
         $customerName = 'test customer';
         $frontendStatusLabel = 'Complete';
@@ -286,7 +266,7 @@ class OrderSenderTest extends AbstractSenderTest
             ->method('getCopyMethod')
             ->willReturn('copy');
 
-        $addressMock = $this->createMock(Address::class);
+        $addressMock = $this->createMock(\Magento\Sales\Model\Order\Address::class);
 
         $this->addressRenderer->expects($this->exactly($formatCallCount))
             ->method('format')
@@ -359,7 +339,7 @@ class OrderSenderTest extends AbstractSenderTest
     /**
      * @return array
      */
-    public function sendVirtualOrderDataProvider(): array
+    public function sendVirtualOrderDataProvider()
     {
         return [
             [true, 1, null],

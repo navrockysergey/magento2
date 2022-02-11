@@ -10,7 +10,7 @@ use Magento\Framework\DataObject;
 use Magento\Framework\Api\AttributeValueFactory;
 
 /**
- * The document data provider
+ * Class Document
  */
 class Document extends DataObject implements DocumentInterface
 {
@@ -33,23 +33,17 @@ class Document extends DataObject implements DocumentInterface
     }
 
     /**
-     * Gets ID.
-     *
      * @return int|string
      */
     public function getId()
     {
         if (!$this->id) {
-            $this->id = $this->getIdFieldName() !== null
-                ? $this->getData($this->getIdFieldName())
-                : null;
+            $this->id = $this->getData($this->getIdFieldName());
         }
         return $this->id;
     }
 
     /**
-     * Sets ID.
-     *
      * @param int $id
      * @return void
      */

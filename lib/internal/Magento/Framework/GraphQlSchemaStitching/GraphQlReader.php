@@ -7,27 +7,22 @@ declare(strict_types=1);
 
 namespace Magento\Framework\GraphQlSchemaStitching;
 
-use GraphQL\Type\Definition\ScalarType;
-use GraphQL\Utils\BuildSchema;
 use Magento\Framework\Config\FileResolverInterface;
-use Magento\Framework\Config\ReaderInterface;
-use Magento\Framework\GraphQl\Type\TypeManagement;
 use Magento\Framework\GraphQlSchemaStitching\GraphQlReader\TypeMetaReaderInterface as TypeReaderComposite;
-use Magento\Framework\GraphQlSchemaStitching\GraphQlReader\Reader\InterfaceType;
+use Magento\Framework\Config\ReaderInterface;
 
 /**
  * Reads *.graphqls files from modules and combines the results as array to be used with a library to configure objects
  */
 class GraphQlReader implements ReaderInterface
 {
-    public const GRAPHQL_PLACEHOLDER_FIELD_NAME = 'placeholder_graphql_field';
+    const GRAPHQL_PLACEHOLDER_FIELD_NAME = 'placeholder_graphql_field';
 
-    public const GRAPHQL_SCHEMA_FILE = 'schema.graphqls';
-
-    /** @deprecated */
-    public const GRAPHQL_INTERFACE = 'graphql_interface';
+    const GRAPHQL_SCHEMA_FILE = 'schema.graphqls';
 
     /**
+     * File locator
+     *
      * @var FileResolverInterface
      */
     private $fileResolver;
@@ -63,17 +58,12 @@ class GraphQlReader implements ReaderInterface
         $this->typeReader = $typeReader;
         $this->defaultScope = $defaultScope;
         $this->fileName = $fileName;
-        $typeManagement = new TypeManagement();
-        $typeManagement->overrideStandardGraphQLTypes();
     }
 
     /**
-     * @inheritdoc
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     * @param string|null $scope
-     * @return array
+     * {@inheritdoc}
      */
-    public function read($scope = null): array
+    public function read($scope = null) : array
     {
         $results = [];
         $scope = $scope ?: $this->defaultScope;
@@ -83,59 +73,18 @@ class GraphQlReader implements ReaderInterface
         }
 
         /**
-         * Gather as many schema together to be parsed in one go for performance
-         * Collect any duplicate types in an array to retry after the initial large parse
-         *
          * Compatible with @see GraphQlReader::parseTypes
          */
-        $typesToRedo = [];
         $knownTypes = [];
         foreach ($schemaFiles as $partialSchemaContent) {
-            $partialSchemaTypes = $this->parseTypesWithUnionHandling($partialSchemaContent);
+            $partialSchemaTypes = $this->parseTypes($partialSchemaContent);
 
-            // Filter out duplicated ones and save them into a list to be retried
-            $tmpTypes = $knownTypes;
-            foreach ($partialSchemaTypes as $intendedKey => $partialSchemaType) {
-                if (isset($tmpTypes[$intendedKey])) {
-                    if (!isset($typesToRedo[$intendedKey])) {
-                        $typesToRedo[$intendedKey] = [];
-                    }
-                    $typesToRedo[$intendedKey][] = $partialSchemaType;
-                    continue;
-                }
-                $tmpTypes[$intendedKey] = $partialSchemaType;
-            }
-            $knownTypes = $tmpTypes;
-        }
-
-        /**
-         * Read this large batch of data, this builds most of the $results array
-         */
-        $schemaContent = implode("\n", $knownTypes);
-        $results = $this->readPartialTypes($schemaContent);
-
-        /**
-         * Go over the list of types to be retried and batch them up into as few batches as possible
-         */
-        $typesToRedoBatches = [];
-        foreach ($typesToRedo as $type => $batches) {
-            foreach ($batches as $id => $data) {
-                if (!isset($typesToRedoBatches[$id])) {
-                    $typesToRedoBatches[$id] = [];
-                }
-                $typesToRedoBatches[$id][$type] = $data;
-            }
-        }
-
-        /**
-         * Process each remaining batch with the minimal amount of additional schema data for performance
-         */
-        foreach ($typesToRedoBatches as $typesToRedoBatch) {
-            $typesToUse =  $this->getTypesToUse($typesToRedoBatch, $knownTypes);
-            $knownTypes = $typesToUse + $knownTypes;
-            $schemaContent = implode("\n", $typesToUse);
+            // Keep declarations from current partial schema, add missing declarations from all previously read schemas
+            $knownTypes = $partialSchemaTypes + $knownTypes;
+            $schemaContent = implode("\n", $knownTypes);
 
             $partialResults = $this->readPartialTypes($schemaContent);
+
             $results = array_replace_recursive($results, $partialResults);
         }
 
@@ -144,56 +93,22 @@ class GraphQlReader implements ReaderInterface
     }
 
     /**
-     * Get the minimum amount of additional types so that performance is improved
-     *
-     * The use of a strpos check here is a bit odd in the context of feeding data into an AST but for the performance
-     * gains and to prevent downtime it is necessary
-     *
-     * @link https://github.com/webonyx/graphql-php/issues/244
-     * @link https://github.com/webonyx/graphql-php/issues/244#issuecomment-383912418
-     *
-     * @param array $typesToRedoBatch
-     * @param array $types
-     * @return array
-     */
-    private function getTypesToUse($typesToRedoBatch, $types): array
-    {
-        $totalKnownSymbolsCount = count($typesToRedoBatch) + count($types);
-
-        $typesToUse = $typesToRedoBatch;
-        for ($i=0; $i < $totalKnownSymbolsCount; $i++) {
-            $changesMade = false;
-            $schemaContent = implode("\n", $typesToUse);
-            foreach ($types as $type => $schema) {
-                if ((!isset($typesToUse[$type]) && strpos($schemaContent, $type) !== false)) {
-                    $typesToUse[$type] = $schema;
-                    $changesMade = true;
-                }
-            }
-            if (!$changesMade) {
-                break;
-            }
-        }
-        return $typesToUse;
-    }
-
-    /**
      * Extract types as string from schema as string
      *
      * @param string $graphQlSchemaContent
      * @return string[] [$typeName => $typeDeclaration, ...]
      */
-    private function readPartialTypes(string $graphQlSchemaContent): array
+    private function readPartialTypes(string $graphQlSchemaContent) : array
     {
         $partialResults = [];
 
         $graphQlSchemaContent = $this->addPlaceHolderInSchema($graphQlSchemaContent);
 
-        $schema = BuildSchema::build($graphQlSchemaContent, null, ['assumeValid'=> true, 'assumeValidSDL' => true]);
+        $schema = \GraphQL\Utils\BuildSchema::build($graphQlSchemaContent);
 
         foreach ($schema->getTypeMap() as $typeName => $typeMeta) {
             // Only process custom types and skip built-in object types
-            if ((strpos($typeName, '__') !== 0 && (!$typeMeta instanceof ScalarType))) {
+            if ((strpos($typeName, '__') !== 0 && (!$typeMeta instanceof \GraphQL\Type\Definition\ScalarType))) {
                 $type = $this->typeReader->read($typeMeta);
                 if (!empty($type)) {
                     $partialResults[$typeName] = $type;
@@ -203,57 +118,9 @@ class GraphQlReader implements ReaderInterface
             }
         }
 
-        return $this->removePlaceholderFromResults($partialResults);
-    }
+        $partialResults = $this->removePlaceholderFromResults($partialResults);
 
-    /**
-     * Extract types as string from a larger string that represents the graphql schema using regular expressions
-     *
-     * The regex in parseTypes does not have the ability to split out the union data from the type below it for example
-     *
-     *  > union X = Y | Z
-     *  >
-     *  > type foo {}
-     *
-     * This would produce only type key from parseTypes, X, which would contain also the type foo entry.
-     *
-     * This wrapper does some post processing as a workaround to split out the union data from the type data below it
-     * which would give us two entries, X and foo
-     *
-     * @param string $graphQlSchemaContent
-     * @return string[] [$typeName => $typeDeclaration, ...]
-     */
-    private function parseTypesWithUnionHandling(string $graphQlSchemaContent): array
-    {
-        $types = $this->parseTypes($graphQlSchemaContent);
-
-        /*
-         * A union schema contains also the data from the schema below it
-         *
-         * If there are two newlines in this union schema then it has data below its definition, meaning it contains
-         * type information not relevant to its actual type
-         */
-        $unionTypes = array_filter(
-            $types,
-            function ($t) {
-                return (strpos($t, 'union ') !== false) && (strpos($t, PHP_EOL . PHP_EOL) !== false);
-            }
-        );
-
-        foreach ($unionTypes as $type => $schema) {
-            $splitSchema = explode(PHP_EOL . PHP_EOL, $schema);
-            // Get the type data at the bottom, this will be the additional type data not related to the union
-            $additionalTypeSchema = end($splitSchema);
-            // Parse the additional type from the bottom so we can have its type key => schema pair
-            $additionalTypeData = $this->parseTypes($additionalTypeSchema);
-            // Fix the union type schema so it does not contain the definition below it
-            $types[$type] = str_replace($additionalTypeSchema, '', $schema);
-            // Append the additional data to types array
-            $additionalTypeKey = array_key_first($additionalTypeData);
-            $types[$additionalTypeKey] = $additionalTypeData[$additionalTypeKey];
-        }
-
-        return $types;
+        return $partialResults;
     }
 
     /**
@@ -262,11 +129,11 @@ class GraphQlReader implements ReaderInterface
      * @param string $graphQlSchemaContent
      * @return string[] [$typeName => $typeDeclaration, ...]
      */
-    private function parseTypes(string $graphQlSchemaContent): array
+    private function parseTypes(string $graphQlSchemaContent) : array
     {
         $typeKindsPattern = '(type|interface|union|enum|input)';
         $typeNamePattern = '([_A-Za-z][_0-9A-Za-z]+)';
-        $typeDefinitionPattern = '([^\{\}]*)(\{[^\}]*\})';
+        $typeDefinitionPattern = '([^\{]*)(\{[^\}]*\})';
         $spacePattern = '[\s\t\n\r]+';
 
         preg_match_all(
@@ -300,7 +167,7 @@ class GraphQlReader implements ReaderInterface
     private function copyInterfaceFieldsToConcreteTypes(array $source): array
     {
         foreach ($source as $interface) {
-            if ($interface['type'] ?? '' == InterfaceType::GRAPHQL_INTERFACE) {
+            if ($interface['type'] == 'graphql_interface') {
                 foreach ($source as $typeName => $type) {
                     if (isset($type['implements'])
                         && isset($type['implements'][$interface['name']])
@@ -372,13 +239,13 @@ class GraphQlReader implements ReaderInterface
      * @param string $graphQlSchemaContent
      * @return string
      */
-    private function addPlaceHolderInSchema(string $graphQlSchemaContent): string
+    private function addPlaceHolderInSchema(string $graphQlSchemaContent) :string
     {
         $placeholderField = self::GRAPHQL_PLACEHOLDER_FIELD_NAME;
-        $typesKindsPattern = '(type|interface|input|union)';
+        $typesKindsPattern = '(type|interface|input)';
         $enumKindsPattern = '(enum)';
         $typeNamePattern = '([_A-Za-z][_0-9A-Za-z]+)';
-        $typeDefinitionPattern = '([^\{\}]*)(\{[\s\t\n\r^\}]*\})';
+        $typeDefinitionPattern = '([^\{]*)(\{[\s\t\n\r^\}]*\})';
         $spacePattern = '([\s\t\n\r]+)';
 
         //add placeholder in empty types
@@ -403,7 +270,7 @@ class GraphQlReader implements ReaderInterface
      * @param array $partialResults
      * @return array
      */
-    private function removePlaceholderFromResults(array $partialResults): array
+    private function removePlaceholderFromResults(array $partialResults) : array
     {
         $placeholderField = self::GRAPHQL_PLACEHOLDER_FIELD_NAME;
         //remove parsed placeholders

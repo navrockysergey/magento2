@@ -75,7 +75,7 @@ define([
                     $('#new_category_name').val(enteredName);
 
                     if (enteredName === '') {
-                        $('#new_category_name').trigger('focus');
+                        $('#new_category_name').focus();
                     }
                     $('#new_category_messages').html('');
                 },
@@ -88,7 +88,7 @@ define([
                     validationOptions.unhighlight($('#new_category_parent-suggest').get(0),
                         validationOptions.errorClass, validationOptions.validClass || '');
                     newCategoryForm.validation('clearError');
-                    $('#category_ids-suggest').trigger('focus');
+                    $('#category_ids-suggest').focus();
                 },
                 buttons: [{
                     text: $.mage.__('Create Category'),
@@ -118,7 +118,7 @@ define([
                             },
                             dataType: 'json',
                             context: $('body')
-                        }).done(function (data) {
+                        }).success(function (data) {
                             var $suggest;
 
                             if (!data.error) {
@@ -135,7 +135,7 @@ define([
                             } else {
                                 $('#new_category_messages').html(data.messages);
                             }
-                        }).always(
+                        }).complete(
                             function () {
                                 thisButton.prop('disabled', false);
                             }

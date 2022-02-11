@@ -3,17 +3,12 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Framework\Module\Test\Unit;
 
-use Magento\Framework\Module\Manager;
-use Magento\Framework\Module\ModuleListInterface;
-use Magento\Framework\Module\Output\ConfigInterface;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-
-class ManagerTest extends TestCase
+/**
+ * Manager test
+ */
+class ManagerTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * XPath in the configuration of a module output flag
@@ -21,17 +16,17 @@ class ManagerTest extends TestCase
     const XML_PATH_OUTPUT_ENABLED = 'custom/is_module_output_enabled';
 
     /**
-     * @var Manager
+     * @var \Magento\Framework\Module\Manager
      */
     private $_model;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     private $_moduleList;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     private $_outputConfig;
 
@@ -40,43 +35,43 @@ class ManagerTest extends TestCase
      */
     protected function setUp(): void
     {
-        $this->_moduleList = $this->getMockForAbstractClass(ModuleListInterface::class);
+        $this->_moduleList = $this->getMockForAbstractClass(\Magento\Framework\Module\ModuleListInterface::class);
         $this->_moduleList->expects($this->any())
             ->method('getOne')
             ->willReturnMap(
-                [
-                    ['Module_One', ['name' => 'One_Module', 'setup_version' => '1']],
-                    ['Module_Two', ['name' => 'Two_Module', 'setup_version' => '2']],
-                    ['Module_Three', ['name' => 'Two_Three']]
-                ]
+                
+                    [
+                        ['Module_One', ['name' => 'One_Module', 'setup_version' => '1']],
+                        ['Module_Two', ['name' => 'Two_Module', 'setup_version' => '2']],
+                        ['Module_Three', ['name' => 'Two_Three']],
+                    ]
+                
             );
-        $this->_outputConfig = $this->getMockForAbstractClass(ConfigInterface::class);
-        $this->_model = new Manager(
+        $this->_outputConfig = $this->getMockForAbstractClass(\Magento\Framework\Module\Output\ConfigInterface::class);
+        $this->_model = new \Magento\Framework\Module\Manager(
             $this->_outputConfig,
             $this->_moduleList,
-            ['Module_Two' => self::XML_PATH_OUTPUT_ENABLED]
+            [
+                'Module_Two' => self::XML_PATH_OUTPUT_ENABLED,
+            ]
         );
     }
 
-    /**
-     * @return void
-     */
-    public function testIsEnabled(): void
+    public function testIsEnabled()
     {
         $this->_moduleList->expects($this->exactly(2))->method('has')->willReturnMap(
-            [
-                ['Module_Exists', true],
-                ['Module_NotExists', false]
-            ]
+            
+                [
+                    ['Module_Exists', true],
+                    ['Module_NotExists', false],
+                ]
+            
         );
         $this->assertTrue($this->_model->isEnabled('Module_Exists'));
         $this->assertFalse($this->_model->isEnabled('Module_NotExists'));
     }
 
-    /**
-     * @return void
-     */
-    public function testIsOutputEnabledReturnsFalseForDisabledModule(): void
+    public function testIsOutputEnabledReturnsFalseForDisabledModule()
     {
         $this->_outputConfig->expects($this->any())->method('isSetFlag')->willReturn(true);
         $this->assertFalse($this->_model->isOutputEnabled('Disabled_Module'));
@@ -85,11 +80,9 @@ class ManagerTest extends TestCase
     /**
      * @param bool $configValue
      * @param bool $expectedResult
-     *
-     * @return void
      * @dataProvider isOutputEnabledGenericConfigPathDataProvider
      */
-    public function testIsOutputEnabledGenericConfigPath($configValue, $expectedResult): void
+    public function testIsOutputEnabledGenericConfigPath($configValue, $expectedResult)
     {
         $this->_moduleList->expects($this->once())->method('has')->willReturn(true);
         $this->_outputConfig->expects($this->once())
@@ -102,7 +95,7 @@ class ManagerTest extends TestCase
     /**
      * @return array
      */
-    public function isOutputEnabledGenericConfigPathDataProvider(): array
+    public function isOutputEnabledGenericConfigPathDataProvider()
     {
         return ['output disabled' => [true, false], 'output enabled' => [false, true]];
     }
@@ -110,14 +103,12 @@ class ManagerTest extends TestCase
     /**
      * @param bool $configValue
      * @param bool $expectedResult
-     *
-     * @return void
      * @dataProvider isOutputEnabledCustomConfigPathDataProvider
      */
-    public function testIsOutputEnabledCustomConfigPath($configValue, $expectedResult): void
+    public function testIsOutputEnabledCustomConfigPath($configValue, $expectedResult)
     {
         $this->_moduleList->expects($this->once())->method('has')->willReturn(true);
-        $this->_outputConfig
+        $this->_outputConfig->expects($this->at(0))
             ->method('isSetFlag')
             ->with(self::XML_PATH_OUTPUT_ENABLED)
             ->willReturn($configValue);
@@ -127,11 +118,11 @@ class ManagerTest extends TestCase
     /**
      * @return array
      */
-    public function isOutputEnabledCustomConfigPathDataProvider(): array
+    public function isOutputEnabledCustomConfigPathDataProvider()
     {
         return [
             'path literal, output disabled' => [false, false],
-            'path literal, output enabled'  => [true, true]
+            'path literal, output enabled'  => [true, true],
         ];
     }
 }

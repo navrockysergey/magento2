@@ -13,7 +13,6 @@ use Magento\Framework\Serialize\Serializer\Json;
 /**
  * Abstract resource model
  *
- * phpcs:disable Magento2.Classes.AbstractApi
  * @api
  * @since 100.0.2
  */
@@ -60,6 +59,7 @@ abstract class AbstractResource
      * Start resource transaction
      *
      * @return $this
+     * @api
      */
     public function beginTransaction()
     {
@@ -72,6 +72,7 @@ abstract class AbstractResource
      *
      * @param callable|array $callback
      * @return $this
+     * @api
      */
     public function addCommitCallback($callback)
     {
@@ -82,8 +83,8 @@ abstract class AbstractResource
     /**
      * Commit resource transaction
      *
-     * @deprecated see \Magento\Framework\Model\ExecuteCommitCallbacks::afterCommit
      * @return $this
+     * @api
      */
     public function commit()
     {
@@ -93,15 +94,14 @@ abstract class AbstractResource
          */
         if ($this->getConnection()->getTransactionLevel() === 0) {
             $callbacks = CallbackPool::get(spl_object_hash($this->getConnection()));
-            foreach ($callbacks as $callback) {
-                try {
+            try {
+                foreach ($callbacks as $callback) {
                     call_user_func($callback);
-                } catch (\Exception $e) {
-                    $this->getLogger()->critical($e);
                 }
+            } catch (\Exception $e) {
+                $this->getLogger()->critical($e);
             }
         }
-
         return $this;
     }
 
@@ -109,6 +109,7 @@ abstract class AbstractResource
      * Roll back resource transaction
      *
      * @return $this
+     * @api
      */
     public function rollBack()
     {

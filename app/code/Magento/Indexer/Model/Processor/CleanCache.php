@@ -5,37 +5,35 @@
  */
 namespace Magento\Indexer\Model\Processor;
 
-use Magento\Indexer\Model\Indexer\DeferredCacheCleaner;
+use \Magento\Framework\App\CacheInterface;
 
-/**
- * Clear cache after reindex
- */
 class CleanCache
 {
     /**
-     * @var DeferredCacheCleaner
+     * @var \Magento\Framework\Indexer\CacheContext
      */
-    private $cacheCleaner;
+    protected $context;
 
     /**
-     * @param DeferredCacheCleaner $cacheCleaner
+     * @var \Magento\Framework\Event\Manager
+     */
+    protected $eventManager;
+
+    /**
+     * @var \Magento\Framework\App\CacheInterface
+     */
+    private $cache;
+
+    /**
+     * @param \Magento\Framework\Indexer\CacheContext $context
+     * @param \Magento\Framework\Event\Manager $eventManager
      */
     public function __construct(
-        DeferredCacheCleaner $cacheCleaner
+        \Magento\Framework\Indexer\CacheContext $context,
+        \Magento\Framework\Event\Manager $eventManager
     ) {
-        $this->cacheCleaner = $cacheCleaner;
-    }
-
-    /**
-     * Defer cache cleaning until after update mview
-     *
-     * @param \Magento\Indexer\Model\Processor $subject
-     * @return void
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     */
-    public function beforeUpdateMview(\Magento\Indexer\Model\Processor $subject)
-    {
-        $this->cacheCleaner->start();
+        $this->context = $context;
+        $this->eventManager = $eventManager;
     }
 
     /**
@@ -47,19 +45,10 @@ class CleanCache
      */
     public function afterUpdateMview(\Magento\Indexer\Model\Processor $subject)
     {
-        $this->cacheCleaner->flush();
-    }
-
-    /**
-     * Defer cache cleaning until after reindex invalid indexers
-     *
-     * @param \Magento\Indexer\Model\Processor $subject
-     * @return void
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     */
-    public function beforeReindexAllInvalid(\Magento\Indexer\Model\Processor $subject)
-    {
-        $this->cacheCleaner->start();
+        $this->eventManager->dispatch('clean_cache_after_reindex', ['object' => $this->context]);
+        if (!empty($this->context->getIdentities())) {
+            $this->getCache()->clean($this->context->getIdentities());
+        }
     }
 
     /**
@@ -71,6 +60,23 @@ class CleanCache
      */
     public function afterReindexAllInvalid(\Magento\Indexer\Model\Processor $subject)
     {
-        $this->cacheCleaner->flush();
+        $this->eventManager->dispatch('clean_cache_by_tags', ['object' => $this->context]);
+        if (!empty($this->context->getIdentities())) {
+            $this->getCache()->clean($this->context->getIdentities());
+        }
+    }
+
+    /**
+     * Get cache interface
+     *
+     * @return \Magento\Framework\App\CacheInterface
+     * @deprecated 100.1.1
+     */
+    private function getCache()
+    {
+        if ($this->cache === null) {
+            $this->cache = \Magento\Framework\App\ObjectManager::getInstance()->get(CacheInterface::class);
+        }
+        return $this->cache;
     }
 }

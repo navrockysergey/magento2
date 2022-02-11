@@ -3,79 +3,59 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Bundle\Test\Unit\Model\Product;
 
-use Magento\Bundle\Model\Product\CatalogPrice;
-use Magento\Catalog\Model\Product;
-use Magento\Catalog\Model\Product\Type\Price;
-use Magento\Framework\Registry;
-use Magento\Store\Api\Data\StoreInterface;
-use Magento\Store\Model\StoreManagerInterface;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-
-class CatalogPriceTest extends TestCase
+class CatalogPriceTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var CatalogPrice
+     * @var \Magento\Bundle\Model\Product\CatalogPrice
      */
     protected $catalogPrice;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $storeManagerMock;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $commonPriceMock;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $coreRegistryMock;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $productMock;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $priceModelMock;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
-        $this->storeManagerMock = $this->getMockForAbstractClass(StoreManagerInterface::class);
+        $this->storeManagerMock = $this->createMock(\Magento\Store\Model\StoreManagerInterface::class);
         $this->commonPriceMock = $this->createMock(\Magento\Catalog\Model\Product\CatalogPrice::class);
-        $this->coreRegistryMock = $this->createMock(Registry::class);
-        $this->productMock = $this->getMockBuilder(Product::class)
-            ->addMethods(['getWebsiteId', 'getCustomerGroupId'])
-            ->onlyMethods(['getStoreId', 'getPriceModel'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->priceModelMock = $this->getMockBuilder(Price::class)
-            ->addMethods(['getTotalPrices'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->catalogPrice = new CatalogPrice(
+        $this->coreRegistryMock = $this->createMock(\Magento\Framework\Registry::class);
+        $methods = ['getStoreId', 'getWebsiteId', 'getCustomerGroupId', 'getPriceModel', '__wakeup'];
+        $this->productMock = $this->createPartialMock(\Magento\Catalog\Model\Product::class, $methods);
+        $this->priceModelMock = $this->createPartialMock(
+            \Magento\Catalog\Model\Product\Type\Price::class,
+            ['getTotalPrices']
+        );
+        $this->catalogPrice = new \Magento\Bundle\Model\Product\CatalogPrice(
             $this->storeManagerMock,
             $this->commonPriceMock,
             $this->coreRegistryMock
         );
     }
 
-    /**
-     * @return void
-     */
-    public function testGetCatalogPriceWithCurrentStore(): void
+    public function testGetCatalogPriceWithCurrentStore()
     {
         $this->coreRegistryMock->expects($this->once())->method('unregister')->with('rule_data');
         $this->productMock->expects($this->once())->method('getStoreId')->willReturn('store_id');
@@ -105,14 +85,11 @@ class CatalogPriceTest extends TestCase
         $this->assertEquals(15, $this->catalogPrice->getCatalogPrice($this->productMock));
     }
 
-    /**
-     * @return void
-     */
-    public function testGetCatalogPriceWithCustomStore(): void
+    public function testGetCatalogPriceWithCustomStore()
     {
-        $storeMock = $this->getMockForAbstractClass(StoreInterface::class);
+        $storeMock = $this->createMock(\Magento\Store\Api\Data\StoreInterface::class);
         $storeMock->expects($this->once())->method('getId')->willReturn('store_id');
-        $currentStoreMock = $this->getMockForAbstractClass(StoreInterface::class);
+        $currentStoreMock = $this->createMock(\Magento\Store\Api\Data\StoreInterface::class);
         $currentStoreMock->expects($this->once())->method('getId')->willReturn('current_store_id');
 
         $this->coreRegistryMock->expects($this->once())->method('unregister')->with('rule_data');
@@ -139,20 +116,14 @@ class CatalogPriceTest extends TestCase
             15
         );
 
-        $this->storeManagerMock
-            ->method('getStore')
-            ->willReturn($currentStoreMock);
-        $this->storeManagerMock
-            ->method('setCurrentStore')
-            ->withConsecutive(['store_id'], ['current_store_id']);
+        $this->storeManagerMock->expects($this->at(0))->method('getStore')->willReturn($currentStoreMock);
+        $this->storeManagerMock->expects($this->at(1))->method('setCurrentStore')->with('store_id');
+        $this->storeManagerMock->expects($this->at(2))->method('setCurrentStore')->with('current_store_id');
 
         $this->assertEquals(15, $this->catalogPrice->getCatalogPrice($this->productMock, $storeMock, true));
     }
 
-    /**
-     * @return void
-     */
-    public function testGetCatalogRegularPrice(): void
+    public function testGetCatalogRegularPrice()
     {
         $this->assertNull($this->catalogPrice->getCatalogRegularPrice($this->productMock));
     }

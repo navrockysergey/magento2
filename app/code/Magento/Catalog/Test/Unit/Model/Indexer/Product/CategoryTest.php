@@ -3,149 +3,108 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Catalog\Test\Unit\Model\Indexer\Product;
 
-use Magento\Catalog\Model\Indexer\Category\Product;
-use Magento\Catalog\Model\Indexer\Category\Product\Action\Full;
-use Magento\Catalog\Model\Indexer\Category\Product\Action\FullFactory;
-use Magento\Catalog\Model\Indexer\Product\Category;
-use Magento\Catalog\Model\Indexer\Product\Category\Action\Rows;
-use Magento\Catalog\Model\Indexer\Product\Category\Action\RowsFactory;
-use Magento\Framework\Indexer\CacheContext;
-use Magento\Framework\Indexer\IndexerInterface;
-use Magento\Framework\Indexer\IndexerRegistry;
-use Magento\Framework\Indexer\IndexMutexInterface;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-
-/**
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
- */
-class CategoryTest extends TestCase
+class CategoryTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var Product
+     * @var \Magento\Catalog\Model\Indexer\Category\Product
      */
     protected $model;
 
     /**
-     * @var FullFactory|MockObject
+     * @var \Magento\Catalog\Model\Indexer\Category\Product\Action\FullFactory|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $fullMock;
 
     /**
-     * @var RowsFactory|MockObject
+     * @var \Magento\Catalog\Model\Indexer\Product\Category\Action\RowsFactory|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $rowsMock;
 
     /**
-     * @var IndexerInterface|MockObject
+     * @var \Magento\Framework\Indexer\IndexerInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $indexerMock;
 
     /**
-     * @var IndexerRegistry|MockObject
+     * @var \Magento\Framework\Indexer\IndexerRegistry|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $indexerRegistryMock;
 
     /**
-     * @var CacheContext|MockObject
+     * @var \Magento\Framework\Indexer\CacheContext|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $cacheContextMock;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
         $this->fullMock = $this->createPartialMock(
-            FullFactory::class,
+            \Magento\Catalog\Model\Indexer\Category\Product\Action\FullFactory::class,
             ['create']
         );
 
         $this->rowsMock = $this->createPartialMock(
-            RowsFactory::class,
+            \Magento\Catalog\Model\Indexer\Product\Category\Action\RowsFactory::class,
             ['create']
         );
 
         $this->indexerMock = $this->getMockForAbstractClass(
-            IndexerInterface::class,
+            \Magento\Framework\Indexer\IndexerInterface::class,
             [],
             '',
             false,
             false,
             true,
-            ['getId', 'load', 'isInvalid', 'isWorking']
+            ['getId', 'load', 'isInvalid', 'isWorking', '__wakeup']
         );
 
         $this->indexerRegistryMock = $this->createPartialMock(
-            IndexerRegistry::class,
+            \Magento\Framework\Indexer\IndexerRegistry::class,
             ['get']
         );
 
-        $indexMutexMock = $this->createMock(IndexMutexInterface::class);
-        $indexMutexMock->method('execute')
-            ->willReturnCallback(
-                function (string $indexerName, callable $callback) {
-                    if ($indexerName) {
-                        $callback();
-                    }
-                }
-            );
-
-        $this->model = new Category(
+        $this->model = new \Magento\Catalog\Model\Indexer\Product\Category(
             $this->fullMock,
             $this->rowsMock,
-            $this->indexerRegistryMock,
-            $indexMutexMock
+            $this->indexerRegistryMock
         );
 
-        $this->cacheContextMock = $this->createMock(CacheContext::class);
+        $this->cacheContextMock = $this->createMock(\Magento\Framework\Indexer\CacheContext::class);
 
         $cacheContextProperty = new \ReflectionProperty(
-            Product::class,
+            \Magento\Catalog\Model\Indexer\Category\Product::class,
             'cacheContext'
         );
         $cacheContextProperty->setAccessible(true);
         $cacheContextProperty->setValue($this->model, $this->cacheContextMock);
     }
 
-    /**
-     * @return void
-     */
-    public function testExecuteWithIndexerWorking(): void
+    public function testExecuteWithIndexerWorking()
     {
         $ids = [1, 2, 3];
 
         $this->prepareIndexer();
 
         $rowMock = $this->createPartialMock(
-            Rows::class,
+            \Magento\Catalog\Model\Indexer\Product\Category\Action\Rows::class,
             ['execute']
         );
-        $rowMock
-            ->method('execute')
-            ->with($ids)
-            ->willReturn($rowMock);
+        $rowMock->expects($this->at(0))->method('execute')->with($ids)->willReturnSelf();
 
         $this->rowsMock->expects($this->once())->method('create')->willReturn($rowMock);
 
         $this->model->execute($ids);
     }
 
-    /**
-     * @return void
-     */
-    public function testExecuteWithIndexerNotWorking(): void
+    public function testExecuteWithIndexerNotWorking()
     {
         $ids = [1, 2, 3];
 
         $this->prepareIndexer();
 
         $rowMock = $this->createPartialMock(
-            Rows::class,
+            \Magento\Catalog\Model\Indexer\Product\Category\Action\Rows::class,
             ['execute']
         );
         $rowMock->expects($this->once())->method('execute')->with($ids)->willReturnSelf();
@@ -159,24 +118,18 @@ class CategoryTest extends TestCase
         $this->model->execute($ids);
     }
 
-    /**
-     * @return void
-     */
-    protected function prepareIndexer(): void
+    protected function prepareIndexer()
     {
         $this->indexerRegistryMock->expects($this->any())
             ->method('get')
-            ->with(Category::INDEXER_ID)
+            ->with(\Magento\Catalog\Model\Indexer\Product\Category::INDEXER_ID)
             ->willReturn($this->indexerMock);
     }
 
-    /**
-     * @return void
-     */
-    public function testExecuteFull(): void
+    public function testExecuteFull()
     {
-        /** @var Full $productIndexerFlatFull */
-        $productIndexerFlatFull = $this->createMock(Full::class);
+        /** @var \Magento\Catalog\Model\Indexer\Category\Product\Action\Full $productIndexerFlatFull */
+        $productIndexerFlatFull = $this->createMock(\Magento\Catalog\Model\Indexer\Category\Product\Action\Full::class);
         $this->fullMock->expects($this->once())
             ->method('create')
             ->willReturn($productIndexerFlatFull);

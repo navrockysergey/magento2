@@ -5,8 +5,6 @@
  */
 namespace Magento\Sales\Model\Order\Email\Sender;
 
-use Magento\Framework\App\Area;
-use Magento\Framework\App\ObjectManager;
 use Magento\Payment\Helper\Data as PaymentHelper;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Email\Container\ShipmentIdentity;
@@ -17,13 +15,10 @@ use Magento\Sales\Model\ResourceModel\Order\Shipment as ShipmentResource;
 use Magento\Sales\Model\Order\Address\Renderer;
 use Magento\Framework\Event\ManagerInterface;
 use Magento\Framework\DataObject;
-use Magento\Store\Model\App\Emulation;
 
 /**
  * Sends order shipment email to the customer.
  *
- * @deprecated 102.1.0 since this class works only with the concrete model and no data interface
- * @see \Magento\Sales\Model\Order\Shipment\Sender\EmailSender
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class ShipmentSender extends Sender
@@ -58,11 +53,6 @@ class ShipmentSender extends Sender
     protected $eventManager;
 
     /**
-     * @var Emulation
-     */
-    private $appEmulation;
-
-    /**
      * @param Template $templateContainer
      * @param ShipmentIdentity $identityContainer
      * @param Order\Email\SenderBuilderFactory $senderBuilderFactory
@@ -72,9 +62,6 @@ class ShipmentSender extends Sender
      * @param ShipmentResource $shipmentResource
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $globalConfig
      * @param ManagerInterface $eventManager
-     * @param Emulation|null $appEmulation
-     *
-     * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
         Template $templateContainer,
@@ -85,8 +72,7 @@ class ShipmentSender extends Sender
         PaymentHelper $paymentHelper,
         ShipmentResource $shipmentResource,
         \Magento\Framework\App\Config\ScopeConfigInterface $globalConfig,
-        ManagerInterface $eventManager,
-        Emulation $appEmulation = null
+        ManagerInterface $eventManager
     ) {
         parent::__construct($templateContainer, $identityContainer, $senderBuilderFactory, $logger, $addressRenderer);
         $this->paymentHelper = $paymentHelper;
@@ -94,7 +80,6 @@ class ShipmentSender extends Sender
         $this->globalConfig = $globalConfig;
         $this->addressRenderer = $addressRenderer;
         $this->eventManager = $eventManager;
-        $this->appEmulation = $appEmulation ?: ObjectManager::getInstance()->get(Emulation::class);
     }
 
     /**
@@ -120,7 +105,7 @@ class ShipmentSender extends Sender
         if (!$this->globalConfig->getValue('sales_email/general/async_sending') || $forceSyncMode) {
             $order = $shipment->getOrder();
             $this->identityContainer->setStore($order->getStore());
-            $this->appEmulation->startEnvironmentEmulation($order->getStoreId(), Area::AREA_FRONTEND, true);
+
             $transport = [
                 'order' => $order,
                 'order_id' => $order->getId(),
@@ -140,7 +125,6 @@ class ShipmentSender extends Sender
                 ]
             ];
             $transportObject = new DataObject($transport);
-            $this->appEmulation->stopEnvironmentEmulation();
 
             /**
              * Event argument `transport` is @deprecated. Use `transportObject` instead.

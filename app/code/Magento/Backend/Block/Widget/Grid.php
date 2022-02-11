@@ -300,17 +300,13 @@ class Grid extends \Magento\Backend\Block\Widget
         if ($this->getCollection()) {
             $field = $column->getFilterIndex() ? $column->getFilterIndex() : $column->getIndex();
             if ($column->getFilterConditionCallback()) {
-                $object = isset($column->getFilterConditionCallback()['object'])
-                    ? $column->getFilterConditionCallback()['object'] : $column->getFilterConditionCallback()[0];
-                $method = isset($column->getFilterConditionCallback()['method'])
-                    ? $column->getFilterConditionCallback()['method'] : $column->getFilterConditionCallback()[1];
-                $object->$method(
+                $column->getFilterConditionCallback()[0]->{$column->getFilterConditionCallback()[1]}(
                     $this->getCollection(),
                     $column
                 );
             } else {
                 $condition = $column->getFilter()->getCondition();
-                if ($field && $condition) {
+                if ($field && isset($condition)) {
                     $this->getCollection()->addFieldToFilter($field, $condition);
                 }
             }

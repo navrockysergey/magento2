@@ -12,7 +12,7 @@ use Magento\Checkout\Model\Session;
 use Magento\Customer\Api\AddressRepositoryInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Multishipping\Model\DisableMultishipping;
+use Magento\Multishipping\Model\Checkout\Type\Multishipping\State;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\Quote;
 
@@ -37,26 +37,18 @@ class CartPlugin
     private $addressRepository;
 
     /**
-     * @var DisableMultishipping
-     */
-    private $disableMultishipping;
-
-    /**
      * @param CartRepositoryInterface $cartRepository
      * @param Session $checkoutSession
      * @param AddressRepositoryInterface $addressRepository
-     * @param DisableMultishipping $disableMultishipping
      */
     public function __construct(
         CartRepositoryInterface $cartRepository,
         Session $checkoutSession,
-        AddressRepositoryInterface $addressRepository,
-        DisableMultishipping $disableMultishipping
+        AddressRepositoryInterface $addressRepository
     ) {
         $this->cartRepository = $cartRepository;
         $this->checkoutSession = $checkoutSession;
         $this->addressRepository = $addressRepository;
-        $this->disableMultishipping = $disableMultishipping;
     }
 
     /**
@@ -72,9 +64,7 @@ class CartPlugin
     {
         /** @var Quote $quote */
         $quote = $this->checkoutSession->getQuote();
-        $isMultipleShippingAddressesPresent = $quote->isMultipleShippingAddresses();
-        if ($isMultipleShippingAddressesPresent || $this->isDisableMultishippingRequired($request, $quote)) {
-            $this->disableMultishipping->execute($quote);
+        if ($quote->isMultipleShippingAddresses() && $this->isCheckoutComplete()) {
             foreach ($quote->getAllShippingAddresses() as $address) {
                 $quote->removeAddress($address->getId());
             }
@@ -85,47 +75,17 @@ class CartPlugin
                 $defaultCustomerAddress = $this->addressRepository->getById($defaultShipping);
                 $shippingAddress->importCustomerAddressData($defaultCustomerAddress);
             }
-            if ($isMultipleShippingAddressesPresent) {
-                $this->checkoutSession->setMultiShippingAddressesFlag(true);
-            }
-            $this->cartRepository->save($quote);
-        } elseif ($this->disableMultishipping->execute($quote) && $this->isVirtualItemInQuote($quote)) {
-            $quote->setTotalsCollectedFlag(false);
             $this->cartRepository->save($quote);
         }
     }
 
     /**
-     * Checks whether quote has virtual items
+     * Checks whether the checkout flow is complete
      *
-     * @param Quote $quote
      * @return bool
      */
-    private function isVirtualItemInQuote(Quote $quote): bool
+    private function isCheckoutComplete() : bool
     {
-        $items = $quote->getItems();
-        if (!empty($items)) {
-            foreach ($items as $item) {
-                if ($item->getIsVirtual()) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Check if we have to disable multishipping mode depends on the request action name
-     *
-     * We should not disable multishipping mode if we are adding a new product item to the existing quote
-     *
-     * @param RequestInterface $request
-     * @param Quote $quote
-     * @return bool
-     */
-    private function isDisableMultishippingRequired(RequestInterface $request, Quote $quote): bool
-    {
-        return $request->getActionName() !== "add" && $quote->getIsMultiShipping();
+        return (bool) ($this->checkoutSession->getStepData(State::STEP_SHIPPING)['is_complete'] ?? true);
     }
 }

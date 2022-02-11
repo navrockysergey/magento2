@@ -112,7 +112,7 @@ class RouteParamsResolver extends \Magento\Framework\DataObject implements Route
             } else {
                 $this->setRouteParam(
                     $this->getEscaper()->encodeUrlParam($key),
-                    $this->getEscaper()->encodeUrlParam((string)$value)
+                    $this->getEscaper()->encodeUrlParam($value)
                 );
             }
         }

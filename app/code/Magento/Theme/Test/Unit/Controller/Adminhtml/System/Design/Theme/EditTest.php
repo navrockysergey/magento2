@@ -3,46 +3,26 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Theme\Test\Unit\Controller\Adminhtml\System\Design\Theme;
-
-use Magento\Backend\Block\Menu;
-use Magento\Backend\Model\Menu\Item;
-use Magento\Framework\View\Asset\LocalInterface;
-use Magento\Framework\View\Design\ThemeInterface;
-use Magento\Framework\View\LayoutInterface;
-use Magento\Framework\View\Page\Config;
-use Magento\Framework\View\Page\Title;
-use Magento\Framework\View\Result\Page;
-use Magento\Theme\Block\Adminhtml\System\Design\Theme\Edit\Tab\Css;
-use Magento\Theme\Helper\Theme;
-use Magento\Theme\Test\Unit\Controller\Adminhtml\System\Design\ThemeTest;
-use Psr\Log\LoggerInterface;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class EditTest extends ThemeTest
+class EditTest extends \Magento\Theme\Test\Unit\Controller\Adminhtml\System\Design\ThemeTest
 {
-    /**
-     * @var string
-     */
+    /** @var string  */
     protected $name = 'Edit';
 
-    /**
-     * @return void
-     */
-    public function testExecuteWithoutLoadedTheme(): void
+    public function testExecuteWithoutLoadedTheme()
     {
         $themeId = 23;
-        $this->_request
+        $this->_request->expects($this->at(0))
             ->method('getParam')
             ->with('id')
             ->willReturn($themeId);
 
         $theme = $this->getMockForAbstractClass(
-            ThemeInterface::class,
+            \Magento\Framework\View\Design\ThemeInterface::class,
             [],
             '',
             false,
@@ -65,7 +45,7 @@ class EditTest extends ThemeTest
 
         $this->_objectManagerMock->expects($this->once())
             ->method('create')
-            ->with(ThemeInterface::class)
+            ->with(\Magento\Framework\View\Design\ThemeInterface::class)
             ->willReturn($theme);
         $this->messageManager->expects($this->once())
             ->method('addError');
@@ -85,19 +65,16 @@ class EditTest extends ThemeTest
         $this->_model->execute();
     }
 
-    /**
-     * @return void
-     */
-    public function testExecuteWithException(): void
+    public function testExecuteWithException()
     {
         $themeId = 23;
-        $this->_request
+        $this->_request->expects($this->at(0))
             ->method('getParam')
             ->with('id')
             ->willReturn($themeId);
 
         $theme = $this->getMockForAbstractClass(
-            ThemeInterface::class,
+            \Magento\Framework\View\Design\ThemeInterface::class,
             [],
             '',
             false,
@@ -120,7 +97,7 @@ class EditTest extends ThemeTest
 
         $this->_objectManagerMock->expects($this->once())
             ->method('create')
-            ->with(ThemeInterface::class)
+            ->with(\Magento\Framework\View\Design\ThemeInterface::class)
             ->willReturn($theme);
 
         $this->coreRegistry
@@ -128,12 +105,12 @@ class EditTest extends ThemeTest
             ->method('register')
             ->willThrowException(new \Exception('Message'));
 
-        $logger = $this->getMockForAbstractClass(LoggerInterface::class, [], '', false);
+        $logger = $this->getMockForAbstractClass(\Psr\Log\LoggerInterface::class, [], '', false);
         $logger->expects($this->once())
             ->method('critical');
         $this->_objectManagerMock->expects($this->once())
             ->method('get')
-            ->with(LoggerInterface::class)
+            ->with(\Psr\Log\LoggerInterface::class)
             ->willReturn($logger);
 
         $this->messageManager->expects($this->once())
@@ -155,38 +132,32 @@ class EditTest extends ThemeTest
     }
 
     /**
-     * @return void
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    public function testExecute(): void
+    public function testExecute()
     {
         $themeId = 23;
 
-        $layout = $this->getMockForAbstractClass(LayoutInterface::class, [], '', false);
-        $tab = $this->getMockBuilder(Css::class)
-            ->addMethods(['setFiles'])
-            ->onlyMethods(['canShowTab'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $menu = $this->getMockBuilder(Menu::class)
-            ->addMethods(['setActive'])
-            ->onlyMethods(['getMenuModel'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        $layout = $this->getMockForAbstractClass(\Magento\Framework\View\LayoutInterface::class, [], '', false);
+        $tab = $this->createPartialMock(
+            \Magento\Theme\Block\Adminhtml\System\Design\Theme\Edit\Tab\Css::class,
+            ['setFiles', 'canShowTab']
+        );
+        $menu = $this->createPartialMock(\Magento\Backend\Block\Menu::class, ['setActive', 'getMenuModel']);
         $menuModel = $this->createMock(\Magento\Backend\Model\Menu::class);
-        $themeHelper = $this->createMock(Theme::class);
-        $cssAsset = $this->getMockForAbstractClass(LocalInterface::class, [], '', false);
-        $menuItem = $this->createMock(Item::class);
-        $resultPage = $this->createMock(Page::class);
-        $pageConfig = $this->createMock(Config::class);
-        $pageTitle = $this->createMock(Title::class);
-        $this->_request
+        $themeHelper = $this->createMock(\Magento\Theme\Helper\Theme::class);
+        $cssAsset = $this->getMockForAbstractClass(\Magento\Framework\View\Asset\LocalInterface::class, [], '', false);
+        $menuItem = $this->createMock(\Magento\Backend\Model\Menu\Item::class);
+        $resultPage = $this->createMock(\Magento\Framework\View\Result\Page::class);
+        $pageConfig = $this->createMock(\Magento\Framework\View\Page\Config::class);
+        $pageTitle = $this->createMock(\Magento\Framework\View\Page\Title::class);
+        $this->_request->expects($this->at(0))
             ->method('getParam')
             ->with('id')
             ->willReturn($themeId);
 
         $theme = $this->getMockForAbstractClass(
-            ThemeInterface::class,
+            \Magento\Framework\View\Design\ThemeInterface::class,
             [],
             '',
             false,
@@ -210,7 +181,7 @@ class EditTest extends ThemeTest
         $this->_objectManagerMock
             ->expects($this->once())
             ->method('create')
-            ->with(ThemeInterface::class)
+            ->with(\Magento\Framework\View\Design\ThemeInterface::class)
             ->willReturn($theme);
 
         $this->coreRegistry
@@ -225,6 +196,10 @@ class EditTest extends ThemeTest
         $tab->expects($this->once())
             ->method('setFiles')
             ->with($cssAsset);
+        $layout->expects($this->at(0))
+            ->method('getBlock')
+            ->with('theme_edit_tabs_tab_css_tab')
+            ->willReturn($tab);
         $menu->expects($this->once())
             ->method('setActive')
             ->with('Magento_Theme::system_design_theme');
@@ -239,10 +214,10 @@ class EditTest extends ThemeTest
             ->method('getTitle')
             ->willReturn('Title');
 
-        $layout
+        $layout->expects($this->at(1))
             ->method('getBlock')
-            ->withConsecutive(['theme_edit_tabs_tab_css_tab'], ['menu'])
-            ->willReturnOnConsecutiveCalls($tab, $menu);
+            ->with('menu')
+            ->willReturn($menu);
         $this->view->expects($this->atLeastOnce())
             ->method('getLayout')
             ->willReturn($layout);
@@ -253,7 +228,7 @@ class EditTest extends ThemeTest
             ->willReturn($cssAsset);
         $this->_objectManagerMock->expects($this->once())
             ->method('get')
-            ->with(Theme::class)
+            ->with(\Magento\Theme\Helper\Theme::class)
             ->willReturn($themeHelper);
         $this->view->expects($this->once())
             ->method('getPage')

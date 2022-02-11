@@ -19,32 +19,27 @@
         </annotations>
         <before>
             <!-- Login as admin -->
-            <actionGroup ref="AdminLoginActionGroup" stepKey="loginAsAdmin"/>
-            <!-- Delete all existing products -->
-            <actionGroup ref="AdminOpenProductIndexPageActionGroup" stepKey="navigateToProductIndexPage"/>
-            <actionGroup ref="DeleteProductsIfTheyExistActionGroup" stepKey="deleteAllProducts"/>
+            <actionGroup ref="LoginAsAdmin" stepKey="loginAsAdmin"/>
             <!-- Create product with description -->
             <createData entity="SimpleProductWithDescription" stepKey="simpleProduct"/>
 
-            <actionGroup ref="CliIndexerReindexActionGroup" stepKey="reindex">
-                <argument name="indices" value=""/>
-            </actionGroup>
-            <actionGroup ref="CliCacheCleanActionGroup" stepKey="flushCache">
-                <argument name="tags" value="full_page"/>
-            </actionGroup>
+            <!-- Perform reindex and flush cache -->
+            <magentoCLI command="indexer:reindex" stepKey="reindex"/>
+            <magentoCLI command="cache:flush" stepKey="flushCache"/>
         </before>
         <after>
             <!-- Delete created product -->
             <deleteData createDataKey="simpleProduct" stepKey="deleteProduct"/>
             <!-- Go to the catalog search term page -->
-            <actionGroup ref="AdminOpenCatalogSearchTermIndexPageActionGroup" stepKey="openAdminCatalogSearchTermIndexPage"/>
+            <amOnPage url="{{AdminCatalogSearchTermIndexPage.url}}" stepKey="openAdminCatalogSearchTermIndexPage"/>
+            <waitForPageLoad stepKey="waitForAdminCatalogSearchTermIndexPageLoad"/>
             <!-- Filter the search term -->
-            <actionGroup ref="AdminSearchTermFilterBySearchQueryActionGroup" stepKey="filterByThirdSearchQuery">
+            <actionGroup ref="searchTermFilterBySearchQuery" stepKey="filterByThirdSearchQuery">
                 <argument name="searchQuery" value="{{ApiProductDescription.value}}"/>
             </actionGroup>
             <!-- Delete created below search terms -->
-            <actionGroup ref="AdminDeleteSearchTermActionGroup" stepKey="deleteSearchTerms"/>
-            <actionGroup ref="AdminLogoutActionGroup" stepKey="logout"/>
+            <actionGroup ref="deleteSearchTerm" stepKey="deleteSearchTerms"/>
+            <actionGroup ref="logout" stepKey="logout"/>
         </after>
         <!-- Go to storefront home page -->
         <actionGroup ref="StorefrontOpenHomePageActionGroup" stepKey="openStoreFrontHomePage"/>
@@ -61,9 +56,10 @@
             <argument name="productName" value="$$simpleProduct.name$$"/>
         </actionGroup>
         <!-- Go to the catalog search term page -->
-        <actionGroup ref="AdminOpenCatalogSearchTermIndexPageActionGroup" stepKey="openAdminCatalogSearchTermIndexPage"/>
+        <amOnPage url="{{AdminCatalogSearchTermIndexPage.url}}" stepKey="openAdminCatalogSearchTermIndexPage"/>
+        <waitForPageLoad stepKey="waitForAdminCatalogSearchTermIndexPageLoad"/>
         <!-- Filter the search term -->
-        <actionGroup ref="AdminSearchTermFilterBySearchQueryActionGroup" stepKey="filterByThirdSearchQuery">
+        <actionGroup ref="searchTermFilterBySearchQuery" stepKey="filterByThirdSearchQuery">
             <argument name="searchQuery" value="{{ApiProductDescription.value}}"/>
         </actionGroup>
         <!-- Assert Search Term in grid -->

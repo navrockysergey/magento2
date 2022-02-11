@@ -3,14 +3,18 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
+/**
+ * Tree node collection
+ *
+ * @author      Magento Core Team <core@magentocommerce.com>
+ */
 namespace Magento\Framework\Data\Tree\Node;
 
 use Magento\Framework\Data\Tree;
 use Magento\Framework\Data\Tree\Node;
 
 /**
- * Tree node collection
- *
  * @api
  * @since 100.0.2
  */
@@ -50,7 +54,6 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      *
      * @return \ArrayIterator
      */
-    #[\ReturnTypeWillChange]
     public function getIterator()
     {
         return new \ArrayIterator($this->_nodes);
@@ -63,7 +66,6 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      * @param mixed $value
      * @return void
      */
-    #[\ReturnTypeWillChange]
     public function offsetSet($key, $value)
     {
         $this->_nodes[$key] = $value;
@@ -71,11 +73,9 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
 
     /**
      * Implementation of \ArrayAccess:offsetGet()
-     *
      * @param string $key
      * @return mixed
      */
-    #[\ReturnTypeWillChange]
     public function offsetGet($key)
     {
         return $this->_nodes[$key];
@@ -83,11 +83,9 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
 
     /**
      * Implementation of \ArrayAccess:offsetUnset()
-     *
      * @param string $key
      * @return void
      */
-    #[\ReturnTypeWillChange]
     public function offsetUnset($key)
     {
         unset($this->_nodes[$key]);
@@ -95,11 +93,9 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
 
     /**
      * Implementation of \ArrayAccess:offsetExists()
-     *
      * @param string $key
      * @return bool
      */
-    #[\ReturnTypeWillChange]
     public function offsetExists($key)
     {
         return isset($this->_nodes[$key]);
@@ -107,7 +103,6 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
 
     /**
      * Adds a node to this node
-     *
      * @param Node $node
      * @return Node
      */
@@ -144,7 +139,6 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      *
      * @return int
      */
-    #[\ReturnTypeWillChange]
     public function count()
     {
         return count($this->_nodes);

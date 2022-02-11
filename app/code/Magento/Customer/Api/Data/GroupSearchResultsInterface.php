@@ -23,6 +23,7 @@ interface GroupSearchResultsInterface extends \Magento\Framework\Api\SearchResul
     /**
      * Set customer groups list.
      *
+     * @api
      * @param \Magento\Customer\Api\Data\GroupInterface[] $items
      * @return $this
      */

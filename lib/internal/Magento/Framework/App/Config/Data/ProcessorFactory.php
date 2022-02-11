@@ -1,13 +1,12 @@
 <?php
 /**
+ * Config data Factory
+ *
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Framework\App\Config\Data;
 
-/**
- * @api
- */
 class ProcessorFactory
 {
     /**
@@ -34,6 +33,7 @@ class ProcessorFactory
      * @param string $processorModel Classname of the instance to get
      * @return ProcessorInterface
      * @throws \InvalidArgumentException In case the given classname is not an instance of ProcessorInterface
+     * @api
      */
     public function get($processorModel)
     {

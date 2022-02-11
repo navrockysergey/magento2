@@ -19,7 +19,8 @@
             <group value="checkout"/>
         </annotations>
         <before>
-            <comment userInput="Adding the comment to replace CliCacheFlushActionGroup action group ('cache:flush' command) for preserving Backward Compatibility" stepKey="flushCache"/>
+            <!-- Flush cache -->
+            <magentoCLI command="cache:flush" stepKey="clearCache"/>
 
             <!-- Create two customers -->
             <createData entity="Simple_US_Customer" stepKey="createFirstCustomer"/>
@@ -65,7 +66,7 @@
         <waitForPageLoad stepKey="waitForFirstProductPageLoad"/>
 
         <!-- Add the product to the shopping cart -->
-        <actionGroup ref="AddToCartFromStorefrontProductPageActionGroup" stepKey="addFirstProductToCart">
+        <actionGroup ref="addToCartFromStorefrontProductPage" stepKey="addFirstProductToCart">
             <argument name="productName" value="$$createSimpleProduct.name$$"/>
         </actionGroup>
 
@@ -74,9 +75,9 @@
         <waitForPageLoad stepKey="waitForSecondProductPageLoad"/>
 
         <!-- Fill the custom options values -->
-        <actionGroup ref="StorefrontProductPageSelectDropDownOptionValueActionGroup" stepKey="selectFirstOption">
-            <argument name="attributeLabel" value="{{ProductOptionValueDropdown.title}}"/>
-            <argument name="optionLabel" value="{{ProductOptionValueWithSkuDropdown1.title}}"/>
+        <actionGroup ref="StorefrontSelectOptionDropDownActionGroup" stepKey="selectFirstOption">
+            <argument name="optionTitle" value="ProductOptionValueDropdown"/>
+                <argument name="option" value="ProductOptionValueWithSkuDropdown1.title"/>
         </actionGroup>
         <fillField selector="{{StorefrontProductInfoMainSection.productOptionFieldInput(ProductOptionField.title)}}" userInput="OptionField" stepKey="fillProductOptionInputField"/>
 
@@ -101,7 +102,7 @@
         <waitForPageLoad stepKey="waitForProductPage"/>
 
          <!-- Add the product to the shopping cart -->
-        <actionGroup ref="AddProductWithQtyToCartFromStorefrontProductPageActionGroup" stepKey="addProductToCart">
+        <actionGroup ref="AddProductWithQtyToCartFromStorefrontProductPage" stepKey="addProductToCart">
             <argument name="productName" value="$$createSimpleProduct.name$$"/>
             <argument name="productQty" value="{{quoteQty2Price123.qty}}"/>
         </actionGroup>
@@ -114,7 +115,8 @@
             <argument name="Customer" value="$$createFirstCustomer$$"/>
         </actionGroup>
 
-        <actionGroup ref="StorefrontCartPageOpenActionGroup" stepKey="amOnPageShoppingCart"/>
+        <amOnPage url="{{CheckoutCartPage.url}}" stepKey="amOnPageShoppingCart"/>
+        <waitForPageLoad stepKey="waitForCheckoutPageLoad"/>
 
         <!-- Assert first products present in shopping cart -->
         <actionGroup ref="StorefrontCheckCartSimpleProductActionGroup" stepKey="checkFirstProductInCart">
@@ -133,11 +135,12 @@
         <see selector="{{StorefrontProductPageSection.orderTotal}}" userInput="{{quoteQty2Subtotal266.currency}}{{quoteQty2Subtotal266.total}}" stepKey="seeFirstCustomerOrderTotal"/>
 
         <!-- Assert products in mini cart for first customer -->
-        <actionGroup ref="StorefrontOpenHomePageActionGroup" stepKey="goToStoreFrontHomePage"/>
-        <actionGroup ref="AssertOneProductNameInMiniCartActionGroup" stepKey="assertFirstProductInMiniCart">
+        <amOnPage url="{{StorefrontHomePage.url}}" stepKey="goToStoreFrontHomePage"/>
+        <waitForPageLoad stepKey="waitForHomePageLoad"/>
+        <actionGroup ref="assertOneProductNameInMiniCart" stepKey="assertFirstProductInMiniCart">
             <argument name="productName" value="$$createSimpleProduct.name$$"/>
         </actionGroup>
-        <actionGroup ref="AssertOneProductNameInMiniCartActionGroup" stepKey="assertSecondProductInMiniCart">
+        <actionGroup ref="assertOneProductNameInMiniCart" stepKey="assertSecondProductInMiniCart">
             <argument name="productName" value="$$createSimpleProductWithCustomOptions.name$$"/>
         </actionGroup>
         <actionGroup ref="AssertMiniShoppingCartSubTotalActionGroup" stepKey="assertMiniCartSubTotal">
@@ -153,7 +156,8 @@
         </actionGroup>
 
         <!-- Assert first products present in shopping cart -->
-        <actionGroup ref="StorefrontCartPageOpenActionGroup" stepKey="amOnShoppingCartPage"/>
+        <amOnPage url="{{CheckoutCartPage.url}}" stepKey="amOnShoppingCartPage"/>
+        <waitForPageLoad stepKey="waitForShoppingCartPageLoad"/>
         <actionGroup ref="StorefrontCheckCartSimpleProductActionGroup" stepKey="checkProductInCart">
             <argument name="product" value="$$createSimpleProduct$$"/>
             <argument name="productQuantity" value="quoteQty2Price123.qty"/>
@@ -164,8 +168,10 @@
         <see selector="{{StorefrontProductPageSection.orderTotal}}" userInput="{{quoteQty2Price123.currency}}{{quoteQty2Price123.total}}" stepKey="seeSecondCustomerOrderTotal"/>
 
         <!-- Assert product in mini cart -->
-        <actionGroup ref="StorefrontOpenHomePageActionGroup" stepKey="goToHomePage"/>
-        <actionGroup ref="StorefrontClickOnMiniCartActionGroup" stepKey="clickOnMiniCart"/>
+        <amOnPage url="{{StorefrontHomePage.url}}" stepKey="goToHomePage"/>
+        <waitForPageLoad stepKey="waitForHomePageToLoad"/>
+        <click selector="{{StorefrontMinicartSection.showCart}}" stepKey="clickOnMiniCart"/>
+        <waitForPageLoad stepKey="waitForPageToLoad"/>
         <actionGroup ref="AssertStorefrontMiniCartItemsActionGroup" stepKey="assertProductInMiniCart">
             <argument name="productName" value="$$createSimpleProduct.name$$"/>
             <argument name="productPrice" value="$$createSimpleProduct.price$$"/>

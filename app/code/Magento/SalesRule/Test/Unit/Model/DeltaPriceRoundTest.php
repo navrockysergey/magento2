@@ -9,16 +9,14 @@ namespace Magento\SalesRule\Test\Unit\Model;
 
 use Magento\Framework\Pricing\PriceCurrencyInterface;
 use Magento\SalesRule\Model\DeltaPriceRound;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for Magento\SalesRule\Model\DeltaPriceRound.
  */
-class DeltaPriceRoundTest extends TestCase
+class DeltaPriceRoundTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var PriceCurrencyInterface|MockObject
+     * @var PriceCurrencyInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $priceCurrency;
 
@@ -36,7 +34,7 @@ class DeltaPriceRoundTest extends TestCase
         $this->priceCurrency->method('round')
             ->willReturnCallback(
                 function ($amount) {
-                    return round((float) $amount, 2);
+                    return round($amount, 2);
                 }
             );
 

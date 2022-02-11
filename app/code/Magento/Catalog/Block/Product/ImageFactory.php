@@ -68,17 +68,20 @@ class ImageFactory
     }
 
     /**
-     * Remove class from custom attributes
+     * Retrieve image custom attributes for HTML element
      *
      * @param array $attributes
-     * @return array
+     * @return string
      */
-    private function filterCustomAttributes(array $attributes): array
+    private function getStringCustomAttributes(array $attributes): string
     {
-        if (isset($attributes['class'])) {
-            unset($attributes['class']);
+        $result = [];
+        foreach ($attributes as $name => $value) {
+            if ($name != 'class') {
+                $result[] = $name . '="' . $value . '"';
+            }
         }
-        return $attributes;
+        return !empty($result) ? implode(' ', $result) : '';
     }
 
     /**
@@ -120,7 +123,7 @@ class ImageFactory
         if (empty($label)) {
             $label = $product->getName();
         }
-        return (string)$label;
+        return (string) $label;
     }
 
     /**
@@ -158,16 +161,16 @@ class ImageFactory
         }
 
         $attributes = $attributes === null ? [] : $attributes;
-
+        
         $data = [
             'data' => [
                 'template' => 'Magento_Catalog::product/image_with_borders.phtml',
                 'image_url' => $imageAsset->getUrl(),
                 'width' => $imageMiscParams['image_width'],
                 'height' => $imageMiscParams['image_height'],
-                'label' => $this->getLabel($product, $imageMiscParams['image_type'] ?? ''),
-                'ratio' => $this->getRatio($imageMiscParams['image_width'] ?? 0, $imageMiscParams['image_height'] ?? 0),
-                'custom_attributes' => $this->filterCustomAttributes($attributes),
+                'label' => $this->getLabel($product, $imageMiscParams['image_type']),
+                'ratio' => $this->getRatio($imageMiscParams['image_width'], $imageMiscParams['image_height']),
+                'custom_attributes' => $this->getStringCustomAttributes($attributes),
                 'class' => $this->getClass($attributes),
                 'product_id' => $product->getId()
             ],

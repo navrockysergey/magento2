@@ -3,20 +3,16 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\CatalogSearch\Test\Unit\Model\Adapter;
 
 use Magento\CatalogSearch\Model\Adapter\Options;
-use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class OptionsTest extends TestCase
+class OptionsTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var ScopeConfigInterface|MockObject
+     * @var \Magento\Framework\App\Config\ScopeConfigInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $scopeConfig;
 
@@ -25,30 +21,24 @@ class OptionsTest extends TestCase
      */
     private $options;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
         $helper = new ObjectManager($this);
 
-        $this->scopeConfig = $this->getMockBuilder(ScopeConfigInterface::class)
-            ->onlyMethods(['getValue'])
+        $this->scopeConfig = $this->getMockBuilder(\Magento\Framework\App\Config\ScopeConfigInterface::class)
+            ->setMethods(['getValue'])
             ->disableOriginalConstructor()
             ->getMockForAbstractClass();
 
         $this->options = $helper->getObject(
-            Options::class,
+            \Magento\CatalogSearch\Model\Adapter\Options::class,
             [
                 'scopeConfig' => $this->scopeConfig
             ]
         );
     }
 
-    /**
-     * @return void
-     */
-    public function testGet(): void
+    public function testGet()
     {
         $expectedResult = [
             'interval_division_limit' => 15,
@@ -57,13 +47,18 @@ class OptionsTest extends TestCase
             'max_intervals_number' => 33
         ];
 
-        $this->scopeConfig
+        $this->scopeConfig->expects($this->at(0))
             ->method('getValue')
-            ->willReturnOnConsecutiveCalls(
-                $expectedResult['interval_division_limit'],
-                $expectedResult['range_step'],
-                $expectedResult['max_intervals_number']
-            );
+            ->withConsecutive([Options::XML_PATH_INTERVAL_DIVISION_LIMIT, ScopeInterface::SCOPE_STORE])
+            ->willReturn($expectedResult['interval_division_limit']);
+        $this->scopeConfig->expects($this->at(1))
+            ->method('getValue')
+            ->withConsecutive([Options::XML_PATH_RANGE_STEP, ScopeInterface::SCOPE_STORE])
+            ->willReturn($expectedResult['range_step']);
+        $this->scopeConfig->expects($this->at(2))
+            ->method('getValue')
+            ->withConsecutive([Options::XML_PATH_RANGE_MAX_INTERVALS, ScopeInterface::SCOPE_STORE])
+            ->willReturn($expectedResult['max_intervals_number']);
 
         $this->options->get();
     }

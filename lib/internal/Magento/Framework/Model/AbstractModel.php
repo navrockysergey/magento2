@@ -5,7 +5,6 @@
  */
 namespace Magento\Framework\Model;
 
-use Magento\Framework\DataObject;
 use Magento\Framework\Phrase;
 
 /**
@@ -15,12 +14,10 @@ use Magento\Framework\Phrase;
  * @api
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.NumberOfChildren)
- * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
- * @SuppressWarnings(PHPMD.ExcessiveClassLength)
  * @SuppressWarnings(PHPMD.TooManyFields)
  * @since 100.0.2
  */
-abstract class AbstractModel extends DataObject
+abstract class AbstractModel extends \Magento\Framework\DataObject
 {
     /**
      * Prefix of model events names
@@ -189,8 +186,8 @@ abstract class AbstractModel extends DataObject
         $this->_logger = $context->getLogger();
         $this->_actionValidator = $context->getActionValidator();
 
-        if ($this->_resource !== null
-            && (method_exists($this->_resource, 'getIdFieldName') || ($this->_resource instanceof DataObject))
+        if (method_exists($this->_resource, 'getIdFieldName')
+            || $this->_resource instanceof \Magento\Framework\DataObject
         ) {
             $this->_idFieldName = $this->_getResource()->getIdFieldName();
         }

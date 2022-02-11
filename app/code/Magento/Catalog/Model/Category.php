@@ -48,33 +48,31 @@ class Category extends \Magento\Catalog\Model\AbstractModel implements
      * Entity code.
      * Can be used as part of method name for entity processing
      */
-    public const ENTITY = 'catalog_category';
+    const ENTITY = 'catalog_category';
 
     /**#@+
      * Category display modes
      */
-    public const DM_PRODUCT = 'PRODUCTS';
+    const DM_PRODUCT = 'PRODUCTS';
 
-    public const DM_PAGE = 'PAGE';
+    const DM_PAGE = 'PAGE';
 
-    public const DM_MIXED = 'PRODUCTS_AND_PAGE';
+    const DM_MIXED = 'PRODUCTS_AND_PAGE';
     /**#@-*/
 
     /**
      * Id of root category
      */
-    public const ROOT_CATEGORY_ID = 0;
+    const ROOT_CATEGORY_ID = 0;
 
     /**
      * Id of category tree root
      */
-    public const TREE_ROOT_ID = 1;
+    const TREE_ROOT_ID = 1;
 
-    public const CACHE_TAG = 'cat_c';
+    const CACHE_TAG = 'cat_c';
 
-    /**
-     * @var string
-     */
+    /**#@-*/
     protected $_eventPrefix = 'catalog_category';
 
     /**
@@ -159,21 +157,29 @@ class Category extends \Magento\Catalog\Model\AbstractModel implements
     protected $filter;
 
     /**
+     * Catalog config
+     *
      * @var \Magento\Catalog\Model\Config
      */
     protected $_catalogConfig;
 
     /**
+     * Product collection factory
+     *
      * @var \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory
      */
     protected $_productCollectionFactory;
 
     /**
+     * Store collection factory
+     *
      * @var \Magento\Store\Model\ResourceModel\Store\CollectionFactory
      */
     protected $_storeCollectionFactory;
 
     /**
+     * Category tree factory
+     *
      * @var \Magento\Catalog\Model\ResourceModel\Category\TreeFactory
      */
     protected $_categoryTreeFactory;
@@ -308,22 +314,18 @@ class Category extends \Magento\Catalog\Model\AbstractModel implements
         return $this->customAttributesCodes;
     }
 
-    // phpcs:disable Generic.CodeAnalysis.UselessOverridingMethod
     /**
      * Returns model resource
      *
      * @throws \Magento\Framework\Exception\LocalizedException
      * @return \Magento\Catalog\Model\ResourceModel\Category
      * @deprecated 102.0.6 because resource models should be used directly
-     * phpcs:disable Generic.CodeAnalysis.UselessOverridingMethod
      * @since 102.0.6
      */
-    protected function _getResource()
+    protected function _getResource() //phpcs:ignore Generic.CodeAnalysis.UselessOverridingMethod
     {
-        //phpcs:enable Generic.CodeAnalysis.UselessOverridingMethod
         return parent::_getResource();
     }
-    // phpcs:enable
 
     /**
      * Get flat resource model flag
@@ -846,7 +848,7 @@ class Category extends \Magento\Catalog\Model\AbstractModel implements
     {
         $ids = $this->getData('path_ids');
         if ($ids === null) {
-            $ids = $this->getPath() !== null ? explode('/', $this->getPath()) : [''];
+            $ids = explode('/', $this->getPath());
             $this->setData('path_ids', $ids);
         }
         return $ids;
@@ -860,7 +862,7 @@ class Category extends \Magento\Catalog\Model\AbstractModel implements
     public function getLevel()
     {
         if (!$this->hasLevel()) {
-            return $this->getPath() !== null ? count(explode('/', $this->getPath())) - 1 : 0;
+            return count(explode('/', $this->getPath())) - 1;
         }
         return $this->getData(self::KEY_LEVEL);
     }
@@ -1031,7 +1033,7 @@ class Category extends \Magento\Catalog\Model\AbstractModel implements
     {
         $available = $this->getData(self::KEY_AVAILABLE_SORT_BY);
         if (empty($available)) {
-            return null;
+            return [];
         }
         if ($available && !is_array($available)) {
             $available = explode(',', $available);
@@ -1153,10 +1155,7 @@ class Category extends \Magento\Catalog\Model\AbstractModel implements
      */
     public function afterDeleteCommit()
     {
-        if ($this->getIsActive() || $this->getDeletedChildrenIds()) {
-            $this->reindex();
-        }
-
+        $this->reindex();
         return parent::afterDeleteCommit();
     }
 

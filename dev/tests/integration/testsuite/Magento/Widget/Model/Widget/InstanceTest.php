@@ -3,7 +3,6 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-
 namespace Magento\Widget\Model\Widget;
 
 class InstanceTest extends \PHPUnit\Framework\TestCase
@@ -46,7 +45,7 @@ class InstanceTest extends \PHPUnit\Framework\TestCase
     {
         $config = $this->_model->setType(\Magento\Catalog\Block\Product\Widget\NewWidget::class)
             ->getWidgetConfigAsArray();
-        $this->assertIsArray($config);
+        $this->assertTrue(is_array($config));
         $element = null;
         if (isset(
             $config['parameters']
@@ -81,7 +80,6 @@ class InstanceTest extends \PHPUnit\Framework\TestCase
         $this->assertContains('sidebar.main', $containers);
         $this->assertContains('content', $containers);
         $this->assertContains('sidebar.additional', $containers);
-
         return $this->_model;
     }
 
@@ -101,8 +99,8 @@ class InstanceTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @covers  \Magento\Widget\Model\Widget\Instance::generateLayoutUpdateXml()
-     * @covers  \Magento\Widget\Model\Widget\Instance::getWidgetParameters()
+     * @covers \Magento\Widget\Model\Widget\Instance::generateLayoutUpdateXml()
+     * @covers \Magento\Widget\Model\Widget\Instance::getWidgetParameters()
      * @param \Magento\Widget\Model\Widget\Instance $model
      * @depends testGetWidgetConfigAsArray
      */
@@ -167,10 +165,10 @@ class InstanceTest extends \PHPUnit\Framework\TestCase
     public function beforeSaveDataProvider()
     {
         return [
-            # Variation 1
-            [
-                ['block_id' => '2']
-            ]
+          # Variation 1
+          [
+              ['block_id' => '2']
+          ]
         ];
     }
 

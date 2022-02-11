@@ -3,16 +3,14 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Elasticsearch\SearchAdapter;
 
-use Magento\Elasticsearch\Elasticsearch5\SearchAdapter\Mapper as Elasticsearch5Mapper;
-use Magento\Elasticsearch\SearchAdapter\Filter\Builder as FilterBuilder;
-use Magento\Elasticsearch\SearchAdapter\Query\Builder as QueryBuilder;
-use Magento\Elasticsearch\SearchAdapter\Query\Builder\MatchQuery as MatchQueryBuilder;
-use Magento\Framework\Search\Request\Query\BoolExpression as BoolQuery;
 use Magento\Framework\Search\RequestInterface;
+use Magento\Framework\Search\Request\Query\BoolExpression as BoolQuery;
+use Magento\Elasticsearch\SearchAdapter\Query\Builder as QueryBuilder;
+use Magento\Elasticsearch\SearchAdapter\Query\Builder\Match as MatchQueryBuilder;
+use Magento\Elasticsearch\SearchAdapter\Filter\Builder as FilterBuilder;
+use Magento\Elasticsearch\Elasticsearch5\SearchAdapter\Mapper as Elasticsearch5Mapper;
 
 /**
  * Mapper class for Elasticsearch2
@@ -59,6 +57,7 @@ class Mapper extends Elasticsearch5Mapper
 
         $searchQuery['body']['query']['bool']['minimum_should_match'] = 1;
 
-        return $this->queryBuilder->initAggregations($request, $searchQuery);
+        $searchQuery = $this->queryBuilder->initAggregations($request, $searchQuery);
+        return $searchQuery;
     }
 }

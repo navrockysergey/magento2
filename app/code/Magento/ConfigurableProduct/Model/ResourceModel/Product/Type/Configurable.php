@@ -173,8 +173,7 @@ class Configurable extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
             []
         )->where(
             'p.entity_id IN (?)',
-            $parentId,
-            \Zend_Db::INT_TYPE
+            $parentId
         );
 
         $childrenIds = [
@@ -203,7 +202,7 @@ class Configurable extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
                 ['e' => $this->getTable('catalog_product_entity')],
                 'e.' . $this->optionProvider->getProductEntityLinkField() . ' = l.parent_id',
                 ['e.entity_id']
-            )->where('l.product_id IN(?)', $childId, \Zend_Db::INT_TYPE);
+            )->where('l.product_id IN(?)', $childId);
         $parentIds = $this->getConnection()->fetchCol($select);
 
         return $parentIds;

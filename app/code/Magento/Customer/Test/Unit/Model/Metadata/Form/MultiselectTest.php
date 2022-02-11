@@ -1,18 +1,14 @@
 <?php
 /**
+ * test Magento\Customer\Model\Metadata\Form\Multiselect
+ *
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-
-declare(strict_types=1);
-
 namespace Magento\Customer\Test\Unit\Model\Metadata\Form;
 
-use Magento\Customer\Api\Data\OptionInterface;
 use Magento\Customer\Model\Metadata\ElementFactory;
 use Magento\Customer\Model\Metadata\Form\Multiselect;
-use Magento\Framework\App\RequestInterface;
-use PHPUnit\Framework\MockObject\MockObject;
 
 class MultiselectTest extends AbstractFormTestCase
 {
@@ -25,7 +21,7 @@ class MultiselectTest extends AbstractFormTestCase
      */
     protected function getClass($value)
     {
-        return new Multiselect(
+        return new \Magento\Customer\Model\Metadata\Form\Multiselect(
             $this->localeMock,
             $this->loggerMock,
             $this->attributeMetadataMock,
@@ -46,17 +42,15 @@ class MultiselectTest extends AbstractFormTestCase
      */
     public function testExtractValue($value, $expected)
     {
-        /** @var MockObject|Multiselect $multiselect */
+        /** @var \PHPUnit\Framework\MockObject\MockObject | Multiselect $multiselect */
         $multiselect = $this->getMockBuilder(
-            Multiselect::class
-        )->disableOriginalConstructor()
-            ->setMethods(
-                ['_getRequestValue']
-            )->getMock();
+            \Magento\Customer\Model\Metadata\Form\Multiselect::class
+        )->disableOriginalConstructor()->setMethods(
+            ['_getRequestValue']
+        )->getMock();
         $multiselect->expects($this->once())->method('_getRequestValue')->willReturn($value);
 
-        $request = $this->getMockBuilder(RequestInterface::class)
-            ->getMock();
+        $request = $this->getMockBuilder(\Magento\Framework\App\RequestInterface::class)->getMock();
         $actual = $multiselect->extractValue($request);
         $this->assertEquals($expected, $actual);
     }
@@ -144,7 +138,7 @@ class MultiselectTest extends AbstractFormTestCase
     {
         return [
             'empty' => ['', ''],
-            'null' => [false, ''],
+            'null' => [null, ''],
             'number' => [14, 'fourteen'],
             'string' => ['some key', 'some string'],
             'array' => [[14, 'some key'], 'fourteen, some string'],
@@ -175,7 +169,7 @@ class MultiselectTest extends AbstractFormTestCase
     {
         return [
             'empty' => ['', ['']],
-            'null' => [false, ['']],
+            'null' => [null, ['']],
             'number' => [14, ['14']],
             'string' => ['some key', ['some key']],
             'array' => [[14, 'some key'], ['14', 'some key']],
@@ -192,31 +186,39 @@ class MultiselectTest extends AbstractFormTestCase
      */
     protected function runOutputValueTest($value, $expected, $format)
     {
-        $option1 = $this->getMockBuilder(OptionInterface::class)
+        $option1 = $this->getMockBuilder(\Magento\Customer\Api\Data\OptionInterface::class)
             ->disableOriginalConstructor()
             ->setMethods(['getLabel', 'getValue'])
             ->getMockForAbstractClass();
-        $option1->method('getLabel')
+        $option1->expects($this->any())
+            ->method('getLabel')
             ->willReturn('fourteen');
-        $option1->method('getValue')
+        $option1->expects($this->any())
+            ->method('getValue')
             ->willReturn('14');
 
-        $option2 = $this->getMockBuilder(OptionInterface::class)
+        $option2 = $this->getMockBuilder(\Magento\Customer\Api\Data\OptionInterface::class)
             ->disableOriginalConstructor()
             ->setMethods(['getLabel', 'getValue'])
             ->getMockForAbstractClass();
-        $option2->method('getLabel')
+        $option2->expects($this->any())
+            ->method('getLabel')
             ->willReturn('some string');
-        $option2->method('getValue')
+        $option2->expects($this->any())
+            ->method('getValue')
             ->willReturn('some key');
 
-        $this->attributeMetadataMock->method(
+        $this->attributeMetadataMock->expects(
+            $this->any()
+        )->method(
             'getOptions'
         )->willReturn(
-            [
-                $option1,
-                $option2,
-            ]
+            
+                [
+                    $option1,
+                    $option2,
+                ]
+            
         );
         $multiselect = $this->getClass($value);
         $actual = $multiselect->outputValue($format);

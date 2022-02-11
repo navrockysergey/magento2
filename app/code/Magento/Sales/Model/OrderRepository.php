@@ -157,9 +157,6 @@ class OrderRepository implements \Magento\Sales\Api\OrderRepositoryInterface
     private function setOrderTaxDetails(OrderInterface $order)
     {
         $extensionAttributes = $order->getExtensionAttributes();
-        if ($extensionAttributes === null) {
-            $extensionAttributes = $this->orderExtensionFactory->create();
-        }
         $orderTaxDetails = $this->orderTaxManagement->getOrderTaxDetails($order->getEntityId());
         $appliedTaxes = $orderTaxDetails->getAppliedTaxes();
 
@@ -183,16 +180,7 @@ class OrderRepository implements \Magento\Sales\Api\OrderRepositoryInterface
     private function setPaymentAdditionalInfo(OrderInterface $order): void
     {
         $extensionAttributes = $order->getExtensionAttributes();
-        if ($extensionAttributes === null) {
-            $extensionAttributes = $this->orderExtensionFactory->create();
-        }
-
-        $paymentAdditionalInformation = [];
-        $payment = $order->getPayment();
-
-        if ($payment) {
-            $paymentAdditionalInformation = $payment->getAdditionalInformation();
-        }
+        $paymentAdditionalInformation = $order->getPayment()->getAdditionalInformation();
 
         $objects = [];
         foreach ($paymentAdditionalInformation as $key => $value) {

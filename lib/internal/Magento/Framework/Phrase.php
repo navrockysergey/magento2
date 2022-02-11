@@ -1,5 +1,7 @@
 <?php
 /**
+ * Phrase (for replacing Data Value with Object)
+ *
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
@@ -9,8 +11,6 @@ use Magento\Framework\Phrase\Renderer\Placeholder as RendererPlaceholder;
 use Magento\Framework\Phrase\RendererInterface;
 
 /**
- * Phrase (for replacing Data Value with Object)
- *
  * @api
  * @since 100.0.2
  */
@@ -102,7 +102,7 @@ class Phrase implements \JsonSerializable
     {
         try {
             return self::getRenderer()->render([$this->text], $this->getArguments());
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
             return $this->getText();
         }
     }
@@ -122,7 +122,6 @@ class Phrase implements \JsonSerializable
      *
      * @return string
      */
-    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return $this->render();

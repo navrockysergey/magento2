@@ -43,10 +43,6 @@ class Collection extends \Magento\Framework\Data\Collection\Filesystem
     protected $_backup = null;
 
     /**
-     * @var \Magento\Framework\Filesystem
-     */
-    private $_filesystem;
-    /**
      * @param \Magento\Framework\Data\Collection\EntityFactory $entityFactory
      * @param \Magento\Backup\Helper\Data $backupData
      * @param \Magento\Framework\Filesystem $filesystem
@@ -60,9 +56,8 @@ class Collection extends \Magento\Framework\Data\Collection\Filesystem
         \Magento\Backup\Model\Backup $backup
     ) {
         $this->_backupData = $backupData;
-        parent::__construct($entityFactory, $filesystem);
+        parent::__construct($entityFactory);
 
-        $this->_filesystem = $filesystem;
         $this->_backup = $backup;
         $this->_varDirectory = $filesystem->getDirectoryWrite(DirectoryList::VAR_DIR);
 

@@ -3,62 +3,54 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
 
 namespace Magento\SalesSequence\Test\Unit\Model;
 
-use Magento\Framework\App\ResourceConnection;
-use Magento\Framework\DB\Adapter\AdapterInterface;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use Magento\SalesSequence\Model\Meta;
-use Magento\SalesSequence\Model\Profile;
 use Magento\SalesSequence\Model\Sequence;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class SequenceTest extends TestCase
+/**
+ * Class SequenceTest
+ */
+class SequenceTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var AdapterInterface|MockObject
+     * @var \Magento\Framework\DB\Adapter\AdapterInterface | \PHPUnit\Framework\MockObject\MockObject
      */
     private $connectionMock;
 
     /**
-     * @var ResourceConnection|MockObject
+     * @var \Magento\Framework\App\ResourceConnection | \PHPUnit\Framework\MockObject\MockObject
      */
     private $resource;
 
     /**
-     * @var Profile|MockObject
+     * @var \Magento\SalesSequence\Model\Profile | \PHPUnit\Framework\MockObject\MockObject
      */
     private $profile;
 
     /**
-     * @var Meta|MockObject
+     * @var \Magento\SalesSequence\Model\Meta | \PHPUnit\Framework\MockObject\MockObject
      */
     private $meta;
 
     /**
-     * @var Sequence
+     * @var \Magento\SalesSequence\Model\Sequence
      */
     private $sequence;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
-        $this->meta = $this->getMockBuilder(Meta::class)
-            ->addMethods(['getSequenceTable', 'getActiveProfile'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->profile = $this->getMockBuilder(Profile::class)
-            ->addMethods(['getSuffix', 'getPrefix', 'getStep', 'getStartValue'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->resource = $this->createPartialMock(ResourceConnection::class, ['getConnection']);
+        $this->meta = $this->createPartialMock(
+            \Magento\SalesSequence\Model\Meta::class,
+            ['getSequenceTable', 'getActiveProfile']
+        );
+        $this->profile = $this->createPartialMock(
+            \Magento\SalesSequence\Model\Profile::class,
+            ['getSuffix', 'getPrefix', 'getStep', 'getStartValue']
+        );
+        $this->resource = $this->createPartialMock(\Magento\Framework\App\ResourceConnection::class, ['getConnection']);
         $this->connectionMock = $this->getMockForAbstractClass(
-            AdapterInterface::class,
+            \Magento\Framework\DB\Adapter\AdapterInterface::class,
             [],
             '',
             false,
@@ -67,28 +59,22 @@ class SequenceTest extends TestCase
             ['insert', 'lastInsertId']
         );
         $this->resource->expects($this->any())->method('getConnection')->willReturn($this->connectionMock);
-        $helper = new ObjectManager($this);
+        $helper = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
         $this->sequence = $helper->getObject(
-            Sequence::class,
+            \Magento\SalesSequence\Model\Sequence::class,
             [
                 'meta' => $this->meta,
-                'resource' => $this->resource
+                'resource' => $this->resource,
             ]
         );
     }
 
-    /**
-     * @return void
-     */
-    public function testSequenceInitialNull(): void
+    public function testSequenceInitialNull()
     {
         $this->assertNull($this->sequence->getCurrentValue());
     }
 
-    /**
-     * @return void
-     */
-    public function testSequenceNextValue(): void
+    public function testSequenceNextValue()
     {
         $step = 777;
         $startValue = 3;
@@ -115,32 +101,24 @@ class SequenceTest extends TestCase
             $this->sequenceParameters()->prefix
         );
         $this->profile->expects($this->exactly(3))->method('getStep')->willReturn($step);
-        $withArgs = $willReturnArgs = [];
-
-        $withArgs[] = [$this->sequenceParameters()->testTable];
-        $willReturnArgs[] = ++$lastInsertId;
-
-        $withArgs[] = [$this->sequenceParameters()->testTable];
-        $willReturnArgs[] = ++$lastInsertId;
-
-        $withArgs[] = [$this->sequenceParameters()->testTable];
-        $willReturnArgs[] = ++$lastInsertId;
-
-        $this->connectionMock
-            ->method('lastInsertId')
-            ->withConsecutive(...$withArgs)
-            ->willReturnOnConsecutiveCalls(...$willReturnArgs);
-
-        $this->nextIncrementStep(780);
-        $this->nextIncrementStep(1557);
-        $this->nextIncrementStep(2334);
+        $lastInsertId = $this->nextIncrementStep($lastInsertId, 780);
+        $lastInsertId = $this->nextIncrementStep($lastInsertId, 1557);
+        $this->nextIncrementStep($lastInsertId, 2334);
     }
 
     /**
+     * @param $lastInsertId
      * @param $sequenceNumber
+     * @return mixed
      */
-    private function nextIncrementStep($sequenceNumber)
+    private function nextIncrementStep($lastInsertId, $sequenceNumber)
     {
+        $lastInsertId++;
+        $this->connectionMock->expects($this->at(1))->method('lastInsertId')->with(
+            $this->sequenceParameters()->testTable
+        )->willReturn(
+            $lastInsertId
+        );
         $this->assertEquals(
             sprintf(
                 Sequence::DEFAULT_PATTERN,
@@ -150,12 +128,13 @@ class SequenceTest extends TestCase
             ),
             $this->sequence->getNextValue()
         );
+        return $lastInsertId;
     }
 
     /**
      * @return \stdClass
      */
-    private function sequenceParameters(): \stdClass
+    private function sequenceParameters()
     {
         $data = new \stdClass();
         $data->prefix = 'AA-';

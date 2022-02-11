@@ -21,8 +21,6 @@ class Serialize implements SerializerInterface
         if (is_resource($data)) {
             throw new \InvalidArgumentException('Unable to serialize value.');
         }
-        // We have to use serialize
-        // phpcs:ignore Magento2.Security.InsecureFunction
         return serialize($data);
     }
 
@@ -41,8 +39,6 @@ class Serialize implements SerializerInterface
             },
             E_NOTICE
         );
-        // We have to use unserialize here
-        // phpcs:ignore Magento2.Security.InsecureFunction
         $result = unserialize($string, ['allowed_classes' => false]);
         restore_error_handler();
         return $result;

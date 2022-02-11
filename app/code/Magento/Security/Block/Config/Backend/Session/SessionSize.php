@@ -42,8 +42,7 @@ class SessionSize extends Field
     }
 
     /**
-     * {@inheritdoc}
-     * @throws ValidatorException
+     * @inheritdoc
      */
     protected function _getElementHtml(AbstractElement $element)
     {

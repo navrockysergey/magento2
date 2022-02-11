@@ -6,12 +6,8 @@
 
 namespace Magento\Eav\Setup;
 
-use Magento\Eav\Model\AttributeFactory;
-use Magento\Eav\Model\Config;
-use Magento\Eav\Model\Entity\Attribute;
 use Magento\Eav\Model\Entity\Setup\Context;
 use Magento\Eav\Model\Entity\Setup\PropertyMapperInterface;
-use Magento\Eav\Model\ReservedAttributeCheckerInterface;
 use Magento\Eav\Model\ResourceModel\Entity\Attribute\Group\CollectionFactory;
 use Magento\Eav\Model\Validator\Attribute\Code;
 use Magento\Framework\App\CacheInterface;
@@ -31,41 +27,57 @@ use Magento\Framework\Setup\ModuleDataSetupInterface;
 class EavSetup
 {
     /**
+     * Cache
+     *
      * @var CacheInterface
      */
     private $cache;
 
     /**
+     * Attribute group collection factory
+     *
      * @var CollectionFactory
      */
     private $attrGroupCollectionFactory;
 
     /**
+     * Attribute mapper
+     *
      * @var PropertyMapperInterface
      */
     private $attributeMapper;
 
     /**
+     * Setup model
+     *
      * @var ModuleDataSetupInterface
      */
     private $setup;
 
     /**
+     * General Attribute Group Name
+     *
      * @var string
      */
     private $_generalGroupName = 'General';
 
     /**
+     * Default attribute group name to id pairs
+     *
      * @var array
      */
     private $defaultGroupIdAssociations = ['general' => 1];
 
     /**
+     * Default attribute group name
+     *
      * @var string
      */
     private $_defaultGroupName = 'Default';
 
     /**
+     * Default attribute set name
+     *
      * @var string
      */
     private $_defaultAttributeSetName = 'Default';
@@ -81,21 +93,6 @@ class EavSetup
     private $attributeCodeValidator;
 
     /**
-     * @var ReservedAttributeCheckerInterface
-     */
-    private $reservedAttributeChecker;
-
-    /**
-     * @var AttributeFactory
-     */
-    private $attributeFactory;
-
-    /**
-     * @var Config|null
-     */
-    private $eavConfig;
-
-    /**
      * Init
      *
      * @param ModuleDataSetupInterface $setup
@@ -104,9 +101,6 @@ class EavSetup
      * @param CollectionFactory $attrGroupCollectionFactory
      * @param Code|null $attributeCodeValidator
      * @param AddOptionToAttribute|null $addAttributeOption
-     * @param ReservedAttributeCheckerInterface|null $reservedAttributeChecker
-     * @param AttributeFactory|null $attributeFactory
-     * @param Config|null $eavConfig
      * @SuppressWarnings(PHPMD.LongVariable)
      */
     public function __construct(
@@ -115,10 +109,7 @@ class EavSetup
         CacheInterface $cache,
         CollectionFactory $attrGroupCollectionFactory,
         Code $attributeCodeValidator = null,
-        AddOptionToAttribute $addAttributeOption = null,
-        ReservedAttributeCheckerInterface $reservedAttributeChecker = null,
-        AttributeFactory $attributeFactory = null,
-        Config $eavConfig = null
+        AddOptionToAttribute $addAttributeOption = null
     ) {
         $this->cache = $cache;
         $this->attrGroupCollectionFactory = $attrGroupCollectionFactory;
@@ -126,11 +117,9 @@ class EavSetup
         $this->setup = $setup;
         $this->addAttributeOption = $addAttributeOption
             ?? ObjectManager::getInstance()->get(AddOptionToAttribute::class);
-        $this->attributeCodeValidator = $attributeCodeValidator ?? ObjectManager::getInstance()->get(Code::class);
-        $this->reservedAttributeChecker = $reservedAttributeChecker
-            ?? ObjectManager::getInstance()->get(ReservedAttributeCheckerInterface::class);
-        $this->attributeFactory = $attributeFactory ?? ObjectManager::getInstance()->get(AttributeFactory::class);
-        $this->eavConfig = $eavConfig ?? ObjectManager::getInstance()->get(Config::class);
+        $this->attributeCodeValidator = $attributeCodeValidator ?: ObjectManager::getInstance()->get(
+            Code::class
+        );
     }
 
     /**
@@ -250,7 +239,6 @@ class EavSetup
             $this->addAttributeSet($code, $this->_defaultAttributeSetName);
         }
         $this->addAttributeGroup($code, $this->_defaultGroupName, $this->_generalGroupName);
-        $this->eavConfig->clear();
 
         return $this;
     }
@@ -1514,17 +1502,6 @@ class EavSetup
             $errorMessage = implode('\n', $this->attributeCodeValidator->getMessages());
 
             throw new LocalizedException(__($errorMessage));
-        }
-
-        /* Actual attribute is created from data array for compatibility with reserved attribute validator logic */
-        $attribute = $this->attributeFactory->createAttribute(Attribute::class, $data);
-        if ($this->reservedAttributeChecker->isReservedAttribute($attribute)) {
-            throw new LocalizedException(
-                __(
-                    'The attribute code \'%1\' is reserved by system. Please try another attribute code',
-                    $attributeCode
-                )
-            );
         }
     }
 }

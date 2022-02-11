@@ -5,10 +5,7 @@
  */
 namespace Magento\Catalog\Model\Indexer\Category;
 
-use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Indexer\CacheContext;
-use Magento\Framework\Indexer\IndexMutexException;
-use Magento\Framework\Indexer\IndexMutexInterface;
 
 /**
  * Category product indexer
@@ -45,26 +42,18 @@ class Product implements \Magento\Framework\Indexer\ActionInterface, \Magento\Fr
     protected $cacheContext;
 
     /**
-     * @var IndexMutexInterface
-     */
-    private $indexMutex;
-
-    /**
      * @param Product\Action\FullFactory $fullActionFactory
      * @param Product\Action\RowsFactory $rowsActionFactory
      * @param \Magento\Framework\Indexer\IndexerRegistry $indexerRegistry
-     * @param IndexMutexInterface|null $indexMutex
      */
     public function __construct(
         Product\Action\FullFactory $fullActionFactory,
         Product\Action\RowsFactory $rowsActionFactory,
-        \Magento\Framework\Indexer\IndexerRegistry $indexerRegistry,
-        ?IndexMutexInterface $indexMutex = null
+        \Magento\Framework\Indexer\IndexerRegistry $indexerRegistry
     ) {
         $this->fullActionFactory = $fullActionFactory;
         $this->rowsActionFactory = $rowsActionFactory;
         $this->indexerRegistry = $indexerRegistry;
-        $this->indexMutex = $indexMutex ?? ObjectManager::getInstance()->get(IndexMutexInterface::class);
     }
 
     /**
@@ -72,12 +61,11 @@ class Product implements \Magento\Framework\Indexer\ActionInterface, \Magento\Fr
      *
      * @param int[] $ids
      * @return void
-     * @throws IndexMutexException
      */
     public function execute($ids)
     {
-        $this->registerEntities($ids);
         $this->executeAction($ids);
+        $this->registerEntities($ids);
     }
 
     /**
@@ -96,17 +84,11 @@ class Product implements \Magento\Framework\Indexer\ActionInterface, \Magento\Fr
      * Execute full indexation
      *
      * @return void
-     * @throws IndexMutexException
      */
     public function executeFull()
     {
-        $this->indexMutex->execute(
-            static::INDEXER_ID,
-            function () {
-                $this->fullActionFactory->create()->execute();
-                $this->registerTags();
-            }
-        );
+        $this->fullActionFactory->create()->execute();
+        $this->registerTags();
     }
 
     /**
@@ -125,7 +107,6 @@ class Product implements \Magento\Framework\Indexer\ActionInterface, \Magento\Fr
      *
      * @param int[] $ids
      * @return void
-     * @throws IndexMutexException
      */
     public function executeList(array $ids)
     {
@@ -137,7 +118,6 @@ class Product implements \Magento\Framework\Indexer\ActionInterface, \Magento\Fr
      *
      * @param int $id
      * @return void
-     * @throws IndexMutexException
      */
     public function executeRow($id)
     {
@@ -149,22 +129,18 @@ class Product implements \Magento\Framework\Indexer\ActionInterface, \Magento\Fr
      *
      * @param int[] $ids
      * @return $this
-     * @throws IndexMutexException
      */
     protected function executeAction($ids)
     {
         $ids = array_unique($ids);
         $indexer = $this->indexerRegistry->get(static::INDEXER_ID);
 
+        /** @var Product\Action\Rows $action */
+        $action = $this->rowsActionFactory->create();
         if ($indexer->isScheduled()) {
-            $this->indexMutex->execute(
-                static::INDEXER_ID,
-                function () use ($ids) {
-                    $this->rowsActionFactory->create()->execute($ids, true);
-                }
-            );
+            $action->execute($ids, true);
         } else {
-            $this->rowsActionFactory->create()->execute($ids);
+            $action->execute($ids);
         }
 
         return $this;

@@ -7,8 +7,7 @@
 /**
  * Pager template
  *
- * @var \Magento\Theme\Block\Html\Pager $block
- * @var \Magento\Framework\Escaper $escaper
+ * @see \Magento\Theme\Block\Html\Pager
  */
 ?>
 <?php if ($block->getCollection()->getSize()): ?>
@@ -16,16 +15,15 @@
     <?php if ($block->getUseContainer()): ?>
     <div class="pager">
     <?php endif ?>
-
         <?php if ($block->getShowAmounts()): ?>
         <p class="toolbar-amount">
             <span class="toolbar-number">
             <?php if ($block->getLastPageNum()>1): ?>
                 <?= $block->escapeHtml(
                     __('Items %1 to %2 of %3 total', $block->getFirstNum(), $block->getLastNum(), $block->getTotalNum())
-                ) ?>
+                )?>
             <?php elseif ($block->getTotalNum() == 1): ?>
-                <?= $block->escapeHtml(__('%1 Item', $block->getTotalNum())) ?>
+                <?= $block->escapeHtml(__('%1 Item', $block->getTotalNum()))?>
             <?php else: ?>
                 <?= $block->escapeHtml(__('%1 Item(s)', $block->getTotalNum())) ?>
             <?php endif; ?>
@@ -62,10 +60,6 @@
                 <li class="item">
                     <a class="page previous jump"
                        title=""
-                       aria-label="<?= $escaper->escapeHtmlAttr(__(
-                           'Skip to page %1',
-                           $block->getPreviousJumpPage()
-                       )) ?>"
                        href="<?= $block->escapeUrl($block->getPreviousJumpUrl()) ?>">
                         <span>...</span>
                     </a>
@@ -92,13 +86,7 @@
 
             <?php if ($block->canShowNextJump()): ?>
                 <li class="item">
-                    <a class="page next jump"
-                       title=""
-                       aria-label="<?= $escaper->escapeHtmlAttr(__(
-                           'Skip to page %1',
-                           $block->getNextJumpPage()
-                       )) ?>"
-                       href="<?= $block->escapeUrl($block->getNextJumpUrl()) ?>">
+                    <a class="page next jump" title="" href="<?= $block->escapeUrl($block->getNextJumpUrl()) ?>">
                         <span>...</span>
                     </a>
                 </li>
@@ -144,7 +132,7 @@
         </div>
     <?php endif ?>
 
-    <?php if ($block->getUseContainer()): ?>
+    <?php if ($block->getUseContainer()):?>
     </div>
     <?php endif ?>
 

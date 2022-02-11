@@ -53,7 +53,7 @@ class Query implements \JsonSerializable
     }
 
     /**
-     * Returns query select
+     * Get select
      *
      * @return Select
      */
@@ -63,7 +63,7 @@ class Query implements \JsonSerializable
     }
 
     /**
-     * Returns Connection name
+     * Get connection name
      *
      * @return string
      */
@@ -73,7 +73,7 @@ class Query implements \JsonSerializable
     }
 
     /**
-     * Returns configuration
+     * Get config
      *
      * @return array
      */
@@ -83,9 +83,12 @@ class Query implements \JsonSerializable
     }
 
     /**
-     * @inheritDoc
+     * Specify data which should be serialized to JSON
+     *
+     * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
+     * @return mixed data which can be serialized by <b>json_encode</b>,
+     * which is a value of any type other than a resource.
      */
-    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return [

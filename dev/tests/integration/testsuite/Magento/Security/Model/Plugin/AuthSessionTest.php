@@ -6,9 +6,7 @@
 namespace Magento\Security\Model\Plugin;
 
 /**
- * @magentoAppArea adminhtml
  * @magentoAppIsolation enabled
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class AuthSessionTest extends \PHPUnit\Framework\TestCase
 {
@@ -95,7 +93,7 @@ class AuthSessionTest extends \PHPUnit\Framework\TestCase
         );
         $adminSessionInfoId = $this->authSession->getAdminSessionInfoId();
         $prolongsDiff = log($this->securityConfig->getAdminSessionLifetime()) - 2; // X from comment above
-        $dateInPast = $this->dateTime->formatDate((int) ($this->authSession->getUpdatedAt() - $prolongsDiff));
+        $dateInPast = $this->dateTime->formatDate($this->authSession->getUpdatedAt() - $prolongsDiff);
         $this->adminSessionsManager->getCurrentSession()
             ->setData(
                 'updated_at',
@@ -110,7 +108,6 @@ class AuthSessionTest extends \PHPUnit\Framework\TestCase
 
         $this->assertSame(strtotime($oldUpdatedAt), strtotime($updatedAt));
     }
-
     /**
      * Test of prolong user action
      * session manager will trigger new prolong if previous prolong was more than X sec ago
@@ -127,7 +124,7 @@ class AuthSessionTest extends \PHPUnit\Framework\TestCase
         );
         $adminSessionInfoId = $this->authSession->getAdminSessionInfoId();
         $prolongsDiff = 4 * log($this->securityConfig->getAdminSessionLifetime()) + 2; // X from comment above
-        $dateInPast = $this->dateTime->formatDate((int) ($this->authSession->getUpdatedAt() - $prolongsDiff));
+        $dateInPast = $this->dateTime->formatDate($this->authSession->getUpdatedAt() - $prolongsDiff);
         $this->adminSessionsManager->getCurrentSession()
             ->setData(
                 'updated_at',
@@ -141,47 +138,5 @@ class AuthSessionTest extends \PHPUnit\Framework\TestCase
         $updatedAt = $this->adminSessionInfo->getUpdatedAt();
 
         $this->assertGreaterThan(strtotime($oldUpdatedAt), strtotime($updatedAt));
-    }
-
-    /**
-     * Test processing prolong with an expired user.
-     *
-     * @magentoDbIsolation enabled
-     */
-    public function testProcessProlongWithExpiredUser()
-    {
-        $this->auth->login(
-            \Magento\TestFramework\Bootstrap::ADMIN_NAME,
-            \Magento\TestFramework\Bootstrap::ADMIN_PASSWORD
-        );
-
-        $expireDate = new \DateTime();
-        $expireDate->modify('-10 days');
-        /** @var \Magento\User\Model\User $user */
-        $user = $this->objectManager->create(\Magento\User\Model\User::class);
-        $user->loadByUsername(\Magento\TestFramework\Bootstrap::ADMIN_NAME);
-        $userExpirationFactory =
-            $this->objectManager->create(\Magento\Security\Api\Data\UserExpirationInterfaceFactory::class);
-        /** @var \Magento\Security\Api\Data\UserExpirationInterface $userExpiration */
-        $userExpiration = $userExpirationFactory->create();
-        $userExpiration->setId($user->getId())
-            ->setExpiresAt($expireDate->format('Y-m-d H:i:s'))
-            ->save();
-
-        // need to trigger a prolong
-        $adminSessionInfoId = $this->authSession->getAdminSessionInfoId();
-        $prolongsDiff = 4 * log($this->securityConfig->getAdminSessionLifetime()) + 2;
-        $dateInPast = $this->dateTime->formatDate((int) ($this->authSession->getUpdatedAt() - $prolongsDiff));
-        $this->adminSessionsManager->getCurrentSession()
-            ->setData(
-                'updated_at',
-                $dateInPast
-            )
-            ->save();
-        $this->adminSessionInfo->load($adminSessionInfoId, 'id');
-        $this->authSession->prolong();
-        static::assertFalse($this->auth->isLoggedIn());
-        $user->reload();
-        static::assertFalse((bool)$user->getIsActive());
     }
 }

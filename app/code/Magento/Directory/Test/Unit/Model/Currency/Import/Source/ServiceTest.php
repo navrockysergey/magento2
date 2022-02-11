@@ -3,40 +3,27 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Directory\Test\Unit\Model\Currency\Import\Source;
 
-use Magento\Directory\Model\Currency\Import\Config;
-use Magento\Directory\Model\Currency\Import\Source\Service;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-
-class ServiceTest extends TestCase
+class ServiceTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var Service
+     * @var \Magento\Directory\Model\Currency\Import\Source\Service
      */
     protected $_model;
 
     /**
-     * @var Config|MockObject
+     * @var \Magento\Directory\Model\Currency\Import\Config|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $_importConfig;
 
-    /**
-     * @inheritdoc
-     */
     protected function setUp(): void
     {
-        $this->_importConfig = $this->createMock(Config::class);
-        $this->_model = new Service($this->_importConfig);
+        $this->_importConfig = $this->createMock(\Magento\Directory\Model\Currency\Import\Config::class);
+        $this->_model = new \Magento\Directory\Model\Currency\Import\Source\Service($this->_importConfig);
     }
 
-    /**
-     * @return void
-     */
-    public function testToOptionArray(): void
+    public function testToOptionArray()
     {
         $this->_importConfig->expects(
             $this->once()
@@ -45,10 +32,24 @@ class ServiceTest extends TestCase
         )->willReturn(
             ['service_one', 'service_two']
         );
-        $this->_importConfig
-            ->method('getServiceLabel')
-            ->withConsecutive(['service_one'], ['service_two'])
-            ->willReturnOnConsecutiveCalls('Service One', 'Service Two');
+        $this->_importConfig->expects(
+            $this->at(1)
+        )->method(
+            'getServiceLabel'
+        )->with(
+            'service_one'
+        )->willReturn(
+            'Service One'
+        );
+        $this->_importConfig->expects(
+            $this->at(2)
+        )->method(
+            'getServiceLabel'
+        )->with(
+            'service_two'
+        )->willReturn(
+            'Service Two'
+        );
         $expectedResult = [
             ['value' => 'service_one', 'label' => 'Service One'],
             ['value' => 'service_two', 'label' => 'Service Two'],

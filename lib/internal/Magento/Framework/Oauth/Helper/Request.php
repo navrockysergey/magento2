@@ -6,11 +6,8 @@
 namespace Magento\Framework\Oauth\Helper;
 
 use Magento\Framework\App\RequestInterface;
-use Laminas\Uri\UriFactory;
+use Zend\Uri\UriFactory;
 
-/**
- * Request helper
- */
 class Request
 {
     /**#@+
@@ -84,9 +81,7 @@ class Request
             return [];
         }
 
-        if ($requestBodyString !== null && $contentTypeHeader &&
-            0 === strpos($contentTypeHeader, \Zend_Http_Client::ENC_URLENCODED)
-        ) {
+        if ($contentTypeHeader && 0 === strpos($contentTypeHeader, \Zend_Http_Client::ENC_URLENCODED)) {
             $protocolParamsNotSet = !$protocolParams;
 
             parse_str($requestBodyString, $protocolBodyParams);
@@ -115,7 +110,7 @@ class Request
     /**
      * Retrieve protocol parameters from query string
      *
-     * @param array $protocolParams
+     * @param array &$protocolParams
      * @param array $queryString
      * @return void
      */

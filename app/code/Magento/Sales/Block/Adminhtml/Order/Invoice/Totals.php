@@ -5,7 +5,6 @@
  */
 namespace Magento\Sales\Block\Adminhtml\Order\Invoice;
 
-use Magento\Framework\DataObject;
 use Magento\Sales\Model\Order\Invoice;
 
 /**

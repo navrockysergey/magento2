@@ -3,32 +3,12 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Elasticsearch\Test\Unit\Model\Indexer;
 
-use Magento\CatalogSearch\Model\Indexer\Fulltext\Processor;
-use Magento\AdvancedSearch\Model\Client\ClientInterface;
-use Magento\Elasticsearch\Model\Adapter\Elasticsearch;
-use Magento\Elasticsearch\Model\Adapter\Index\IndexNameResolver;
-use Magento\Elasticsearch\Model\Indexer\IndexerHandler;
-use Magento\Framework\App\ScopeInterface;
-use Magento\Framework\App\ScopeResolverInterface;
-use Magento\Framework\Indexer\IndexerInterface;
-use Magento\Framework\Indexer\IndexStructureInterface;
-use Magento\Framework\Indexer\SaveHandler\Batch;
-use Magento\Framework\Search\Request\Dimension;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManagerHelper;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-use Magento\Framework\App\DeploymentConfig;
-use Magento\Framework\Indexer\CacheContext;
+use Magento\Elasticsearch\Model\Indexer\IndexerHandler;
 
-/**
- * Test for \Magento\Elasticsearch\Model\Indexer\IndexerHandler
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
- */
-class IndexerHandlerTest extends TestCase
+class IndexerHandlerTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var IndexerHandler
@@ -36,64 +16,44 @@ class IndexerHandlerTest extends TestCase
     private $model;
 
     /**
-     * @var Elasticsearch|MockObject
+     * @var \Magento\Elasticsearch\Model\Adapter\Elasticsearch|\PHPUnit\Framework\MockObject\MockObject
      */
     private $adapter;
 
     /**
-     * @var Batch|MockObject
+     * @var \Magento\Framework\Indexer\SaveHandler\Batch|\PHPUnit\Framework\MockObject\MockObject
      */
     private $batch;
 
     /**
-     * @var \Magento\Elasticsearch\Model\Adapter\ElasticsearchFactory|MockObject
+     * @var \Magento\Elasticsearch\Model\Adapter\ElasticsearchFactory|\PHPUnit\Framework\MockObject\MockObject
      */
     private $adapterFactory;
 
     /**
-     * @var IndexStructureInterface|MockObject
+     * @var \Magento\Framework\Indexer\IndexStructureInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $indexStructure;
 
     /**
-     * @var IndexNameResolver|MockObject
+     * @var \Magento\Elasticsearch\Model\Adapter\Index\IndexNameResolver|\PHPUnit\Framework\MockObject\MockObject
      */
     private $indexNameResolver;
 
     /**
-     * @var ClientInterface|MockObject
+     * @var \Magento\Elasticsearch\Model\Client\Elasticsearch|\PHPUnit\Framework\MockObject\MockObject
      */
     private $client;
 
     /**
-     * @var ScopeResolverInterface|MockObject
+     * @var \Magento\Framework\App\ScopeResolverInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $scopeResolver;
 
     /**
-     * @var ScopeInterface|MockObject
+     * @var \Magento\Framework\App\ScopeInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $scopeInterface;
-
-    /**
-     * @var Processor|MockObject
-     */
-    private $processor;
-
-    /**
-     * @var IndexerInterface|MockObject
-     */
-    private $indexer;
-
-    /**
-     * @var CacheContext|MockObject
-     */
-    private $cacheContext;
-
-    /**
-     * @var DeploymentConfig|MockObject
-     */
-    private $deploymentConfig;
 
     /**
      * Set up test environment.
@@ -102,7 +62,7 @@ class IndexerHandlerTest extends TestCase
      */
     protected function setUp(): void
     {
-        $this->adapter = $this->getMockBuilder(Elasticsearch::class)
+        $this->adapter = $this->getMockBuilder(\Magento\Elasticsearch\Model\Adapter\Elasticsearch::class)
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -115,68 +75,52 @@ class IndexerHandlerTest extends TestCase
             ->method('create')
             ->willReturn($this->adapter);
 
-        $this->batch = $this->getMockBuilder(Batch::class)
+        $this->batch = $this->getMockBuilder(\Magento\Framework\Indexer\SaveHandler\Batch::class)
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->indexStructure = $this->getMockBuilder(IndexStructureInterface::class)
+        $this->indexStructure = $this->getMockBuilder(\Magento\Framework\Indexer\IndexStructureInterface::class)
             ->disableOriginalConstructor()
-            ->getMockForAbstractClass();
+            ->getMock();
 
         $this->indexNameResolver = $this->getMockBuilder(
-            IndexNameResolver::class
+            \Magento\Elasticsearch\Model\Adapter\Index\IndexNameResolver::class
         )
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->client = $this->getMockBuilder(ClientInterface::class)
-            ->setMethods(['ping', 'testConnection','prepareDocsPerStore','addDocs', 'cleanIndex'])
+        $this->client = $this->getMockBuilder(\Magento\Elasticsearch\Model\Client\Elasticsearch::class)
+            ->setMethods(['ping'])
             ->disableOriginalConstructor()
-            ->getMockForAbstractClass();
+            ->getMock();
 
         $this->scopeResolver = $this->getMockForAbstractClass(
-            ScopeResolverInterface::class,
+            \Magento\Framework\App\ScopeResolverInterface::class,
             [],
             '',
             false
         );
-
-        $this->processor = $this->getMockBuilder(Processor::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->indexer = $this->getMockBuilder(IndexerInterface::class)
-            ->disableOriginalConstructor()
-            ->getMockForAbstractClass();
-        $this->processor->expects($this->any())
-            ->method('getIndexer')
-            ->willReturn($this->indexer);
-
-        $this->deploymentConfig = $this->getMockBuilder(DeploymentConfig::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $this->cacheContext = $this->getMockBuilder(CacheContext::class)
-            ->disableOriginalConstructor()
-            ->getMock();
 
         $this->scopeInterface = $this->getMockForAbstractClass(
-            ScopeInterface::class,
+            \Magento\Framework\App\ScopeInterface::class,
             [],
             '',
             false
         );
 
-        $this->model = new IndexerHandler(
-            $this->indexStructure,
-            $this->adapter,
-            $this->indexNameResolver,
-            $this->batch,
-            $this->scopeResolver,
-            ['indexer_id' => 'catalogsearch_fulltext'],
-            500,
-            $this->deploymentConfig,
-            $this->cacheContext,
-            $this->processor
+        $objectManager = new ObjectManagerHelper($this);
+
+        $this->model = $objectManager->getObject(
+            \Magento\Elasticsearch\Model\Indexer\IndexerHandler::class,
+            [
+                'indexStructure' => $this->indexStructure,
+                'adapter' => $this->adapter,
+                'indexNameResolver' => $this->indexNameResolver,
+                'batch' => $this->batch,
+                'data' => ['indexer_id' => 'catalogsearch_fulltext'],
+                500,
+                'scopeResolver' => $this->scopeResolver
+            ]
         );
     }
 
@@ -200,7 +144,7 @@ class IndexerHandlerTest extends TestCase
         $dimensionValue = 3;
         $documentId = 123;
 
-        $dimension = $this->getMockBuilder(Dimension::class)
+        $dimension = $this->getMockBuilder(\Magento\Framework\Search\Request\Dimension::class)
             ->disableOriginalConstructor()
             ->getMock();
         $dimension->expects($this->once())
@@ -222,10 +166,9 @@ class IndexerHandlerTest extends TestCase
     {
         $dimensionValue = 3;
         $documentId = 123;
-        $document = ['entity_id' => $documentId, 'category_ids' => [1, 2]];
-        $documents = new \ArrayIterator([$document]);
+        $documents = new \ArrayIterator([$documentId]);
 
-        $dimension = $this->getMockBuilder(Dimension::class)
+        $dimension = $this->getMockBuilder(\Magento\Framework\Search\Request\Dimension::class)
             ->disableOriginalConstructor()
             ->getMock();
         $dimension->expects($this->once())
@@ -240,22 +183,16 @@ class IndexerHandlerTest extends TestCase
         $this->adapter->expects($this->once())
             ->method('prepareDocsPerStore')
             ->with([], $dimensionValue)
-            ->willReturn([$document]);
+            ->willReturn([$documentId]);
         $this->adapter->expects($this->once())
             ->method('addDocs')
-            ->with([$document]);
+            ->with([$documentId]);
         $this->scopeResolver->expects($this->once())
             ->method('getScope')
             ->willReturn($this->scopeInterface);
         $this->scopeInterface->expects($this->once())
             ->method('getId')
             ->willReturn($dimensionValue);
-
-        $this->indexer->expects($this->once())
-            ->method('isScheduled')
-            ->willReturn(true);
-        $this->cacheContext->expects($this->once())
-            ->method('registerEntities');
 
         $result = $this->model->saveIndex([$dimension], $documents);
 
@@ -269,7 +206,7 @@ class IndexerHandlerTest extends TestCase
     {
         $dimensionValue = 'SomeDimension';
 
-        $dimension = $this->getMockBuilder(Dimension::class)
+        $dimension = $this->getMockBuilder(\Magento\Framework\Search\Request\Dimension::class)
             ->disableOriginalConstructor()
             ->getMock();
         $dimension->expects($this->any())
@@ -291,7 +228,7 @@ class IndexerHandlerTest extends TestCase
     {
         $objectManager = new ObjectManagerHelper($this);
         $model = $objectManager->getObject(
-            IndexerHandler::class,
+            \Magento\Elasticsearch\Model\Indexer\IndexerHandler::class,
             [
                 'adapterFactory' => $this->adapterFactory,
                 'batch' => $this->batch,
@@ -300,7 +237,7 @@ class IndexerHandlerTest extends TestCase
         );
         $dimensionValue = 'SomeDimension';
 
-        $dimension = $this->getMockBuilder(Dimension::class)
+        $dimension = $this->getMockBuilder(\Magento\Framework\Search\Request\Dimension::class)
             ->disableOriginalConstructor()
             ->getMock();
         $dimension->expects($this->any())
@@ -313,46 +250,5 @@ class IndexerHandlerTest extends TestCase
         $result = $model->cleanIndex([$dimension]);
 
         $this->assertEquals($model, $result);
-    }
-
-    /**
-     * Test mapping data is updated for index.
-     *
-     * @return void
-     */
-    public function testUpdateIndex(): void
-    {
-        $dimensionValue = 'SomeDimension';
-        $indexMapping = 'some_index_mapping';
-        $attributeCode = 'example_attribute_code';
-
-        $dimension = $this->getMockBuilder(Dimension::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $dimension->expects($this->once())
-            ->method('getValue')
-            ->willReturn($dimensionValue);
-
-        $this->scopeResolver->expects($this->once())
-            ->method('getScope')
-            ->with($dimensionValue)
-            ->willReturn($this->scopeInterface);
-
-        $this->scopeInterface->expects($this->once())
-            ->method('getId')
-            ->willReturn(1);
-
-        $this->indexNameResolver->expects($this->once())
-            ->method('getIndexMapping')
-            ->with('catalogsearch_fulltext')
-            ->willReturn($indexMapping);
-
-        $this->adapter->expects($this->once())
-            ->method('updateIndexMapping')
-            ->with(1, $indexMapping, $attributeCode)
-            ->willReturnSelf();
-
-        $this->model->updateIndex([$dimension], $attributeCode);
     }
 }

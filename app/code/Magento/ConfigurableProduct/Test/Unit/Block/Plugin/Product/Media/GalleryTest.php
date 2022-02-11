@@ -3,22 +3,18 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\ConfigurableProduct\Test\Unit\Block\Plugin\Product\Media;
 
-use Magento\Catalog\Model\Product;
 use Magento\ConfigurableProduct\Block\Plugin\Product\Media\Gallery;
-use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
-use Magento\Framework\DataObject;
-use Magento\Framework\Data\Collection as DataCollection;
+use Magento\Catalog\Model\Product;
 use Magento\Framework\Serialize\Serializer\Json;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class GalleryTest extends TestCase
+/**
+ * Class GalleryTest
+ */
+class GalleryTest extends \PHPUnit\Framework\TestCase
 {
+
     public function testAfterGetOptions()
     {
         $jsonMock = $this->createJsonMock();
@@ -38,27 +34,22 @@ class GalleryTest extends TestCase
                 ]
             ]
         ];
-        $image = new DataObject(
+        $image = new \Magento\Framework\DataObject(
             ['media_type' => 'type', 'video_url' => 'url', 'file' => 'image.jpg']
         );
 
-        $dataCollection = $this->getMockBuilder(DataCollection::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['getItems'])
-            ->getMock();
         $galleryMock->expects(($this->any()))->method('getProduct')->willReturn($productMock);
         $productMock->expects($this->once())->method('getTypeId')->willReturn('configurable');
         $productMock->expects($this->once())->method('getTypeInstance')->willReturn($configurableTypeMock);
         $configurableTypeMock->expects($this->once())->method('getUsedProducts')->with($productMock)
             ->willReturn([$variationProductMock]);
         $variationProductMock->expects($this->once())->method('getId')->willReturn($variationProductId);
-        $variationProductMock->expects($this->once())->method('getMediaGalleryImages')->willReturn($dataCollection);
-        $dataCollection->expects($this->once())->method('getItems')->willReturn([$image]);
+        $variationProductMock->expects($this->once())->method('getMediaGalleryImages')->willReturn([$image]);
         $variationProductMock->expects($this->once())->method('getImage')->willReturn('image.jpg');
         $jsonMock->expects($this->once())->method('serialize')->with($expectedGalleryJson)
             ->willReturn(json_encode($expectedGalleryJson));
 
-        $helper = new ObjectManager($this);
+        $helper = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
         $plugin = $helper->getObject(
             Gallery::class,
             [
@@ -70,7 +61,7 @@ class GalleryTest extends TestCase
     }
 
     /**
-     * @return MockObject
+     * @return \PHPUnit\Framework\MockObject\MockObject
      */
     private function createJsonMock()
     {
@@ -80,7 +71,7 @@ class GalleryTest extends TestCase
     }
 
     /**
-     * @return MockObject
+     * @return \PHPUnit\Framework\MockObject\MockObject
      */
     private function createProductMock()
     {
@@ -90,7 +81,7 @@ class GalleryTest extends TestCase
     }
 
     /**
-     * @return MockObject
+     * @return \PHPUnit\Framework\MockObject\MockObject
      */
     private function createGalleryMock()
     {
@@ -100,11 +91,11 @@ class GalleryTest extends TestCase
     }
 
     /**
-     * @return MockObject
+     * @return \PHPUnit\Framework\MockObject\MockObject
      */
     private function createConfigurableTypeMock()
     {
-        return $this->getMockBuilder(Configurable::class)
+        return $this->getMockBuilder(\Magento\ConfigurableProduct\Model\Product\Type\Configurable::class)
             ->disableOriginalConstructor()
             ->getMock();
     }

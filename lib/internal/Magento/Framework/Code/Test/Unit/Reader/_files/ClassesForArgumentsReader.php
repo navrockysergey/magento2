@@ -48,51 +48,22 @@ class ClassWithAllArgumentTypes
     protected $_constValue;
 
     /**
-     * Test property without specified type
-     */
-    private $noType;
-
-    /**
-     * @var null
-     */
-    private $optNullValue;
-
-    /**
-     * @var int|null
-     */
-    private ?int $optNullIntValue;
-
-    /**
-     * @var null
-     */
-    private $optNoTypeValue;
-
-    /**
      * @param stdClass $stdClassObject
      * @param ClassWithoutConstruct $withoutConstructorClassObject
      * @param mixed $someVariable
-     * @param $noType
      * @param string $const
      * @param int $optionalNumValue
      * @param string $optionalStringValue
      * @param array $optionalArrayValue
-     * @param null $optNullValue
-     * @param null|int $optNullIntValue first type from defined will be used
-     * @param $optNoTypeValue
-     * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
         \stdClass $stdClassObject,
         \ClassWithoutConstruct $withoutConstructorClassObject,
         $someVariable,
-        $noType,
         $const = \ClassWithAllArgumentTypes::DEFAULT_VALUE,
         $optionalNumValue = 9807,
         $optionalStringValue = 'optional string',
-        $optionalArrayValue = ['optionalKey' => 'optionalValue'],
-        $optNullValue = null,
-        $optNullIntValue = 1,
-        $optNoTypeValue = null
+        $optionalArrayValue = ['optionalKey' => 'optionalValue']
     ) {
         $this->_stdClassObject = $stdClassObject;
         $this->_withoutConstructorClassObject = $withoutConstructorClassObject;
@@ -101,10 +72,6 @@ class ClassWithAllArgumentTypes
         $this->_optionalStringValue = $optionalStringValue;
         $this->_optionalArrayValue = $optionalArrayValue;
         $this->_constValue = $const;
-        $this->noType = $noType;
-        $this->optNullValue = $optNullValue;
-        $this->optNullIntValue = $optNullIntValue;
-        $this->optNoTypeValue = $optNoTypeValue;
     }
 }
 class ClassWithoutOwnConstruct extends ClassWithAllArgumentTypes

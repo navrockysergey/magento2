@@ -3,30 +3,16 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-
 namespace Magento\Cms\Helper\Wysiwyg;
 
-use Exception;
-use InvalidArgumentException;
-use Magento\Backend\Helper\Data;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\App\Helper\AbstractHelper;
-use Magento\Framework\App\Helper\Context;
-use Magento\Framework\Escaper;
-use Magento\Framework\Exception\FileSystemException;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Filesystem;
-use Magento\Framework\Filesystem\Directory\Read;
-use Magento\Framework\Filesystem\Directory\Write;
-use Magento\Framework\UrlInterface;
-use Magento\Store\Model\StoreManagerInterface;
-use Magento\Theme\Helper\Storage;
 
 /**
  * Wysiwyg Images Helper.
+ *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class Images extends AbstractHelper
+class Images extends \Magento\Framework\App\Helper\AbstractHelper
 {
     /**
      * Image directory subpath relative to media directory
@@ -37,14 +23,12 @@ class Images extends AbstractHelper
 
     /**
      * Current directory path
-     *
      * @var string
      */
     protected $_currentPath;
 
     /**
      * Current directory URL
-     *
      * @var string
      */
     protected $_currentUrl;
@@ -57,51 +41,51 @@ class Images extends AbstractHelper
     protected $_storeId;
 
     /**
-     * @var Write
+     * @var \Magento\Framework\Filesystem\Directory\Write
      */
     protected $_directory;
 
     /**
      * Adminhtml data
      *
-     * @var Data
+     * @var \Magento\Backend\Helper\Data
      */
     protected $_backendData;
 
     /**
      * Store manager
      *
-     * @var StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
     /**
      * String escaper
      *
-     * @var Escaper
+     * @var \Magento\Framework\Escaper
      */
     protected $escaper;
 
     /**
-     * @var Read
+     * @var \Magento\Framework\Filesystem\Directory\Read
      */
     private $_readDirectory;
 
     /**
      * Construct
      *
-     * @param Context $context
-     * @param Data $backendData
-     * @param Filesystem $filesystem
-     * @param StoreManagerInterface $storeManager
-     * @param Escaper $escaper
+     * @param \Magento\Framework\App\Helper\Context $context
+     * @param \Magento\Backend\Helper\Data $backendData
+     * @param \Magento\Framework\Filesystem $filesystem
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param \Magento\Framework\Escaper $escaper
      */
     public function __construct(
-        Context $context,
-        Data $backendData,
-        Filesystem $filesystem,
-        StoreManagerInterface $storeManager,
-        Escaper $escaper
+        \Magento\Framework\App\Helper\Context $context,
+        \Magento\Backend\Helper\Data $backendData,
+        \Magento\Framework\Filesystem $filesystem,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Framework\Escaper $escaper
     ) {
         parent::__construct($context);
         $this->_backendData = $backendData;
@@ -152,7 +136,7 @@ class Images extends AbstractHelper
      */
     public function getBaseUrl()
     {
-        return $this->_storeManager->getStore()->getBaseUrl(UrlInterface::URL_TYPE_MEDIA);
+        return $this->_storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA);
     }
 
     /**
@@ -182,19 +166,18 @@ class Images extends AbstractHelper
      *
      * @param string $id
      * @return string
-     * @throws InvalidArgumentException
+     * @throws \InvalidArgumentException When path contains restricted symbols.
      */
     public function convertIdToPath($id)
     {
-        if ($id === Storage::NODE_ROOT) {
+        if ($id === \Magento\Theme\Helper\Storage::NODE_ROOT) {
             return $this->getStorageRoot();
         } else {
             $path = $this->getStorageRoot() . $this->idDecode($id);
-
             try {
                 $this->_readDirectory->getAbsolutePath($path);
-            } catch (Exception $e) {
-                throw new InvalidArgumentException('Path is invalid');
+            } catch (\Exception $e) {
+                throw new \InvalidArgumentException('Path is invalid');
             }
 
             return $path;
@@ -208,7 +191,7 @@ class Images extends AbstractHelper
      */
     public function isUsingStaticUrlsAllowed()
     {
-        $checkResult = (object)[];
+        $checkResult = (object) [];
         $checkResult->isAllowed = false;
         $this->_eventManager->dispatch(
             'cms_wysiwyg_images_static_urls_allowed',
@@ -227,7 +210,7 @@ class Images extends AbstractHelper
     public function getImageHtmlDeclaration($filename, $renderAsTag = false)
     {
         $fileUrl = $this->getCurrentUrl() . $filename;
-        $mediaUrl = $this->_storeManager->getStore($this->_storeId)->getBaseUrl(UrlInterface::URL_TYPE_MEDIA);
+        $mediaUrl = $this->_storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA);
         $mediaPath = str_replace($mediaUrl, '', $fileUrl);
         $directive = sprintf('{{media url="%s"}}', $mediaPath);
         if ($renderAsTag) {
@@ -251,10 +234,12 @@ class Images extends AbstractHelper
     }
 
     /**
-     * Return path of the root directory for startup. Also try to create target directory if it doesn't exist
+     * Return path of the current selected directory or root directory for startup
+     *
+     * Try to create target directory if it doesn't exist
      *
      * @return string
-     * @throws LocalizedException
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getCurrentPath()
     {
@@ -267,40 +252,18 @@ class Images extends AbstractHelper
                     $currentPath = $path;
                 }
             }
-
-            $currentTreePath = $this->_getRequest()->getParam('current_tree_path');
-            if ($currentTreePath) {
-                $currentTreePath = $this->convertIdToPath($currentTreePath);
-                $this->createSubDirIfNotExist($currentTreePath);
+            try {
+                $currentDir = $this->_directory->getRelativePath($currentPath);
+                if (!$this->_directory->isExist($currentDir)) {
+                    $this->_directory->create($currentDir);
+                }
+            } catch (\Magento\Framework\Exception\FileSystemException $e) {
+                $message = __('The directory %1 is not writable by server.', $currentPath);
+                throw new \Magento\Framework\Exception\LocalizedException($message);
             }
-
             $this->_currentPath = $currentPath;
         }
-
         return $this->_currentPath;
-    }
-
-    /**
-     * Create subdirectory if doesn't exist
-     *
-     * @param string $absPath Path of subdirectory to create
-     * @throws LocalizedException
-     */
-    private function createSubDirIfNotExist(string $absPath)
-    {
-        $relPath = $this->_directory->getRelativePath($absPath);
-        if (!$this->_directory->isExist($relPath)) {
-            try {
-                $this->_directory->create($relPath);
-            } catch (FileSystemException $e) {
-                $message = __(
-                    'Can\'t create %1 as subdirectory of %2, you might have some permission issue.',
-                    $relPath,
-                    $this->_directory->getAbsolutePath()
-                );
-                throw new LocalizedException($message);
-            }
-        }
     }
 
     /**
@@ -315,7 +278,7 @@ class Images extends AbstractHelper
             $mediaUrl = $this->_storeManager->getStore(
                 $this->_storeId
             )->getBaseUrl(
-                UrlInterface::URL_TYPE_MEDIA
+                \Magento\Framework\UrlInterface::URL_TYPE_MEDIA
             );
             $this->_currentUrl = rtrim($mediaUrl . $this->_directory->getRelativePath($path), '/') . '/';
         }
@@ -342,8 +305,7 @@ class Images extends AbstractHelper
     public function idDecode($string)
     {
         $string = strtr($string, ':_-', '+/=');
-
-        // phpcs:ignore Magento2.Functions.DiscouragedFunction
+        //phpcs:ignore Magento2.Functions.DiscouragedFunction
         return base64_decode($string);
     }
 

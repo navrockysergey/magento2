@@ -3,7 +3,7 @@
  * See COPYING.txt for license details.
  */
 /*browser:true*/
-
+/*global define*/
 define(
     [
         'Magento_Checkout/js/view/payment/default',
@@ -105,7 +105,7 @@ define(
             },
 
             /**
-             * Return state of place order button.
+             * Returns state of place order button.
              *
              * @return {Boolean}
              */

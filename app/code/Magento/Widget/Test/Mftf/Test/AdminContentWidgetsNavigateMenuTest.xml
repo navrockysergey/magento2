@@ -18,13 +18,12 @@
             <testCaseId value="MC-14147"/>
             <group value="menu"/>
             <group value="mtf_migrated"/>
-            <group value="pr_exclude"/>
         </annotations>
         <before>
-            <actionGroup ref="AdminLoginActionGroup" stepKey="LoginAsAdmin"/>
+            <actionGroup ref="LoginAsAdmin" stepKey="LoginAsAdmin"/>
         </before>
         <after>
-            <actionGroup ref="AdminLogoutActionGroup" stepKey="logout"/>
+            <actionGroup ref="logout" stepKey="logout"/>
         </after>
         <actionGroup ref="AdminNavigateMenuActionGroup" stepKey="navigateToContentWidgetsPage">
             <argument name="menuUiId" value="{{AdminMenuContent.dataUiId}}"/>

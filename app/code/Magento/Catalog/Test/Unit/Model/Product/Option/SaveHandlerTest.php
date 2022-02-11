@@ -3,51 +3,36 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
 
 namespace Magento\Catalog\Test\Unit\Model\Product\Option;
 
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Option;
-use Magento\Catalog\Model\Product\Option\Repository;
-use Magento\Catalog\Model\Product\Option\SaveHandler;
-use Magento\Catalog\Model\ResourceModel\Product\Relation;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use \Magento\Catalog\Model\Product\Option\Repository;
+use \Magento\Catalog\Model\Product\Option\SaveHandler;
 
-/**
- * Test for \Magento\Catalog\Model\Product\Option\SaveHandler.
- */
-class SaveHandlerTest extends TestCase
+class SaveHandlerTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var SaveHandler|MockObject
+     * @var SaveHandler|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $model;
 
     /**
-     * @var Product|MockObject
+     * @var Product|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $entity;
 
     /**
-     * @var Option|MockObject
+     * @var Option|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $optionMock;
 
     /**
-     * @var Repository|MockObject
+     * @var Repository|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $optionRepository;
 
-    /**
-     * @var Relation|MockObject
-     */
-    private $relationMock;
-
-    /**
-     * @inheridoc
-     */
     protected function setUp(): void
     {
         $this->entity = $this->getMockBuilder(Product::class)
@@ -59,19 +44,11 @@ class SaveHandlerTest extends TestCase
         $this->optionRepository = $this->getMockBuilder(Repository::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->relationMock = $this->getMockBuilder(Relation::class)
-            ->disableOriginalConstructor()
-            ->getMock();
 
-        $this->model = new SaveHandler($this->optionRepository, $this->relationMock);
+        $this->model = new SaveHandler($this->optionRepository);
     }
 
-    /**
-     * Test for execute
-     *
-     * @return void
-     */
-    public function testExecute(): void
+    public function testExecute()
     {
         $this->optionMock->expects($this->any())->method('getOptionId')->willReturn(5);
         $this->entity->expects($this->once())->method('getOptions')->willReturn([$this->optionMock]);

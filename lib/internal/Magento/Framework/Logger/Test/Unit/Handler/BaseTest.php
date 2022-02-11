@@ -3,19 +3,12 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Framework\Logger\Test\Unit\Handler;
 
-use Magento\Framework\Filesystem\DriverInterface;
-use Magento\Framework\Logger\Handler\Base;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-
-class BaseTest extends TestCase
+class BaseTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var Base|MockObject
+     * @var \Magento\Framework\Logger\Handler\Base|\PHPUnit\Framework\MockObject\MockObject
      */
     private $model;
 
@@ -26,10 +19,10 @@ class BaseTest extends TestCase
 
     protected function setUp(): void
     {
-        $driverMock = $this->getMockBuilder(DriverInterface::class)
+        $driverMock = $this->getMockBuilder(\Magento\Framework\Filesystem\DriverInterface::class)
             ->disableOriginalConstructor()
-            ->getMockForAbstractClass();
-        $this->model = new Base($driverMock);
+            ->getMock();
+        $this->model = new \Magento\Framework\Logger\Handler\Base($driverMock);
 
         $class = new \ReflectionClass($this->model);
         $this->sanitizeMethod = $class->getMethod('sanitizeFileName');
@@ -60,5 +53,15 @@ class BaseTest extends TestCase
             'var/hack/custom.log',
             $this->sanitizeMethod->invokeArgs($this->model, ['../../../var/hack/custom.log'])
         );
+    }
+
+    /**
+     */
+    public function testSanitizeFileException()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Filename expected to be a string');
+
+        $this->sanitizeMethod->invokeArgs($this->model, [['filename' => 'notValid']]);
     }
 }

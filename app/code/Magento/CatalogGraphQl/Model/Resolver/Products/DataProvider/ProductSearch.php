@@ -8,11 +8,10 @@ declare(strict_types=1);
 namespace Magento\CatalogGraphQl\Model\Resolver\Products\DataProvider;
 
 use Magento\Catalog\Api\Data\ProductSearchResultsInterfaceFactory;
-use Magento\Catalog\Model\Product\Visibility;
 use Magento\Catalog\Model\ResourceModel\Product\Collection;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
+use Magento\CatalogGraphQl\Model\Resolver\Products\DataProvider\Product\CollectionPostProcessor;
 use Magento\CatalogGraphQl\Model\Resolver\Products\DataProvider\Product\CollectionProcessorInterface;
-use Magento\CatalogGraphQl\Model\Resolver\Products\DataProvider\Product\CollectionPostProcessorInterface;
 use Magento\CatalogGraphQl\Model\Resolver\Products\DataProvider\ProductSearch\ProductCollectionSearchCriteriaBuilder;
 use Magento\CatalogSearch\Model\ResourceModel\Fulltext\Collection\SearchResultApplierFactory;
 use Magento\CatalogSearch\Model\ResourceModel\Fulltext\Collection\SearchResultApplierInterface;
@@ -20,7 +19,6 @@ use Magento\Framework\Api\Search\SearchResultInterface;
 use Magento\Framework\Api\SearchCriteriaInterface;
 use Magento\Framework\Api\SearchResultsInterface;
 use Magento\Framework\App\ObjectManager;
-use Magento\GraphQl\Model\Query\ContextInterface;
 
 /**
  * Product field data provider for product search, used for GraphQL resolver processing.
@@ -43,7 +41,7 @@ class ProductSearch
     private $collectionPreProcessor;
 
     /**
-     * @var CollectionPostProcessorInterface
+     * @var CollectionPostProcessor
      */
     private $collectionPostProcessor;
 
@@ -58,35 +56,28 @@ class ProductSearch
     private $searchCriteriaBuilder;
 
     /**
-     * @var Visibility
-     */
-    private $catalogProductVisibility;
-
-    /**
      * @param CollectionFactory $collectionFactory
      * @param ProductSearchResultsInterfaceFactory $searchResultsFactory
      * @param CollectionProcessorInterface $collectionPreProcessor
-     * @param CollectionPostProcessorInterface $collectionPostProcessor
+     * @param CollectionPostProcessor $collectionPostProcessor
      * @param SearchResultApplierFactory $searchResultsApplierFactory
-     * @param ProductCollectionSearchCriteriaBuilder $searchCriteriaBuilder
-     * @param Visibility $catalogProductVisibility
+     * @param ProductCollectionSearchCriteriaBuilder|null $searchCriteriaBuilder
      */
     public function __construct(
         CollectionFactory $collectionFactory,
         ProductSearchResultsInterfaceFactory $searchResultsFactory,
         CollectionProcessorInterface $collectionPreProcessor,
-        CollectionPostProcessorInterface $collectionPostProcessor,
+        CollectionPostProcessor $collectionPostProcessor,
         SearchResultApplierFactory $searchResultsApplierFactory,
-        ProductCollectionSearchCriteriaBuilder $searchCriteriaBuilder,
-        Visibility $catalogProductVisibility
+        ?ProductCollectionSearchCriteriaBuilder $searchCriteriaBuilder = null
     ) {
         $this->collectionFactory = $collectionFactory;
         $this->searchResultsFactory = $searchResultsFactory;
         $this->collectionPreProcessor = $collectionPreProcessor;
         $this->collectionPostProcessor = $collectionPostProcessor;
         $this->searchResultApplierFactory = $searchResultsApplierFactory;
-        $this->searchCriteriaBuilder = $searchCriteriaBuilder;
-        $this->catalogProductVisibility = $catalogProductVisibility;
+        $this->searchCriteriaBuilder = $searchCriteriaBuilder
+            ?? ObjectManager::getInstance()->get(ProductCollectionSearchCriteriaBuilder::class);
     }
 
     /**
@@ -95,14 +86,12 @@ class ProductSearch
      * @param SearchCriteriaInterface $searchCriteria
      * @param SearchResultInterface $searchResult
      * @param array $attributes
-     * @param ContextInterface|null $context
      * @return SearchResultsInterface
      */
     public function getList(
         SearchCriteriaInterface $searchCriteria,
         SearchResultInterface $searchResult,
-        array $attributes = [],
-        ContextInterface $context = null
+        array $attributes = []
     ): SearchResultsInterface {
         /** @var Collection $collection */
         $collection = $this->collectionFactory->create();
@@ -116,17 +105,14 @@ class ProductSearch
             $this->getSortOrderArray($searchCriteriaForCollection)
         )->apply();
 
-        $collection->setFlag('search_resut_applied', true);
-
-        $collection->setVisibility($this->catalogProductVisibility->getVisibleInSiteIds());
-        $this->collectionPreProcessor->process($collection, $searchCriteriaForCollection, $attributes, $context);
+        $this->collectionPreProcessor->process($collection, $searchCriteriaForCollection, $attributes);
         $collection->load();
-        $this->collectionPostProcessor->process($collection, $attributes, $context);
+        $this->collectionPostProcessor->process($collection, $attributes);
 
         $searchResults = $this->searchResultsFactory->create();
         $searchResults->setSearchCriteria($searchCriteriaForCollection);
         $searchResults->setItems($collection->getItems());
-        $searchResults->setTotalCount($collection->getSize());
+        $searchResults->setTotalCount($searchResult->getTotalCount());
         return $searchResults;
     }
 
@@ -166,12 +152,6 @@ class ProductSearch
         $sortOrders = $searchCriteria->getSortOrders();
         if (is_array($sortOrders)) {
             foreach ($sortOrders as $sortOrder) {
-                // I am replacing _id with entity_id because in ElasticSearch _id is required for sorting by ID.
-                // Where as entity_id is required when using ID as the sort in $collection->load();.
-                // @see \Magento\CatalogGraphQl\Model\Resolver\Products\Query\Search::getResult
-                if ($sortOrder->getField() === '_id') {
-                    $sortOrder->setField('entity_id');
-                }
                 $ordersArray[$sortOrder->getField()] = $sortOrder->getDirection();
             }
         }

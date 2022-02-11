@@ -3,35 +3,32 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
+
 
 namespace Magento\Framework\Crontab\Test\Unit;
 
-use Exception;
-use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Crontab\CrontabManager;
 use Magento\Framework\Crontab\CrontabManagerInterface;
+use Magento\Framework\ShellInterface;
+use Magento\Framework\Phrase;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem;
+use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Filesystem\Directory\ReadInterface;
 use Magento\Framework\Filesystem\DriverPool;
-use Magento\Framework\Phrase;
-use Magento\Framework\ShellInterface;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
 /**
  * Tests crontab manager functionality.
  */
-class CrontabManagerTest extends TestCase
+class CrontabManagerTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var ShellInterface|MockObject
+     * @var ShellInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $shellMock;
 
     /**
-     * @var Filesystem|MockObject
+     * @var Filesystem|\PHPUnit\Framework\MockObject\MockObject
      */
     private $filesystemMock;
 
@@ -41,7 +38,7 @@ class CrontabManagerTest extends TestCase
     private $crontabManager;
 
     /**
-     * @inheritdoc
+     * @return void
      */
     protected function setUp(): void
     {
@@ -56,13 +53,11 @@ class CrontabManagerTest extends TestCase
     }
 
     /**
-     * Verify get tasks without cronetab.
-     *
      * @return void
      */
-    public function testGetTasksNoCrontab(): void
+    public function testGetTasksNoCrontab()
     {
-        $exception = new Exception('crontab: no crontab for user');
+        $exception = new \Exception('crontab: no crontab for user');
         $localizedException = new LocalizedException(new Phrase('Some error'), $exception);
 
         $this->shellMock->expects($this->once())
@@ -74,15 +69,12 @@ class CrontabManagerTest extends TestCase
     }
 
     /**
-     * Verify get tasks.
-     *
      * @param string $content
      * @param array $tasks
-     *
      * @return void
      * @dataProvider getTasksDataProvider
      */
-    public function testGetTasks($content, $tasks): void
+    public function testGetTasks($content, $tasks)
     {
         $this->shellMock->expects($this->once())
             ->method('execute')
@@ -93,11 +85,9 @@ class CrontabManagerTest extends TestCase
     }
 
     /**
-     * Data provider to get tasks.
-     *
      * @return array
      */
-    public function getTasksDataProvider(): array
+    public function getTasksDataProvider()
     {
         return [
             [
@@ -105,7 +95,7 @@ class CrontabManagerTest extends TestCase
                     . CrontabManagerInterface::TASKS_BLOCK_START . ' ' . hash("sha256", BP) . PHP_EOL
                     . '* * * * * /bin/php /var/www/magento/bin/magento cron:run' . PHP_EOL
                     . CrontabManagerInterface::TASKS_BLOCK_END . ' ' . hash("sha256", BP) . PHP_EOL,
-                'tasks' => ['* * * * * /bin/php /var/www/magento/bin/magento cron:run']
+                'tasks' => ['* * * * * /bin/php /var/www/magento/bin/magento cron:run'],
             ],
             [
                 'content' => '* * * * * /bin/php /var/www/cron.php' . PHP_EOL
@@ -113,65 +103,68 @@ class CrontabManagerTest extends TestCase
                     . '* * * * * /bin/php /var/www/magento/bin/magento cron:run' . PHP_EOL
                     . CrontabManagerInterface::TASKS_BLOCK_END . ' ' . hash("sha256", BP) . PHP_EOL,
                 'tasks' => [
-                    '* * * * * /bin/php /var/www/magento/bin/magento cron:run'
-                ]
+                    '* * * * * /bin/php /var/www/magento/bin/magento cron:run',
+                ],
             ],
             [
                 'content' => '* * * * * /bin/php /var/www/cron.php' . PHP_EOL,
-                'tasks' => []
+                'tasks' => [],
             ],
             [
                 'content' => '',
-                'tasks' => []
-            ]
+                'tasks' => [],
+            ],
         ];
     }
 
     /**
-     * Verify remove tasks with exception.
-     *
      * @return void
      */
-    public function testRemoveTasksWithException(): void
+    public function testRemoveTasksWithException()
     {
-        $this->expectException('Magento\Framework\Exception\LocalizedException');
+        $this->expectException(\Magento\Framework\Exception\LocalizedException::class);
         $this->expectExceptionMessage('Shell error');
-        $exception = new Exception('Shell error');
+
+        $exception = new \Exception('Shell error');
         $localizedException = new LocalizedException(new Phrase('Some error'), $exception);
 
-        $this->shellMock
+        $this->shellMock->expects($this->at(0))
             ->method('execute')
-            ->withConsecutive(['crontab -l 2>/dev/null', []], ['echo "" | crontab -', []])
-            ->willReturnOnConsecutiveCalls('', $this->throwException($localizedException));
+            ->with('crontab -l 2>/dev/null', [])
+            ->willReturn('');
+
+        $this->shellMock->expects($this->at(1))
+            ->method('execute')
+            ->with('echo "" | crontab -', [])
+            ->willThrowException($localizedException);
 
         $this->crontabManager->removeTasks();
     }
 
     /**
-     * Verify remove tasks.
-     *
      * @param string $contentBefore
      * @param string $contentAfter
-     *
      * @return void
      * @dataProvider removeTasksDataProvider
      */
-    public function testRemoveTasks($contentBefore, $contentAfter): void
+    public function testRemoveTasks($contentBefore, $contentAfter)
     {
-        $this->shellMock
+        $this->shellMock->expects($this->at(0))
             ->method('execute')
-            ->withConsecutive(['crontab -l 2>/dev/null', []], ['echo "' . $contentAfter . '" | crontab -', []])
+            ->with('crontab -l 2>/dev/null', [])
             ->willReturn($contentBefore);
+
+        $this->shellMock->expects($this->at(1))
+            ->method('execute')
+            ->with('echo "' . $contentAfter . '" | crontab -', []);
 
         $this->crontabManager->removeTasks();
     }
 
     /**
-     * Data provider to remove tasks.
-     *
      * @return array
      */
-    public function removeTasksDataProvider(): array
+    public function removeTasksDataProvider()
     {
         return [
             [
@@ -195,19 +188,18 @@ class CrontabManagerTest extends TestCase
             [
                 'contentBefore' => '',
                 'contentAfter' => ''
-            ]
+            ],
         ];
     }
 
     /**
-     * Verify save tasks with empty tasks list.
-     *
      * @return void
      */
-    public function testSaveTasksWithEmptyTasksList(): void
+    public function testSaveTasksWithEmptyTasksList()
     {
-        $this->expectException('Magento\Framework\Exception\LocalizedException');
+        $this->expectException(\Magento\Framework\Exception\LocalizedException::class);
         $this->expectExceptionMessage('The list of tasks is empty. Add tasks and try again.');
+
         $baseDirMock = $this->getMockBuilder(ReadInterface::class)
             ->getMockForAbstractClass();
         $baseDirMock->expects($this->never())
@@ -229,14 +221,13 @@ class CrontabManagerTest extends TestCase
     }
 
     /**
-     * Verify save tasks with out command.
-     *
      * @return void
      */
-    public function testSaveTasksWithoutCommand(): void
+    public function testSaveTasksWithoutCommand()
     {
-        $this->expectException('Magento\Framework\Exception\LocalizedException');
+        $this->expectException(\Magento\Framework\Exception\LocalizedException::class);
         $this->expectExceptionMessage('The command shouldn\'t be empty. Enter and try again.');
+
         $baseDirMock = $this->getMockBuilder(ReadInterface::class)
             ->getMockForAbstractClass();
         $baseDirMock->expects($this->once())
@@ -261,16 +252,13 @@ class CrontabManagerTest extends TestCase
     }
 
     /**
-     * Verify sava task.
-     *
      * @param array $tasks
      * @param string $content
      * @param string $contentToSave
-     *
      * @return void
      * @dataProvider saveTasksDataProvider
      */
-    public function testSaveTasks($tasks, $content, $contentToSave): void
+    public function testSaveTasks($tasks, $content, $contentToSave)
     {
         $baseDirMock = $this->getMockBuilder(ReadInterface::class)
             ->getMockForAbstractClass();
@@ -290,20 +278,22 @@ class CrontabManagerTest extends TestCase
                 [DirectoryList::LOG, DriverPool::FILE, $logDirMock],
             ]);
 
-        $this->shellMock
+        $this->shellMock->expects($this->at(0))
             ->method('execute')
-            ->withConsecutive(['crontab -l 2>/dev/null', []], ['echo "' . $contentToSave . '" | crontab -', []])
+            ->with('crontab -l 2>/dev/null', [])
             ->willReturn($content);
+
+        $this->shellMock->expects($this->at(1))
+            ->method('execute')
+            ->with('echo "' . $contentToSave . '" | crontab -', []);
 
         $this->crontabManager->saveTasks($tasks);
     }
 
     /**
-     * Data provider to save tasks.
-     *
      * @return array
      */
-    public function saveTasksDataProvider(): array
+    public function saveTasksDataProvider()
     {
         $content = '* * * * * /bin/php /var/www/cron.php' . PHP_EOL
             . CrontabManagerInterface::TASKS_BLOCK_START . ' ' . hash("sha256", BP) . PHP_EOL
@@ -319,7 +309,7 @@ class CrontabManagerTest extends TestCase
                 'contentToSave' => '* * * * * /bin/php /var/www/cron.php' . PHP_EOL
                     . CrontabManagerInterface::TASKS_BLOCK_START . ' ' . hash("sha256", BP) . PHP_EOL
                     . '* * * * * ' . PHP_BINARY . ' run.php' . PHP_EOL
-                    . CrontabManagerInterface::TASKS_BLOCK_END . ' ' . hash("sha256", BP) . PHP_EOL
+                    . CrontabManagerInterface::TASKS_BLOCK_END . ' ' . hash("sha256", BP) . PHP_EOL,
             ],
             [
                 'tasks' => [
@@ -329,7 +319,7 @@ class CrontabManagerTest extends TestCase
                 'contentToSave' => '* * * * * /bin/php /var/www/cron.php' . PHP_EOL
                     . CrontabManagerInterface::TASKS_BLOCK_START . ' ' . hash("sha256", BP) . PHP_EOL
                     . '1 2 3 4 5 ' . PHP_BINARY . ' run.php' . PHP_EOL
-                    . CrontabManagerInterface::TASKS_BLOCK_END . ' ' . hash("sha256", BP) . PHP_EOL
+                    . CrontabManagerInterface::TASKS_BLOCK_END . ' ' . hash("sha256", BP) . PHP_EOL,
             ],
             [
                 'tasks' => [
@@ -340,7 +330,7 @@ class CrontabManagerTest extends TestCase
                     . CrontabManagerInterface::TASKS_BLOCK_START . ' ' . hash("sha256", BP) . PHP_EOL
                     . '* * * * * ' . PHP_BINARY . ' /var/www/magento2/run.php >>'
                     . ' /var/www/magento2/var/log/cron.log' . PHP_EOL
-                    . CrontabManagerInterface::TASKS_BLOCK_END . ' ' . hash("sha256", BP) . PHP_EOL
+                    . CrontabManagerInterface::TASKS_BLOCK_END . ' ' . hash("sha256", BP) . PHP_EOL,
             ],
             [
                 'tasks' => [
@@ -351,7 +341,7 @@ class CrontabManagerTest extends TestCase
                     . CrontabManagerInterface::TASKS_BLOCK_START . ' ' . hash("sha256", BP) . PHP_EOL
                     . '* * * * * ' . PHP_BINARY . ' /var/www/magento2/run.php'
                     . ' %% cron:run | grep -v \"Ran \'jobs\' by schedule\"' . PHP_EOL
-                    . CrontabManagerInterface::TASKS_BLOCK_END . ' ' . hash("sha256", BP) . PHP_EOL
+                    . CrontabManagerInterface::TASKS_BLOCK_END . ' ' . hash("sha256", BP) . PHP_EOL,
             ],
             [
                 'tasks' => [
@@ -362,19 +352,8 @@ class CrontabManagerTest extends TestCase
                     . CrontabManagerInterface::TASKS_BLOCK_START . ' ' . hash("sha256", BP) . PHP_EOL
                     . '* * * * * ' . PHP_BINARY . ' /var/www/magento2/run.php'
                     . ' %% cron:run | grep -v \"Ran \'jobs\' by schedule\"' . PHP_EOL
-                    . CrontabManagerInterface::TASKS_BLOCK_END . ' ' . hash("sha256", BP) . PHP_EOL
+                    . CrontabManagerInterface::TASKS_BLOCK_END . ' ' . hash("sha256", BP) . PHP_EOL,
             ],
-            [
-                'tasks' => [
-                    ['command' => '{magentoRoot}run.php mysqldump --no-tablespaces db > db-$(date +%F).sql']
-                ],
-                'content' => '* * * * * /bin/php /var/www/cron.php',
-                'contentToSave' => '* * * * * /bin/php /var/www/cron.php' . PHP_EOL
-                    . CrontabManagerInterface::TASKS_BLOCK_START . ' ' . hash("sha256", BP) . PHP_EOL
-                    . '* * * * * ' . PHP_BINARY . ' /var/www/magento2/run.php'
-                    . ' mysqldump --no-tablespaces db > db-\$(date +%%F).sql' . PHP_EOL
-                    . CrontabManagerInterface::TASKS_BLOCK_END . ' ' . hash("sha256", BP) . PHP_EOL
-            ]
         ];
     }
 }

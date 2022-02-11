@@ -52,7 +52,7 @@ use Magento\Eav\Model\ResourceModel\Entity\Attribute\CollectionFactory as Attrib
  */
 class Eav extends AbstractModifier
 {
-    public const SORT_ORDER_MULTIPLIER = 10;
+    const SORT_ORDER_MULTIPLIER = 10;
 
     /**
      * @var LocatorInterface
@@ -197,6 +197,7 @@ class Eav extends AbstractModifier
     private $localeCurrency;
 
     /**
+     * internal cache for attribute models
      * @var array
      */
     private $attributesCache = [];
@@ -368,6 +369,7 @@ class Eav extends AbstractModifier
      * @param string $groupCode
      * @param int $sortOrder
      * @return array
+     * @api
      * @since 101.0.0
      */
     public function addContainerChildren(
@@ -398,6 +400,8 @@ class Eav extends AbstractModifier
      * @param string $groupCode
      * @param int $sortOrder
      * @return array
+     * @api
+     * @since 101.0.0
      */
     public function getContainerChildren(ProductAttributeInterface $attribute, $groupCode, $sortOrder)
     {
@@ -659,6 +663,8 @@ class Eav extends AbstractModifier
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     * @api
+     * @since 101.0.0
      */
     public function setupAttributeMeta(ProductAttributeInterface $attribute, $groupCode, $sortOrder)
     {
@@ -680,6 +686,7 @@ class Eav extends AbstractModifier
                 'scopeLabel' => $this->getScopeLabel($attribute),
                 'globalScope' => $this->isScopeGlobal($attribute),
                 'sortOrder' => $sortOrder * self::SORT_ORDER_MULTIPLIER,
+                '__disableTmpl' => ['label' => true, 'code' => true]
             ]
         );
         $product = $this->locator->getProduct();
@@ -745,9 +752,6 @@ class Eav extends AbstractModifier
             case 'gallery':
                 // Gallery attribute is being handled by "Images And Videos" section
                 $meta = [];
-                break;
-            case 'datetime':
-                $meta = $this->customizeDatetimeAttribute($meta);
                 break;
         }
 
@@ -842,6 +846,8 @@ class Eav extends AbstractModifier
      *
      * @param ProductAttributeInterface $attribute
      * @return array
+     * @api
+     * @since 101.0.0
      */
     public function setupAttributeContainerMeta(ProductAttributeInterface $attribute)
     {
@@ -854,6 +860,7 @@ class Eav extends AbstractModifier
                 'breakLine' => false,
                 'label' => $attribute->getDefaultFrontendLabel(),
                 'required' => $attribute->getIsRequired(),
+                '__disableTmpl' => ['label' => true]
             ]
         );
 
@@ -877,6 +884,8 @@ class Eav extends AbstractModifier
      *
      * @param ProductAttributeInterface $attribute
      * @return mixed|null
+     * @api
+     * @since 101.0.0
      */
     public function setupAttributeData(ProductAttributeInterface $attribute)
     {
@@ -947,19 +956,6 @@ class Eav extends AbstractModifier
         $meta['arguments']['data']['config']['formElement'] = WysiwygElement::NAME;
         $meta['arguments']['data']['config']['wysiwyg'] = true;
         $meta['arguments']['data']['config']['wysiwygConfigData'] = $this->wysiwygConfigProcessor->process($attribute);
-
-        return $meta;
-    }
-
-    /**
-     * Customize datetime attribute
-     *
-     * @param array $meta
-     * @return array
-     */
-    private function customizeDatetimeAttribute(array $meta): array
-    {
-        $meta['arguments']['data']['config']['options']['showsTime'] = 1;
 
         return $meta;
     }
@@ -1119,6 +1115,7 @@ class Eav extends AbstractModifier
      *
      * @param mixed $value
      * @return string
+     * @since 101.0.0
      */
     protected function formatPrice($value)
     {

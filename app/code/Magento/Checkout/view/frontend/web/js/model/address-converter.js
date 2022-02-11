@@ -16,6 +16,37 @@ define([
 
     var countryData = customerData.get('directory-data');
 
+    /**
+     * Find region by code
+     *
+     * @param {Int} countryId
+     * @param {String} regionCode
+     * @returns {Object}
+     */
+    function findCountryRegionByCode(countryId, regionCode) {
+        var data = countryData()[countryId] || {},
+            id,
+            region;
+
+        if (data.regions) {
+            for (id in data.regions) {
+                // eslint-disable-next-line max-depth
+                if (data.regions[id].code === regionCode) {
+                    region = $.extend(
+                        true,
+                        {
+                            id: id
+                        },
+                        data.regions[id]
+                    );
+                    break;
+                }
+            }
+        }
+
+        return region;
+    }
+
     return {
         /**
          * Convert address form data to Address object
@@ -28,10 +59,21 @@ define([
             var addressData = $.extend(true, {}, formData),
                 region,
                 regionName = addressData.region,
-                customAttributes;
+                field,
+                mappings = {
+                    'country_id': 'countryId',
+                    'region_id': 'regionId',
+                    'region_code': 'regionCode'
+                };
 
             if (mageUtils.isObject(addressData.street)) {
                 addressData.street = this.objectToArray(addressData.street);
+            }
+
+            for (field in mappings) {
+                if (!addressData[field] && addressData[mappings[field]]) {
+                    addressData[field] = addressData[mappings[field]];
+                }
             }
 
             addressData.region = {
@@ -52,6 +94,14 @@ define([
                     addressData.region.region = region.name;
                 }
             } else if (
+                addressData['country_id'] &&
+                addressData['region_code'] &&
+                (region = findCountryRegionByCode(addressData['country_id'], addressData['region_code']))
+            ) {
+                addressData.region['region_id'] = region.id;
+                addressData.region['region_code'] = region.code;
+                addressData.region.region = region.name;
+            } else if (
                 !addressData['region_id'] &&
                 countryData()[addressData['country_id']] &&
                 countryData()[addressData['country_id']].regions
@@ -65,20 +115,10 @@ define([
                 addressData['custom_attributes'] = _.map(
                     addressData['custom_attributes'],
                     function (value, key) {
-                        customAttributes = {
+                        return {
                             'attribute_code': key,
                             'value': value
                         };
-
-                        if (typeof value === 'boolean') {
-                            customAttributes = {
-                                'attribute_code': key,
-                                'value': value,
-                                'label': value === true ? 'Yes' : 'No'
-                            };
-                        }
-
-                        return customAttributes;
                     }
                 );
             }
@@ -99,12 +139,12 @@ define([
                 customAttributesObject;
 
             $.each(addrs, function (key) {
-                if (addrs.hasOwnProperty(key) && typeof addrs[key] !== 'function') {
+                if (addrs.hasOwnProperty(key) && !$.isFunction(addrs[key])) {
                     output[self.toUnderscore(key)] = addrs[key];
                 }
             });
 
-            if (Array.isArray(addrs.street)) {
+            if ($.isArray(addrs.street)) {
                 streetObject = {};
                 addrs.street.forEach(function (value, index) {
                     streetObject[index] = value;
@@ -113,7 +153,7 @@ define([
             }
 
             //jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-            if (Array.isArray(addrs.customAttributes)) {
+            if ($.isArray(addrs.customAttributes)) {
                 customAttributesObject = {};
                 addrs.customAttributes.forEach(function (value) {
                     customAttributesObject[value.attribute_code] = value.value;

@@ -3,46 +3,38 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Backend\Test\Unit\App\Area;
 
-use Laminas\Uri\Uri;
 use Magento\Backend\App\Area\FrontNameResolver;
-use Magento\Backend\App\Config;
 use Magento\Backend\Setup\ConfigOptionsList;
-use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\DeploymentConfig;
-use Magento\Framework\App\Request\Http;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
-class FrontNameResolverTest extends TestCase
+class FrontNameResolverTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var FrontNameResolver
+     * @var \Magento\Backend\App\Area\FrontNameResolver
      */
     protected $model;
 
     /**
-     * @var MockObject|Config
+     * @var \PHPUnit\Framework\MockObject\MockObject|\Magento\Backend\App\Config
      */
     protected $configMock;
 
     /**
-     * @var MockObject|ScopeConfigInterface
+     * @var \PHPUnit\Framework\MockObject\MockObject|\Magento\Framework\App\Config\ScopeConfigInterface
      */
     protected $scopeConfigMock;
 
     /**
-     * @var MockObject|Uri
+     * @var \PHPUnit\Framework\MockObject\MockObject|\Zend\Uri\Uri
      */
     protected $uri;
 
     /**
-     * @var MockObject|Http
+     * @var \PHPUnit\Framework\MockObject\MockObject|\Magento\Framework\App\Request\Http
      */
     protected $request;
 
@@ -51,23 +43,20 @@ class FrontNameResolverTest extends TestCase
      */
     protected $_defaultFrontName = 'defaultFrontName';
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
-        /** @var MockObject|DeploymentConfig $deploymentConfigMock */
-        $deploymentConfigMock = $this->createMock(DeploymentConfig::class);
+        /** @var \PHPUnit\Framework\MockObject\MockObject|DeploymentConfig $deploymentConfigMock */
+        $deploymentConfigMock = $this->createMock(\Magento\Framework\App\DeploymentConfig::class);
         $deploymentConfigMock->expects($this->once())
             ->method('get')
             ->with(ConfigOptionsList::CONFIG_PATH_BACKEND_FRONTNAME)
             ->willReturn($this->_defaultFrontName);
-        $this->uri = $this->createMock(Uri::class);
+        $this->uri = $this->createMock(\Zend\Uri\Uri::class);
 
-        $this->request = $this->createMock(Http::class);
+        $this->request = $this->createMock(\Magento\Framework\App\Request\Http::class);
 
-        $this->configMock = $this->createMock(Config::class);
-        $this->scopeConfigMock = $this->getMockForAbstractClass(ScopeConfigInterface::class);
+        $this->configMock = $this->createMock(\Magento\Backend\App\Config::class);
+        $this->scopeConfigMock = $this->createMock(\Magento\Framework\App\Config\ScopeConfigInterface::class);
         $this->model = new FrontNameResolver(
             $this->configMock,
             $deploymentConfigMock,
@@ -77,22 +66,30 @@ class FrontNameResolverTest extends TestCase
         );
     }
 
-    /**
-     * @return void
-     */
-    public function testIfCustomPathUsed(): void
+    public function testIfCustomPathUsed()
     {
-        $this->configMock
-            ->method('getValue')
-            ->withConsecutive(['admin/url/use_custom_path'], ['admin/url/custom_path'])
-            ->willReturnOnConsecutiveCalls(true, 'expectedValue');
+        $this->configMock->expects(
+            $this->at(0)
+        )->method(
+            'getValue'
+        )->with(
+            'admin/url/use_custom_path'
+        )->willReturn(
+            true
+        );
+        $this->configMock->expects(
+            $this->at(1)
+        )->method(
+            'getValue'
+        )->with(
+            'admin/url/custom_path'
+        )->willReturn(
+            'expectedValue'
+        );
         $this->assertEquals('expectedValue', $this->model->getFrontName());
     }
 
-    /**
-     * @return void
-     */
-    public function testIfCustomPathNotUsed(): void
+    public function testIfCustomPathNotUsed()
     {
         $this->configMock->expects(
             $this->once()
@@ -111,18 +108,11 @@ class FrontNameResolverTest extends TestCase
      * @param string $host
      * @param string $useCustomAdminUrl
      * @param string $customAdminUrl
-     * @param bool $expectedValue
-     *
-     * @return void
+     * @param string $expectedValue
      * @dataProvider hostsDataProvider
      */
-    public function testIsHostBackend(
-        string $url,
-        string $host,
-        string $useCustomAdminUrl,
-        string $customAdminUrl,
-        bool $expectedValue
-    ): void {
+    public function testIsHostBackend($url, $host, $useCustomAdminUrl, $customAdminUrl, $expectedValue)
+    {
         $this->scopeConfigMock->expects($this->exactly(2))
             ->method('getValue')
             ->willReturnMap(
@@ -139,7 +129,7 @@ class FrontNameResolverTest extends TestCase
                         ScopeInterface::SCOPE_STORE,
                         null,
                         $customAdminUrl
-                    ]
+                    ],
                 ]
             );
 
@@ -183,7 +173,7 @@ class FrontNameResolverTest extends TestCase
     /**
      * @return array
      */
-    public function hostsDataProvider(): array
+    public function hostsDataProvider()
     {
         return [
             'withoutPort' => [

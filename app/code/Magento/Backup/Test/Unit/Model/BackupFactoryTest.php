@@ -3,114 +3,114 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Backup\Test\Unit\Model;
 
-use Magento\Backup\Model\Backup;
-use Magento\Backup\Model\BackupFactory;
-use Magento\Backup\Model\Fs\Collection;
-use Magento\Framework\DataObject;
-use Magento\Framework\ObjectManagerInterface;
-use PHPUnit\Framework\TestCase;
-
-class BackupFactoryTest extends TestCase
+class BackupFactoryTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var BackupFactory
+     * @var \Magento\Backup\Model\BackupFactory
      */
-    protected $instance;
+    protected $_instance;
 
     /**
-     * @var ObjectManagerInterface
+     * @var \Magento\Framework\ObjectManagerInterface
      */
-    protected $objectManager;
+    protected $_objectManager;
 
     /**
-     * @var Collection
+     * @var \Magento\Backup\Model\Fs\Collection
      */
-    protected $fsCollection;
+    protected $_fsCollection;
 
     /**
-     * @var Backup
+     * @var \Magento\Backup\Model\Backup
      */
-    protected $backupModel;
+    protected $_backupModel;
 
     /**
      * @var array
      */
-    protected $data;
+    protected $_data;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
-        $this->data = [
+        $this->_data = [
             'id' => '1385661590_snapshot',
             'time' => 1385661590,
             'path' => 'C:\test\test\var\backups',
             'name' => '',
-            'type' => 'snapshot'
+            'type' => 'snapshot',
         ];
-        $this->fsCollection = $this->createMock(Collection::class);
-        $this->fsCollection
-            ->method('getIterator')
-            ->willReturn(new \ArrayIterator([new DataObject($this->data)]));
+        $this->_fsCollection = $this->createMock(\Magento\Backup\Model\Fs\Collection::class);
+        $this->_fsCollection->expects(
+            $this->at(0)
+        )->method(
+            'getIterator'
+        )->willReturn(
+            new \ArrayIterator([new \Magento\Framework\DataObject($this->_data)])
+        );
 
-        $this->backupModel = $this->createMock(Backup::class);
+        $this->_backupModel = $this->createMock(\Magento\Backup\Model\Backup::class);
 
-        $this->objectManager = $this->getMockForAbstractClass(ObjectManagerInterface::class);
-        $this->objectManager
-            ->method('create')
-            ->withConsecutive([Collection::class], [Backup::class])
-            ->willReturnOnConsecutiveCalls($this->fsCollection, $this->backupModel);
+        $this->_objectManager = $this->createMock(\Magento\Framework\ObjectManagerInterface::class);
+        $this->_objectManager->expects(
+            $this->at(0)
+        )->method(
+            'create'
+        )->with(
+            \Magento\Backup\Model\Fs\Collection::class
+        )->willReturn(
+            $this->_fsCollection
+        );
+        $this->_objectManager->expects(
+            $this->at(1)
+        )->method(
+            'create'
+        )->with(
+            \Magento\Backup\Model\Backup::class
+        )->willReturn(
+            $this->_backupModel
+        );
 
-        $this->instance = new BackupFactory($this->objectManager);
+        $this->_instance = new \Magento\Backup\Model\BackupFactory($this->_objectManager);
     }
 
-    /**
-     * @return void
-     */
-    public function testCreate(): void
+    public function testCreate()
     {
-        $this->backupModel->expects($this->once())
+        $this->_backupModel->expects($this->once())
             ->method('setType')
-            ->with($this->data['type'])
+            ->with($this->_data['type'])
             ->willReturnSelf();
 
-        $this->backupModel->expects($this->once())
+        $this->_backupModel->expects($this->once())
             ->method('setTime')
-            ->with($this->data['time'])
+            ->with($this->_data['time'])
             ->willReturnSelf();
 
-        $this->backupModel->expects($this->once())
+        $this->_backupModel->expects($this->once())
             ->method('setName')
-            ->with($this->data['name'])
+            ->with($this->_data['name'])
             ->willReturnSelf();
 
-        $this->backupModel->expects($this->once())
+        $this->_backupModel->expects($this->once())
             ->method('setPath')
-            ->with($this->data['path'])
+            ->with($this->_data['path'])
             ->willReturnSelf();
 
-        $this->backupModel->expects($this->once())
+        $this->_backupModel->expects($this->once())
             ->method('setData')
             ->willReturnSelf();
 
-        $this->instance->create('1385661590', 'snapshot');
+        $this->_instance->create('1385661590', 'snapshot');
     }
 
-    /**
-     * @return void
-     */
-    public function testCreateInvalid(): void
+    public function testCreateInvalid()
     {
-        $this->backupModel->expects($this->never())->method('setType');
-        $this->backupModel->expects($this->never())->method('setTime');
-        $this->backupModel->expects($this->never())->method('setName');
-        $this->backupModel->expects($this->never())->method('setPath');
+        $this->_backupModel->expects($this->never())->method('setType');
+        $this->_backupModel->expects($this->never())->method('setTime');
+        $this->_backupModel->expects($this->never())->method('setName');
+        $this->_backupModel->expects($this->never())->method('setPath');
 
-        $this->instance->create('451094400', 'snapshot');
+        $this->_instance->create('451094400', 'snapshot');
     }
 }

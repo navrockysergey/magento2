@@ -3,40 +3,32 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Backend\Test\Unit\App\Action\Plugin;
 
-use Magento\Backend\App\AbstractAction;
-use Magento\Backend\App\Action\Plugin\MassactionKey;
-use Magento\Framework\App\RequestInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Magento\Backend\App\AbstractAction;
+use Magento\Framework\App\RequestInterface;
 
-class MassactionKeyTest extends TestCase
+class MassactionKeyTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var MassactionKey
+     * @var \Magento\Backend\App\Action\Plugin\MassactionKey
      */
     protected $plugin;
 
     /**
-     * @var MockObject|RequestInterface
+     * @var \PHPUnit\Framework\MockObject\MockObject|RequestInterface
      */
     protected $requestMock;
 
     /**
-     * @var MockObject|AbstractAction
+     * @var \PHPUnit\Framework\MockObject\MockObject|AbstractAction
      */
     protected $subjectMock;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
-        $this->subjectMock = $this->createMock(AbstractAction::class);
+        $this->subjectMock = $this->createMock(\Magento\Backend\App\AbstractAction::class);
         $this->requestMock = $this->getMockForAbstractClass(
             RequestInterface::class,
             [],
@@ -49,29 +41,29 @@ class MassactionKeyTest extends TestCase
 
         $objectManager = new ObjectManager($this);
         $this->plugin = $objectManager->getObject(
-            MassactionKey::class,
+            \Magento\Backend\App\Action\Plugin\MassactionKey::class,
             [
                 'subject' => $this->subjectMock,
-                'request' => $this->requestMock
+                'request' => $this->requestMock,
             ]
         );
     }
 
     /**
-     * @param array|string $postData
+     * @param $postData array|string
      * @param array $convertedData
-     *
-     * @return void
      * @dataProvider beforeDispatchDataProvider
      */
-    public function testBeforeDispatchWhenMassactionPrepareKeyRequestExists(
-        $postData,
-        array $convertedData
-    ): void {
-        $this->requestMock
+    public function testBeforeDispatchWhenMassactionPrepareKeyRequestExists($postData, $convertedData)
+    {
+        $this->requestMock->expects($this->at(0))
             ->method('getPost')
-            ->withConsecutive(['massaction_prepare_key'], ['key'])
-            ->willReturnOnConsecutiveCalls('key', $postData);
+            ->with('massaction_prepare_key')
+            ->willReturn('key');
+        $this->requestMock->expects($this->at(1))
+            ->method('getPost')
+            ->with('key')
+            ->willReturn($postData);
         $this->requestMock->expects($this->once())
             ->method('setPostValue')
             ->with('key', $convertedData);
@@ -82,7 +74,7 @@ class MassactionKeyTest extends TestCase
     /**
      * @return array
      */
-    public function beforeDispatchDataProvider(): array
+    public function beforeDispatchDataProvider()
     {
         return [
             'post_data_is_array' => [['key'], ['key']],
@@ -90,10 +82,7 @@ class MassactionKeyTest extends TestCase
         ];
     }
 
-    /**
-     * @return void
-     */
-    public function testBeforeDispatchWhenMassactionPrepareKeyRequestNotExists(): void
+    public function testBeforeDispatchWhenMassactionPrepareKeyRequestNotExists()
     {
         $this->requestMock->expects($this->once())
             ->method('getPost')

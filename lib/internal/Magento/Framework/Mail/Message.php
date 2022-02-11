@@ -5,23 +5,25 @@
  */
 namespace Magento\Framework\Mail;
 
-use Laminas\Mime\Mime;
-use Laminas\Mime\Part;
+use Zend\Mime\Mime;
+use Zend\Mime\Part;
 
 /**
  * Class Message for email transportation
  *
- * @deprecated 102.0.4 a new message implementation was added
+ * @deprecated 102.0.4
  * @see \Magento\Framework\Mail\EmailMessage
  */
 class Message implements MailMessageInterface
 {
     /**
-     * @var \Laminas\Mail\Message
+     * @var \Zend\Mail\Message
      */
     protected $zendMessage;
 
     /**
+     * Message type
+     *
      * @var string
      */
     private $messageType = Mime::TYPE_TEXT;
@@ -33,7 +35,7 @@ class Message implements MailMessageInterface
      */
     public function __construct($charset = 'utf-8')
     {
-        $this->zendMessage = new \Laminas\Mail\Message();
+        $this->zendMessage = new \Zend\Mail\Message();
         $this->zendMessage->setEncoding($charset);
     }
 
@@ -162,16 +164,15 @@ class Message implements MailMessageInterface
      *
      * @param string $body
      * @param string $messageType
-     * @return \Laminas\Mime\Message
+     * @return \Zend\Mime\Message
      */
     private function createMimeFromString($body, $messageType)
     {
         $part = new Part($body);
         $part->setCharset($this->zendMessage->getEncoding());
         $part->setEncoding(Mime::ENCODING_QUOTEDPRINTABLE);
-        $part->setDisposition(Mime::DISPOSITION_INLINE);
         $part->setType($messageType);
-        $mimeMessage = new \Laminas\Mime\Message();
+        $mimeMessage = new \Zend\Mime\Message();
         $mimeMessage->addPart($part);
         return $mimeMessage;
     }

@@ -14,7 +14,7 @@
             <stories value="Add Products to Order from Shopping Cart"/>
             <title value="Add configurable product to order from shopping cart test"/>
             <description value="Add configurable product to order from shopping cart"/>
-            <severity value="BLOCKER"/>
+            <severity value="CRITICAL"/>
             <testCaseId value="MC-16008"/>
             <group value="sales"/>
             <group value="mtf_migrated"/>
@@ -57,7 +57,7 @@
         </before>
         <after>
             <!-- Admin log out -->
-            <actionGroup ref="AdminLogoutActionGroup" stepKey="logout"/>
+            <actionGroup ref="logout" stepKey="logout"/>
 
             <!-- Customer log out -->
             <actionGroup ref="StorefrontCustomerLogoutActionGroup" stepKey="customerLogout"/>
@@ -74,7 +74,7 @@
             <deleteData createDataKey="createCategory" stepKey="deleteCategory"/>
 
             <!-- Reindex invalidated indices after product attribute has been created/deleted -->
-            <magentoCron groups="index" stepKey="reindexInvalidatedIndices"/>
+            <actionGroup ref="CliRunReindexUsingCronJobsActionGroup" stepKey="reindexInvalidatedIndices"/>
         </after>
 
         <!-- Login as customer -->
@@ -91,14 +91,14 @@
         </actionGroup>
 
         <!-- Login as admin -->
-        <actionGroup ref="AdminLoginActionGroup" stepKey="loginAsAdmin"/>
+        <actionGroup ref="LoginAsAdmin" stepKey="loginAsAdmin"/>
 
         <!-- Search and open customer -->
-        <actionGroup ref="AdminOpenCustomerEditPageActionGroup" stepKey="openCustomerEditPage">
-            <argument name="customerId" value="$createCustomer.id$"/>
+        <actionGroup ref="AdminFilterCustomerByEmail" stepKey="filterCreatedCustomer">
+            <argument name="email" value="$$createCustomer.email$$"/>
         </actionGroup>
-        <comment userInput="Comment is added to preserve the step key for backward compatibility" stepKey="filterCreatedCustomer"/>
-        <comment userInput="Comment is added to preserve the step key for backward compatibility" stepKey="clickEditButton"/>
+        <click selector="{{AdminCustomerGridSection.firstRowEditLink}}" stepKey="clickEditButton"/>
+        <waitForPageLoad stepKey="waitForPageLoad"/>
 
         <!-- Click create order -->
         <click selector="{{AdminCustomerMainActionsSection.createOrderBtn}}" stepKey="clickCreateOrder"/>
@@ -109,8 +109,8 @@
 
         <!-- Click update changes -->
         <checkOption selector="{{AdminCustomerActivitiesShoppingCartSection.addToOrder}}" stepKey="checkOptionAddToOrder"/>
-        <actionGroup ref="AdminClickUpdateChangesOnCreateOrderPageActionGroup" stepKey="clickUpdateChangesBtn"/>
-        <comment userInput="Comment is added to preserve the step key for backward compatibility" stepKey="waitForOrderUpdating"/>
+        <click selector="{{AdminCustomerCreateNewOrderSection.updateChangesBtn}}" stepKey="clickUpdateChangesBtn"/>
+        <waitForPageLoad stepKey="waitForOrderUpdating"/>
 
         <!-- Assert product in items ordered grid -->
         <see selector="{{AdminCustomerCreateNewOrderSection.productName}}" userInput="$$createConfigProduct.name$$" stepKey="seeProductName"/>

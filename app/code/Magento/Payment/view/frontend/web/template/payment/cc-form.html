@@ -44,10 +44,13 @@
             <span><!-- ko i18n: 'Credit Card Number'--><!-- /ko --></span>
         </label>
         <div class="control">
-            <input type="number" name="payment[cc_number]" class="input-text" value=""
+            <input type="number"
+                   name="payment[cc_number]"
                    oncopy="return false;"
                    oncut="return false;"
                    onpaste="return false;"
+                   class="input-text"
+                   value=""
                    data-bind="attr: {
                                     autocomplete: off,
                                     id: getCode() + '_cc_number',
@@ -104,12 +107,12 @@
         <div class="control _with-tooltip">
             <input type="number"
                    autocomplete="off"
-                   class="input-text cvv"
-                   name="payment[cc_cid]"
-                   value=""
                    oncopy="return false;"
                    oncut="return false;"
                    onpaste="return false;"
+                   class="input-text cvv"
+                   name="payment[cc_cid]"
+                   value=""
                    data-bind="attr: {id: getCode() + '_cc_cid',
                         title: $t('Card Verification Number'),
                         'data-container': getCode() + '-cc-cvv',

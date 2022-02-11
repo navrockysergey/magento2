@@ -48,14 +48,14 @@ class Queue extends \Magento\Framework\Model\AbstractModel implements TemplateTy
     protected $_template;
 
     /**
-     * Subscriber collection
+     * Subscribers collection
      *
      * @var \Magento\Newsletter\Model\ResourceModel\Subscriber\Collection
      */
     protected $_subscribersCollection;
 
     /**
-     * Flag for Save Stores.
+     * Save stores flag.
      *
      * @var boolean
      */
@@ -68,15 +68,15 @@ class Queue extends \Magento\Framework\Model\AbstractModel implements TemplateTy
      */
     protected $_stores = [];
 
-    public const STATUS_NEVER = 0;
+    const STATUS_NEVER = 0;
 
-    public const STATUS_SENDING = 1;
+    const STATUS_SENDING = 1;
 
-    public const STATUS_CANCEL = 2;
+    const STATUS_CANCEL = 2;
 
-    public const STATUS_SENT = 3;
+    const STATUS_SENT = 3;
 
-    public const STATUS_PAUSE = 4;
+    const STATUS_PAUSE = 4;
 
     /**
      * Filter for newsletter text
@@ -86,21 +86,21 @@ class Queue extends \Magento\Framework\Model\AbstractModel implements TemplateTy
     protected $_templateFilter;
 
     /**
-     * Datetime
+     * Date
      *
      * @var \Magento\Framework\Stdlib\DateTime\DateTime
      */
     protected $_date;
 
     /**
-     * Factory of Problem
+     * Problem factory
      *
      * @var \Magento\Newsletter\Model\ProblemFactory
      */
     protected $_problemFactory;
 
     /**
-     * Factory of Template
+     * Template factory
      *
      * @var \Magento\Newsletter\Model\TemplateFactory
      */
@@ -202,14 +202,11 @@ class Queue extends \Magento\Framework\Model\AbstractModel implements TemplateTy
      */
     public function setQueueStartAtByString($startAt)
     {
-        // Cast start_at value to null if value is incorrect ("0", "" must be casted to null)
-        $startAt = (string) $startAt ?: null;
-        // Convert start_at value using UTC converter if start_at value is not null
-        $startAt = $startAt === null
-            ? $startAt
-            : $this->utcConverter->convertLocalizedDateToUtc($startAt);
-        $this->setQueueStartAt($startAt);
-
+        if ($startAt === null || $startAt == '') {
+            $this->setQueueStartAt(null);
+        } else {
+            $this->setQueueStartAt($this->utcConverter->convertLocalizedDateToUtc($startAt));
+        }
         return $this;
     }
 
@@ -259,12 +256,7 @@ class Queue extends \Magento\Framework\Model\AbstractModel implements TemplateTy
             $transport = $this->_transportBuilder->setTemplateOptions(
                 ['area' => \Magento\Framework\App\Area::AREA_FRONTEND, 'store' => $item->getStoreId()]
             )->setTemplateVars(
-                [
-                    'subscriber' => $item,
-                    'subscriber_data' => [
-                        'unsubscription_link' => $item->getUnsubscriptionLink()
-                    ]
-                ]
+                ['subscriber' => $item]
             )->setFrom(
                 ['name' => $this->getNewsletterSenderName(), 'email' => $this->getNewsletterSenderEmail()]
             )->addTo(

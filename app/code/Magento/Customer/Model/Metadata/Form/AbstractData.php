@@ -208,9 +208,6 @@ abstract class AbstractData
     protected function _getFormFilter()
     {
         $filterCode = $this->getAttribute()->getInputFilter();
-        if (!$filterCode) {
-            $filterCode = $this->assignFilter();
-        }
         if ($filterCode) {
             $filterClass = 'Magento\Framework\Data\Form\Filter\\' . ucfirst($filterCode);
             if ($filterCode == 'date') {
@@ -221,22 +218,6 @@ abstract class AbstractData
             return $filter;
         }
         return false;
-    }
-
-    /**
-     * Assign filter code for user defined Date type Attributes
-     *
-     * @return string|null
-     */
-    private function assignFilter(): ?string
-    {
-        $attribute = $this->getAttribute();
-        $filterCode = null;
-        if ($attribute->getFrontendInput() === 'date' && $attribute->isUserDefined()) {
-            $filterCode = 'date';
-        }
-
-        return $filterCode;
     }
 
     /**
@@ -438,7 +419,6 @@ abstract class AbstractData
                     }
                     break;
                 case 'url':
-                    // phpcs:ignore Magento2.Functions.DiscouragedFunction
                     $parsedUrl = parse_url($value);
                     if ($parsedUrl === false || empty($parsedUrl['scheme']) || empty($parsedUrl['host'])) {
                         return [__('"%1" is not a valid URL.', $label)];

@@ -3,76 +3,51 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Indexer\Test\Unit\Model\Indexer;
 
-use Magento\Framework\Event\ManagerInterface;
-use Magento\Framework\Model\Context;
-use Magento\Framework\Registry;
-use Magento\Indexer\Model\Indexer\State;
-use Magento\Indexer\Model\ResourceModel\Indexer\State\Collection;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-
-class StateTest extends TestCase
+class StateTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var State
+     * @var \Magento\Indexer\Model\Indexer\State
      */
     protected $model;
 
     /**
-     * @var Context|MockObject
+     * @var \Magento\Framework\Model\Context|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $_contextMock;
 
     /**
-     * @var Registry|MockObject
+     * @var \Magento\Framework\Registry|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $_registryMock;
 
     /**
-     * @var \Magento\Indexer\Model\ResourceModel\Indexer\State|MockObject
+     * @var \Magento\Indexer\Model\ResourceModel\Indexer\State|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $_resourceMock;
 
     /**
-     * @var Collection|MockObject
+     * @var \Magento\Indexer\Model\ResourceModel\Indexer\State\Collection|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $_resourceCollectionMock;
 
-    /**
-     * @var \Magento\Framework\Lock\LockManagerInterface|MockObject
-     */
-    protected $lockManagerMock;
-
-    /**
-     * @var \Magento\Framework\App\DeploymentConfig|MockObject
-     */
-    protected $configReaderMock;
-
     protected function setUp(): void
     {
-        $this->_contextMock = $this->createPartialMock(Context::class, ['getEventDispatcher']);
-        $eventManagerMock = $this->getMockForAbstractClass(ManagerInterface::class);
+        $this->_contextMock = $this->createPartialMock(\Magento\Framework\Model\Context::class, ['getEventDispatcher']);
+        $eventManagerMock = $this->createMock(\Magento\Framework\Event\ManagerInterface::class);
         $this->_contextMock->expects($this->any())->method('getEventDispatcher')->willReturn($eventManagerMock);
-        $this->_registryMock = $this->createMock(Registry::class);
+        $this->_registryMock = $this->createMock(\Magento\Framework\Registry::class);
         $this->_resourceMock = $this->createMock(\Magento\Indexer\Model\ResourceModel\Indexer\State::class);
         $this->_resourceCollectionMock = $this->createMock(
-            Collection::class
+            \Magento\Indexer\Model\ResourceModel\Indexer\State\Collection::class
         );
-        $this->lockManagerMock = $this->createMock(\Magento\Framework\Lock\LockManagerInterface::class);
-        $this->configReaderMock = $this->createMock(\Magento\Framework\App\DeploymentConfig::class);
 
-        $this->model = new State(
+        $this->model = new \Magento\Indexer\Model\Indexer\State(
             $this->_contextMock,
             $this->_registryMock,
             $this->_resourceMock,
-            $this->_resourceCollectionMock,
-            [],
-            $this->lockManagerMock,
-            $this->configReaderMock
+            $this->_resourceCollectionMock
         );
     }
 
@@ -88,7 +63,7 @@ class StateTest extends TestCase
     {
         $this->assertNull($this->model->getUpdated());
         $this->model->beforeSave();
-        $this->assertNotNull($this->model->getUpdated());
+        $this->assertTrue(($this->model->getUpdated() != null));
     }
 
     public function testSetStatus()
@@ -96,68 +71,5 @@ class StateTest extends TestCase
         $setData = 'data';
         $this->model->setStatus($setData);
         $this->assertEquals($setData, $this->model->getStatus());
-    }
-
-    public function testSetterAndGetterWithoutApplicationLock()
-    {
-        $this->configReaderMock->expects($this->any())->method('get')->willReturn(false);
-
-        $this->lockManagerMock->expects($this->any())->method('isLocked')->willReturn(false);
-
-        $status = \Magento\Framework\Indexer\StateInterface::STATUS_WORKING;
-        $this->model->setStatus($status);
-        $this->assertEquals($status, $this->model->getStatus());
-
-        $date = time();
-        $this->model->setUpdated($date);
-        $this->assertEquals($date, $this->model->getUpdated());
-    }
-
-    /**
-     * @return array
-     */
-    public function executeProvider()
-    {
-        return [
-            [
-                'setStatus' => \Magento\Framework\Indexer\StateInterface::STATUS_WORKING,
-                'getStatus' => \Magento\Framework\Indexer\StateInterface::STATUS_WORKING,
-                'lock' => 'lock',
-                'isLocked' => true
-            ],
-            [
-                'setStatus' => \Magento\Framework\Indexer\StateInterface::STATUS_WORKING,
-                'getStatus' => \Magento\Framework\Indexer\StateInterface::STATUS_INVALID,
-                'lock' => 'lock',
-                'isLocked' => false
-            ],
-            [
-                'setStatus' => \Magento\Framework\Indexer\StateInterface::STATUS_INVALID,
-                'getStatus' => \Magento\Framework\Indexer\StateInterface::STATUS_INVALID,
-                'lock' => 'unlock',
-                'isLocked' => false
-            ],
-            [
-                'setStatus' => \Magento\Framework\Indexer\StateInterface::STATUS_VALID,
-                'getStatus' => \Magento\Framework\Indexer\StateInterface::STATUS_VALID,
-                'lock' => 'unlock',
-                'isLocked' => false
-            ]
-        ];
-    }
-
-    /**
-     * @param string $setStatus
-     * @param string $getStatus
-     * @param bool $isLocked
-     * @dataProvider executeProvider
-     */
-    public function testSetterAndGetterWithApplicationLock($setStatus, $getStatus, $lock, $isLocked)
-    {
-        $this->configReaderMock->expects($this->any())->method('get')->willReturn(true);
-        $this->lockManagerMock->expects($this->any())->method('isLocked')->willReturn($isLocked);
-        $this->lockManagerMock->expects($this->once())->method($lock);
-        $this->model->setStatus($setStatus);
-        $this->assertEquals($getStatus, $this->model->getStatus());
     }
 }

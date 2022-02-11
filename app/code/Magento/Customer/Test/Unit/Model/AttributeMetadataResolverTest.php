@@ -1,10 +1,9 @@
 <?php
+declare(strict_types=1);
 /**
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Customer\Test\Unit\Model;
 
 use Magento\Customer\Model\Attribute;
@@ -16,70 +15,63 @@ use Magento\Customer\Model\ResourceModel\Address\Attribute\Source\CountryWithWeb
 use Magento\Eav\Model\Entity\Type;
 use Magento\Framework\View\Element\UiComponent\ContextInterface;
 use Magento\Ui\DataProvider\EavValidationRules;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 /**
+ * Class AttributeMetadataResolverTest
  *
  * Validate attributeMetadata contains correct values in meta data array
  */
 class AttributeMetadataResolverTest extends TestCase
 {
     /**
-     * @var CountryWithWebsites|MockObject
+     * @var CountryWithWebsites | \PHPUnit\Framework\MockObject\MockObject
      */
     private $countryWithWebsiteSource;
 
     /**
-     * @var EavValidationRules|MockObject
+     * @var EavValidationRules | \PHPUnit\Framework\MockObject\MockObject
      */
     private $eavValidationRules;
 
     /**
-     * @var FileUploaderDataResolver|MockObject
+     * @var FileUploaderDataResolver | \PHPUnit\Framework\MockObject\MockObject
      */
     private $fileUploaderDataResolver;
 
     /**
-     * @var ShareConfig|MockObject
+     * @var ShareConfig | \PHPUnit\Framework\MockObject\MockObject
      */
     private $shareConfig;
 
     /**
-     * @var GroupManagement|MockObject
+     * @var GroupManagement | \PHPUnit\Framework\MockObject\MockObject
      */
     private $groupManagement;
 
     /**
-     * @var ContextInterface|MockObject
+     * @var ContextInterface | \PHPUnit\Framework\MockObject\MockObject
      */
     private $context;
 
-    /**
-     * @var AttributeMetadataResolver
-     */
+    /** @var  AttributeMetadataResolver */
     private $model;
 
-    /**
-     * @var Attribute|MockObject
-     */
+    /** @var  Attribute | \PHPUnit\Framework\MockObject\MockObject */
     private $attribute;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
         $this->countryWithWebsiteSource = $this->getMockBuilder(CountryWithWebsites::class)
-            ->onlyMethods(['getAllOptions'])
+            ->setMethods(['getAllOptions'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->eavValidationRules = $this->getMockBuilder(EavValidationRules::class)
-            ->onlyMethods(['build'])
+            ->setMethods(['build'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->fileUploaderDataResolver = $this->getMockBuilder(FileUploaderDataResolver::class)
-            ->onlyMethods(['overrideFileUploaderMetadata'])
+            ->setMethods(['overrideFileUploaderMetadata'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->context =  $this->getMockBuilder(ContextInterface::class)
@@ -89,21 +81,18 @@ class AttributeMetadataResolverTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
         $this->groupManagement =  $this->getMockBuilder(GroupManagement::class)
-            ->onlyMethods(['getDefaultGroup'])
-            ->addMethods(['getId'])
+            ->setMethods(['getId', 'getDefaultGroup'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->attribute = $this->getMockBuilder(Attribute::class)
-            ->onlyMethods(
-                [
-                    'usesSource',
-                    'getDataUsingMethod',
-                    'getAttributeCode',
-                    'getFrontendInput',
-                    'getSource',
-                    'setDataUsingMethod'
-                ]
-            )
+            ->setMethods([
+                'usesSource',
+                'getDataUsingMethod',
+                'getAttributeCode',
+                'getFrontendInput',
+                'getSource',
+                'setDataUsingMethod'
+            ])
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -117,12 +106,7 @@ class AttributeMetadataResolverTest extends TestCase
         );
     }
 
-    /**
-     * Test to get meta data of the customer or customer address attribute.
-     *
-     * @return void
-     */
-    public function testGetAttributesMetaHasDefaultAttributeValue(): void
+    public function testGetAttributesMetaHasDefaultAttributeValue()
     {
         $rules = [
             'required-entry' => true
@@ -145,10 +129,10 @@ class AttributeMetadataResolverTest extends TestCase
         $this->groupManagement->expects($this->once())
             ->method('getId')
             ->willReturn($defaultGroupId);
-        $this->attribute
+        $this->attribute->expects($this->at(9))
             ->method('getDataUsingMethod')
-            ->withConsecutive([], [], [], [], [], [], ['default_value'])
-            ->willReturnOnConsecutiveCalls(null, null, null, null, null, null, $defaultGroupId);
+            ->with('default_value')
+            ->willReturn($defaultGroupId);
         $this->attribute->expects($this->once())
             ->method('setDataUsingMethod')
             ->willReturnSelf();

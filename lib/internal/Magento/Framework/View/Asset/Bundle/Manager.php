@@ -202,8 +202,6 @@ class Manager
     }
 
     /**
-     * Check for an asset's minified
-     *
      * @param LocalInterface $asset
      * @return bool
      */
@@ -231,8 +229,6 @@ class Manager
     }
 
     /**
-     * Validates asset
-     *
      * @param LocalInterface $asset
      * @return bool
      */
@@ -248,8 +244,6 @@ class Manager
     }
 
     /**
-     * Check if asset has valid type.
-     *
      * @param LocalInterface $asset
      * @return bool
      */

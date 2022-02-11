@@ -10,6 +10,7 @@ namespace Magento\Catalog\Model\Api\SearchCriteria\CollectionProcessor\Condition
 use Magento\Framework\Api\SearchCriteria\CollectionProcessor\ConditionProcessor\CustomConditionInterface;
 use Magento\Catalog\Model\ResourceModel\Product\Collection;
 use Magento\Framework\Api\Filter;
+use Magento\Framework\Data\Collection\AbstractDb;
 use Magento\Framework\Exception\NoSuchEntityException as CategoryDoesNotExistException;
 
 /**
@@ -62,12 +63,12 @@ class ProductCategoryCondition implements CustomConditionInterface
             )->where(
                 $this->resourceConnection->getConnection()->prepareSqlCondition(
                     'cat.category_id',
-                    ['in' => $this->getCategoryIds($filter)]
+                    [$this->mapConditionType($filter->getConditionType()) => $this->getCategoryIds($filter)]
                 )
             );
 
         $selectCondition = [
-            $this->mapConditionType($filter->getConditionType()) => $categorySelect
+            'in' => $categorySelect
         ];
 
         return $this->resourceConnection->getConnection()
@@ -115,7 +116,12 @@ class ProductCategoryCondition implements CustomConditionInterface
      */
     private function mapConditionType(string $conditionType): string
     {
-        $ninConditions = ['nin', 'neq', 'nlike'];
-        return in_array($conditionType, $ninConditions, true) ? 'nin' : 'in';
+        $conditionsMap = [
+            'eq' => 'in',
+            'neq' => 'nin',
+            'like' => 'in',
+            'nlike' => 'nin',
+        ];
+        return $conditionsMap[$conditionType] ?? $conditionType;
     }
 }

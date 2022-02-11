@@ -34,7 +34,7 @@ class Auto implements AlgorithmInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getItems(
         BucketInterface $bucket,
@@ -53,8 +53,6 @@ class Auto implements AlgorithmInterface
     }
 
     /**
-     * Returns price range.
-     *
      * @param BucketInterface $bucket
      * @param array $dimensions
      * @param EntityStorage $entityStorage
@@ -82,12 +80,13 @@ class Auto implements AlgorithmInterface
     private function getMaxPriceInt(EntityStorage $entityStorage)
     {
         $aggregations = $this->dataProvider->getAggregations($entityStorage);
-        return ($aggregations['max'] !== null) ? floor($aggregations['max']) : 0;
+        $maxPrice = $aggregations['max'];
+        $maxPrice = floor($maxPrice);
+
+        return $maxPrice;
     }
 
     /**
-     * Return Minimal range power.
-     *
      * @return int
      */
     private function getMinRangePower()

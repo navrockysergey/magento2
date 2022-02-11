@@ -17,13 +17,11 @@ define([
             url: '',
             currentPath: ['root'],
             tree: {
-                core: {
-                    themes: {
-                        dots: false
-                    },
-                    // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-                    check_callback: true
-                    // jscs:enable requireCamelCaseOrUpperCaseIdentifiers
+                'plugins': ['themes', 'json_data', 'ui', 'hotkeys'],
+                'themes': {
+                    'theme': 'default',
+                    'dots': false,
+                    'icons': true
                 }
             }
         },
@@ -36,33 +34,41 @@ define([
                     {},
                     options.tree,
                     {
-                        core: {
+                        'json_data': {
                             data: {
+                                data: options.rootName,
+                                state: 'closed',
+                                metadata: {
+                                    node: {
+                                        id: options.root,
+                                        text: options.rootName
+                                    }
+                                },
+                                attr: {
+                                    'data-id': options.root,
+                                    id: options.root
+                                }
+                            },
+                            ajax: {
                                 url: options.url,
-                                type: 'POST',
-                                dataType: 'text',
-                                dataFilter: $.proxy(function (data) {
-                                    return this._convertData(JSON.parse(data));
-                                }, this),
 
                                 /**
-                                 * @param {HTMLElement} node
+                                 * @param {Object} node
                                  * @return {Object}
                                  */
                                 data: function (node) {
                                     return {
-                                        node: node.id === 'root' ? null : node.id,
+                                        node: node.data('id'),
                                         'form_key': window.FORM_KEY
                                     };
-                                }
+                                },
+                                success: this._convertData
                             }
                         }
                     }
                 );
 
-            this.element.jstree(treeOptions)
-                .on('ready.jstree', $.proxy(this.treeLoaded, this))
-                .on('load_node.jstree', $.proxy(this._createRootNode, this));
+            this.element.jstree(treeOptions).on('loaded.jstree', $.proxy(this.treeLoaded, this));
         },
 
         /**
@@ -101,51 +107,24 @@ define([
         },
 
         /**
-         * Create tree root node
-         *
-         * @param {jQuery.Event} event
-         * @param {Object} data
-         * @private
-         */
-        _createRootNode: function (event, data) {
-            var rootNode, children;
-
-            // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-            if (data.node.id === '#') {
-                rootNode = {
-                    id: this.options.root,
-                    text: this.options.rootName,
-                    li_attr: {
-                        'data-id': this.options.root
-                    }
-                };
-                children = data.node.children;
-
-                data.instance.element.jstree().create_node(null, rootNode, 'first', function () {
-                    data.instance.element.jstree().move_node(children, rootNode.id);
-                });
-            }
-            // jscs:enable requireCamelCaseOrUpperCaseIdentifiers
-        },
-
-        /**
          * @param {*} data
          * @return {*}
          * @private
          */
         _convertData: function (data) {
             return $.map(data, function (node) {
+                var codeCopy = $.extend({}, node);
 
                 return {
-                    id: node.id,
-                    text: node.text,
-                    path: node.path,
-                    // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-                    li_attr: {
-                        'data-id': node.id
+                    data: node.text,
+                    attr: {
+                        'data-id': node.id,
+                        id: node.id
                     },
-                    // jscs:enable requireCamelCaseOrUpperCaseIdentifiers
-                    children: node.children
+                    metadata: {
+                        node: codeCopy
+                    },
+                    state: node.state || 'closed'
                 };
             });
         }

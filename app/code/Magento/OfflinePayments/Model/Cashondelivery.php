@@ -15,7 +15,7 @@ namespace Magento\OfflinePayments\Model;
  */
 class Cashondelivery extends \Magento\Payment\Model\Method\AbstractMethod
 {
-    public const PAYMENT_METHOD_CASHONDELIVERY_CODE = 'cashondelivery';
+    const PAYMENT_METHOD_CASHONDELIVERY_CODE = 'cashondelivery';
 
     /**
      * Payment method code
@@ -52,7 +52,6 @@ class Cashondelivery extends \Magento\Payment\Model\Method\AbstractMethod
      */
     public function getInstructions()
     {
-        $instructions = $this->getConfigData('instructions');
-        return $instructions !== null ? trim($instructions) : '';
+        return trim($this->getConfigData('instructions'));
     }
 }

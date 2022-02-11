@@ -113,7 +113,6 @@ define([
 
             $.when(this.isEmailCheckComplete).done(function () {
                 this.isPasswordVisible(false);
-                checkoutData.setCheckedEmailValue('');
             }.bind(this)).fail(function () {
                 this.isPasswordVisible(true);
                 checkoutData.setCheckedEmailValue(this.email());
@@ -161,13 +160,9 @@ define([
                 return valid;
             }
 
-            if (loginForm.is(':visible')) {
-                validator = loginForm.validate();
+            validator = loginForm.validate();
 
-                return validator.check(usernameSelector);
-            }
-
-            return true;
+            return validator.check(usernameSelector);
         },
 
         /**
@@ -197,10 +192,6 @@ define([
          * @returns {Boolean} - initial visibility state.
          */
         resolveInitialPasswordVisibility: function () {
-            if (checkoutData.getInputFieldEmailValue() !== '' && checkoutData.getCheckedEmailValue() !== '') {
-                return true;
-            }
-
             if (checkoutData.getInputFieldEmailValue() !== '') {
                 return checkoutData.getInputFieldEmailValue() === checkoutData.getCheckedEmailValue();
             }

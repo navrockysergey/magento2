@@ -3,140 +3,112 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Widget\Test\Unit\Block\Adminhtml\Widget\Instance\Edit\Chooser;
 
-use Magento\Backend\Block\Context;
-use Magento\Framework\App\Config;
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\Escaper;
-use Magento\Framework\Event\Manager;
-use Magento\Framework\View\Layout\ProcessorFactory;
-use Magento\Framework\View\Model\Layout\Merge;
-use Magento\Framework\View\Model\PageLayout\Config\BuilderInterface as PageLayoutConfigBuilder;
-use Magento\Framework\View\PageLayout\Config as PageLayoutConfig;
-use Magento\Theme\Model\ResourceModel\Theme\Collection;
-use Magento\Theme\Model\ResourceModel\Theme\CollectionFactory;
-use Magento\Theme\Model\Theme;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManagerHelper;
 
-/**
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
- */
-abstract class AbstractContainerTest extends TestCase
+abstract class AbstractContainerTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var Manager|MockObject
+     * @var \Magento\Framework\Event\Manager|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $eventManagerMock;
 
     /**
-     * @var ScopeConfigInterface|MockObject
+     * @var \Magento\Framework\App\Config\ScopeConfigInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $scopeConfigMock;
 
     /**
-     * @var Context|MockObject
+     * @var \Magento\Backend\Block\Context|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $contextMock;
 
     /**
-     * @var Collection|MockObject
+     * @var \Magento\Theme\Model\ResourceModel\Theme\Collection|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $themeCollectionMock;
 
     /**
-     * @var CollectionFactory|MockObject
+     * @var \Magento\Theme\Model\ResourceModel\Theme\CollectionFactory|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $themeCollectionFactoryMock;
 
     /**
-     * @var Theme|MockObject
+     * @var \Magento\Theme\Model\Theme|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $themeMock;
 
     /**
-     * @var ProcessorFactory|MockObject
+     * @var \Magento\Framework\View\Layout\ProcessorFactory|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $layoutProcessorFactoryMock;
 
     /**
-     * @var Merge|MockObject
+     * @var \Magento\Framework\View\Model\Layout\Merge|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $layoutMergeMock;
 
     /**
-     * @var Escaper|MockObject
+     * @var \Magento\Framework\Escaper|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $escaperMock;
 
     /**
-     * @var PageLayoutConfigBuilder|MockObject
+     * @var ObjectManagerHelper
      */
-    protected $pageLayoutConfigBuilderMock;
+    protected $objectManagerHelper;
 
     /**
      * @return void
      */
     protected function setUp(): void
     {
-        $this->eventManagerMock = $this->getMockBuilder(Manager::class)
+        $this->objectManagerHelper = new ObjectManagerHelper($this);
+
+        $this->eventManagerMock = $this->getMockBuilder(\Magento\Framework\Event\Manager::class)
             ->setMethods(['dispatch'])
             ->disableOriginalConstructor()
             ->getMock();
-        $this->scopeConfigMock = $this->getMockBuilder(Config::class)
+        $this->scopeConfigMock = $this->getMockBuilder(\Magento\Framework\App\Config::class)
             ->setMethods(['getValue'])
             ->disableOriginalConstructor()
             ->getMock();
 
         $this->themeCollectionFactoryMock = $this->createPartialMock(
-            CollectionFactory::class,
+            \Magento\Theme\Model\ResourceModel\Theme\CollectionFactory::class,
             ['create']
         );
-        $this->themeCollectionMock = $this->getMockBuilder(Collection::class)
+        $this->themeCollectionMock = $this->getMockBuilder(\Magento\Theme\Model\ResourceModel\Theme\Collection::class)
             ->disableOriginalConstructor()
             ->setMethods(['getItemById'])
             ->getMock();
         $this->themeMock = $this->getMockBuilder(
-            Theme::class
-        )->disableOriginalConstructor()
-            ->getMock();
+            \Magento\Theme\Model\Theme::class
+        )->disableOriginalConstructor()->getMock();
 
         $this->layoutProcessorFactoryMock = $this->createPartialMock(
-            ProcessorFactory::class,
+            \Magento\Framework\View\Layout\ProcessorFactory::class,
             ['create']
         );
 
-        $this->layoutMergeMock = $this->getMockBuilder(Merge::class)
+        $this->layoutMergeMock = $this->getMockBuilder(\Magento\Framework\View\Model\Layout\Merge::class)
             ->setMethods(['addPageHandles', 'load', 'getContainers', 'addHandle'])
             ->disableOriginalConstructor()
             ->getMock();
 
         $this->escaperMock = $this->createPartialMock(
-            Escaper::class,
+            \Magento\Framework\Escaper::class,
             ['escapeHtml', 'escapeHtmlAttr']
         );
-        $this->escaperMock->method('escapeHtmlAttr')->willReturnArgument(0);
+        $this->escaperMock->expects($this->any())->method('escapeHtmlAttr')->willReturnArgument(0);
 
-        $this->contextMock = $this->getMockBuilder(Context::class)
+        $this->contextMock = $this->getMockBuilder(\Magento\Backend\Block\Context::class)
             ->setMethods(['getEventManager', 'getScopeConfig', 'getEscaper'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->contextMock->expects($this->once())->method('getEventManager')->willReturn($this->eventManagerMock);
         $this->contextMock->expects($this->once())->method('getScopeConfig')->willReturn($this->scopeConfigMock);
         $this->contextMock->expects($this->once())->method('getEscaper')->willReturn($this->escaperMock);
-
-        $this->pageLayoutConfigBuilderMock = $this->getMockBuilder(PageLayoutConfigBuilder::class)
-            ->getMockForAbstractClass();
-        $pageLayoutConfigMock = $this->getMockBuilder(PageLayoutConfig::class)
-            ->onlyMethods(['getPageLayouts'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $pageLayoutConfigMock->method('getPageLayouts')
-            ->willReturn(['empty' => 'Empty']);
-        $this->pageLayoutConfigBuilderMock->method('getPageLayoutsConfig')
-            ->willReturn($pageLayoutConfigMock);
     }
 }

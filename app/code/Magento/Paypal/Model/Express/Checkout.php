@@ -30,25 +30,25 @@ class Checkout
      *
      * @var string
      */
-    public const PAL_CACHE_ID = 'paypal_express_checkout_pal';
+    const PAL_CACHE_ID = 'paypal_express_checkout_pal';
 
     /**
      * Keys for passthrough variables in sales/quote_payment and sales/order_payment
      * Uses additional_information as storage
      */
-    public const PAYMENT_INFO_TRANSPORT_TOKEN    = 'paypal_express_checkout_token';
-    public const PAYMENT_INFO_TRANSPORT_SHIPPING_OVERRIDDEN = 'paypal_express_checkout_shipping_overridden';
-    public const PAYMENT_INFO_TRANSPORT_SHIPPING_METHOD = 'paypal_express_checkout_shipping_method';
-    public const PAYMENT_INFO_TRANSPORT_PAYER_ID = 'paypal_express_checkout_payer_id';
-    public const PAYMENT_INFO_TRANSPORT_REDIRECT = 'paypal_express_checkout_redirect_required';
-    public const PAYMENT_INFO_TRANSPORT_BILLING_AGREEMENT = 'paypal_ec_create_ba';
+    const PAYMENT_INFO_TRANSPORT_TOKEN    = 'paypal_express_checkout_token';
+    const PAYMENT_INFO_TRANSPORT_SHIPPING_OVERRIDDEN = 'paypal_express_checkout_shipping_overridden';
+    const PAYMENT_INFO_TRANSPORT_SHIPPING_METHOD = 'paypal_express_checkout_shipping_method';
+    const PAYMENT_INFO_TRANSPORT_PAYER_ID = 'paypal_express_checkout_payer_id';
+    const PAYMENT_INFO_TRANSPORT_REDIRECT = 'paypal_express_checkout_redirect_required';
+    const PAYMENT_INFO_TRANSPORT_BILLING_AGREEMENT = 'paypal_ec_create_ba';
 
     /**
      * Flag which says that was used PayPal Express Checkout button for checkout
      * Uses additional_information as storage
      * @var string
      */
-    public const PAYMENT_INFO_BUTTON = 'button';
+    const PAYMENT_INFO_BUTTON = 'button';
 
     /**
      * @var \Magento\Quote\Model\Quote
@@ -131,6 +131,8 @@ class Checkout
     protected $_isBml = false;
 
     /**
+     * Customer ID
+     *
      * @var int
      */
     protected $_customerId;
@@ -143,6 +145,8 @@ class Checkout
     protected $_billingAgreement;
 
     /**
+     * Order
+     *
      * @var \Magento\Sales\Model\Order
      */
     protected $_order;
@@ -153,11 +157,15 @@ class Checkout
     protected $_configCacheType;
 
     /**
+     * Checkout data
+     *
      * @var \Magento\Checkout\Helper\Data
      */
     protected $_checkoutData;
 
     /**
+     * Tax data
+     *
      * @var \Magento\Tax\Helper\Data
      */
     protected $_taxData;
@@ -497,7 +505,7 @@ class Checkout
         $solutionType = $this->_config->getMerchantCountry() == 'DE'
             ? \Magento\Paypal\Model\Config::EC_SOLUTION_TYPE_MARK
             : $this->_config->getValue('solutionType');
-        $totalAmount = round((float)$this->_quote->getBaseGrandTotal(), 2);
+        $totalAmount = round($this->_quote->getBaseGrandTotal(), 2);
         $this->_getApi()->setAmount($totalAmount)
             ->setCurrencyCode($this->_quote->getBaseCurrencyCode())
             ->setInvNum($this->_quote->getReservedOrderId())
@@ -655,7 +663,7 @@ class Checkout
         ) === \Magento\Paypal\Model\Config::REQUIRE_BILLING_ADDRESS_ALL;
 
         if ($isButton && !$requireBillingAddress && !$quote->isVirtual()) {
-            $billingAddress = clone $shippingAddress; /** @phpstan-ignore-line */
+            $billingAddress = clone $shippingAddress;
             $billingAddress->unsAddressId()->unsAddressType()->setCustomerAddressId(null);
             $data = $billingAddress->getData();
             $data['save_in_address_book'] = 0;
@@ -1147,20 +1155,8 @@ class Checkout
     protected function prepareGuestQuote()
     {
         $quote = $this->_quote;
-        $billingAddress = $quote->getBillingAddress();
-
-        /* Check if Guest customer provided an email address on checkout page, and in case
-        it was provided, use it as priority, if not, use email address returned from PayPal.
-        (Guest customer can place order two ways: - from checkout page, where guest is asked to provide
-        an email address that later can be used for account creation; - from mini shopping cart, directly
-        proceeding to PayPal without providing an email address */
-        $email = $billingAddress->getOrigData('email') !== null
-            ? $billingAddress->getOrigData('email') : $billingAddress->getEmail();
-
         $quote->setCustomerId(null)
-            ->setCustomerEmail($email)
-            ->setCustomerFirstname($billingAddress->getFirstname())
-            ->setCustomerLastname($billingAddress->getLastname())
+            ->setCustomerEmail($quote->getBillingAddress()->getEmail())
             ->setCustomerIsGuest(true)
             ->setCustomerGroupId(\Magento\Customer\Model\Group::NOT_LOGGED_IN_ID);
         return $this;

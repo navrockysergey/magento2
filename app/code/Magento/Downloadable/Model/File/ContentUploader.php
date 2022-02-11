@@ -18,9 +18,9 @@ use Magento\Framework\Filesystem;
 class ContentUploader extends Uploader implements \Magento\Downloadable\Api\Data\File\ContentUploaderInterface
 {
     /**
-     * Default MIME type for header "application/octet-stream"
+     * Default MIME type
      */
-    public const DEFAULT_MIME_TYPE = 'application/octet-stream';
+    const DEFAULT_MIME_TYPE = 'application/octet-stream';
 
     /**
      * Filename prefix for temporary files
@@ -79,7 +79,6 @@ class ContentUploader extends Uploader implements \Magento\Downloadable\Api\Data
      *
      * @param ContentInterface $fileContent
      * @return array
-     * @phpcs:disable Magento2.Functions.DiscouragedFunction
      */
     protected function decodeContent(ContentInterface $fileContent)
     {
@@ -106,8 +105,7 @@ class ContentUploader extends Uploader implements \Magento\Downloadable\Api\Data
     }
 
     /**
-     * @inheritdoc
-     * @phpcs:disable Magento2.Functions.DiscouragedFunction
+     * {@inheritdoc}
      */
     public function upload(ContentInterface $fileContent, $contentType)
     {
@@ -120,13 +118,9 @@ class ContentUploader extends Uploader implements \Magento\Downloadable\Api\Data
         $this->setAllowRenameFiles(true);
         $this->setFilesDispersion(true);
         $result = $this->save($this->getDestinationDirectory($contentType));
-
-        if ($result) {
-            unset($result['path']);
-            $result['status'] = 'new';
-            $result['name'] = substr($result['file'], strrpos($result['file'], '/') + 1);
-        }
-
+        unset($result['path']);
+        $result['status'] = 'new';
+        $result['name'] = substr($result['file'], strrpos($result['file'], '/') + 1);
         return $result;
     }
 

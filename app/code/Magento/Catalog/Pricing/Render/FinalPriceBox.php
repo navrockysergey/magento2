@@ -196,7 +196,6 @@ class FinalPriceBox extends BasePriceBox
         $cacheKeys['display_minimal_price'] = $this->getDisplayMinimalPrice();
         $cacheKeys['is_product_list'] = $this->isProductList();
         $cacheKeys['customer_group_id'] = $this->getSaleableItem()->getCustomerGroupId();
-        $cacheKeys['zone'] = $this->getZone();
         return $cacheKeys;
     }
 

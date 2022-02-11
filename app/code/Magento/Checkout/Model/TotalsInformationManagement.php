@@ -5,14 +5,14 @@
  */
 namespace Magento\Checkout\Model;
 
-use Magento\Checkout\Api\Data\TotalsInformationInterface;
-
 /**
- * Class for management of totals information.
+ * Class TotalsInformationManagement
  */
 class TotalsInformationManagement implements \Magento\Checkout\Api\TotalsInformationManagementInterface
 {
     /**
+     * Cart total repository.
+     *
      * @var \Magento\Quote\Api\CartTotalRepositoryInterface
      */
     protected $cartTotalRepository;
@@ -38,11 +38,11 @@ class TotalsInformationManagement implements \Magento\Checkout\Api\TotalsInforma
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function calculate(
         $cartId,
-        TotalsInformationInterface $addressInformation
+        \Magento\Checkout\Api\Data\TotalsInformationInterface $addressInformation
     ) {
         /** @var \Magento\Quote\Model\Quote $quote */
         $quote = $this->cartRepository->get($cartId);
@@ -52,21 +52,9 @@ class TotalsInformationManagement implements \Magento\Checkout\Api\TotalsInforma
             $quote->setBillingAddress($addressInformation->getAddress());
         } else {
             $quote->setShippingAddress($addressInformation->getAddress());
-            if ($addressInformation->getShippingCarrierCode() && $addressInformation->getShippingMethodCode()) {
-                $shippingMethod = implode(
-                    '_',
-                    [$addressInformation->getShippingCarrierCode(), $addressInformation->getShippingMethodCode()]
-                );
-                $quoteShippingAddress = $quote->getShippingAddress();
-                if ($quoteShippingAddress->getShippingMethod() &&
-                    $quoteShippingAddress->getShippingMethod() !== $shippingMethod
-                ) {
-                    $quoteShippingAddress->setShippingAmount(0);
-                    $quoteShippingAddress->setBaseShippingAmount(0);
-                }
-                $quoteShippingAddress->setCollectShippingRates(true)
-                    ->setShippingMethod($shippingMethod);
-            }
+            $quote->getShippingAddress()->setCollectShippingRates(true)->setShippingMethod(
+                $addressInformation->getShippingCarrierCode() . '_' . $addressInformation->getShippingMethodCode()
+            );
         }
         $quote->collectTotals();
 
@@ -74,8 +62,6 @@ class TotalsInformationManagement implements \Magento\Checkout\Api\TotalsInforma
     }
 
     /**
-     * Check if quote have items.
-     *
      * @param \Magento\Quote\Model\Quote $quote
      * @throws \Magento\Framework\Exception\LocalizedException
      * @return void

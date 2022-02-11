@@ -23,26 +23,26 @@ class Config
     /**
      * Cache types
      */
-    public const BUILT_IN = 1;
+    const BUILT_IN = 1;
 
-    public const VARNISH = 2;
+    const VARNISH = 2;
 
     /**
      * XML path to Varnish settings
      */
-    public const XML_PAGECACHE_TTL = 'system/full_page_cache/ttl';
+    const XML_PAGECACHE_TTL = 'system/full_page_cache/ttl';
 
-    public const XML_PAGECACHE_TYPE = 'system/full_page_cache/caching_application';
+    const XML_PAGECACHE_TYPE = 'system/full_page_cache/caching_application';
 
-    public const XML_VARNISH_PAGECACHE_ACCESS_LIST = 'system/full_page_cache/varnish/access_list';
+    const XML_VARNISH_PAGECACHE_ACCESS_LIST = 'system/full_page_cache/varnish/access_list';
 
-    public const XML_VARNISH_PAGECACHE_BACKEND_PORT = 'system/full_page_cache/varnish/backend_port';
+    const XML_VARNISH_PAGECACHE_BACKEND_PORT = 'system/full_page_cache/varnish/backend_port';
 
-    public const XML_VARNISH_PAGECACHE_BACKEND_HOST = 'system/full_page_cache/varnish/backend_host';
+    const XML_VARNISH_PAGECACHE_BACKEND_HOST = 'system/full_page_cache/varnish/backend_host';
 
-    public const XML_VARNISH_PAGECACHE_GRACE_PERIOD = 'system/full_page_cache/varnish/grace_period';
+    const XML_VARNISH_PAGECACHE_GRACE_PERIOD = 'system/full_page_cache/varnish/grace_period';
 
-    public const XML_VARNISH_PAGECACHE_DESIGN_THEME_REGEX = 'design/theme/ua_regexp';
+    const XML_VARNISH_PAGECACHE_DESIGN_THEME_REGEX = 'design/theme/ua_regexp';
 
     /**
      * @var \Magento\Framework\App\Config\ScopeConfigInterface
@@ -52,17 +52,17 @@ class Config
     /**
      * XML path to Varnish 6 config template path
      */
-    public const VARNISH_6_CONFIGURATION_PATH = 'system/full_page_cache/varnish6/path';
+    const VARNISH_6_CONFIGURATION_PATH = 'system/full_page_cache/varnish6/path';
 
     /**
      * XML path to Varnish 5 config template path
      */
-    public const VARNISH_5_CONFIGURATION_PATH = 'system/full_page_cache/varnish5/path';
+    const VARNISH_5_CONFIGURATION_PATH = 'system/full_page_cache/varnish5/path';
 
     /**
      * XML path to Varnish 4 config template path
      */
-    public const VARNISH_4_CONFIGURATION_PATH = 'system/full_page_cache/varnish4/path';
+    const VARNISH_4_CONFIGURATION_PATH = 'system/full_page_cache/varnish4/path';
 
     /**
      * @var \Magento\Framework\App\Cache\StateInterface $_cacheState
@@ -117,16 +117,18 @@ class Config
      * Return currently selected cache type: built in or varnish
      *
      * @return int
+     * @api
      */
     public function getType()
     {
-        return (int)$this->_scopeConfig->getValue(self::XML_PAGECACHE_TYPE);
+        return $this->_scopeConfig->getValue(self::XML_PAGECACHE_TYPE);
     }
 
     /**
      * Return page lifetime
      *
      * @return int
+     * @api
      */
     public function getTtl()
     {
@@ -139,6 +141,7 @@ class Config
      * @param string $vclTemplatePath
      * @return string
      * @deprecated 100.2.0 see \Magento\PageCache\Model\VclGeneratorInterface::generateVcl
+     * @api
      */
     public function getVclFile($vclTemplatePath)
     {
@@ -264,6 +267,7 @@ class Config
      * Whether a cache type is enabled in Cache Management Grid
      *
      * @return bool
+     * @api
      */
     public function isEnabled()
     {

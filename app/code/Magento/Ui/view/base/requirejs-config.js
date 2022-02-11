@@ -4,10 +4,8 @@
  */
 
 var config = {
-    deps: [],
     shim: {
-        'chartjs/chartjs-adapter-moment': ['moment'],
-        'tiny_mce_5/tinymce.min': {
+        'tiny_mce_4/tinymce.min': {
             exports: 'tinyMCE'
         }
     },
@@ -25,10 +23,8 @@ var config = {
             consoleLogger:  'Magento_Ui/js/lib/logger/console-logger',
             uiLayout:       'Magento_Ui/js/core/renderer/layout',
             buttonAdapter:  'Magento_Ui/js/form/button-adapter',
-            chartJs:        'chartjs/Chart.min',
-            'chart.js':     'chartjs/Chart.min',
-            tinymce:        'tiny_mce_5/tinymce.min',
-            wysiwygAdapter: 'mage/adminhtml/wysiwyg/tiny_mce/tinymce5Adapter'
+            tinymce4:       'tiny_mce_4/tinymce.min',
+            wysiwygAdapter: 'mage/adminhtml/wysiwyg/tiny_mce/tinymce4Adapter'
         }
     }
 };

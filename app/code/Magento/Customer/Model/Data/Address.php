@@ -1,5 +1,7 @@
 <?php
 /**
+ * Data Model implementing the Address interface
+ *
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
@@ -9,7 +11,7 @@ use Magento\Customer\Api\Data\RegionInterface;
 use \Magento\Framework\Api\AttributeValueFactory;
 
 /**
- * Class Address Data Model implementing the Address interface
+ * Class Address
  *
  *
  * @api
@@ -325,10 +327,7 @@ class Address extends \Magento\Framework\Api\AbstractExtensibleObject implements
      */
     public function setTelephone($telephone)
     {
-        return $this->setData(
-            self::TELEPHONE,
-            is_string($telephone) && '' !== $telephone ? trim($telephone) : $telephone
-        );
+        return $this->setData(self::TELEPHONE, trim($telephone));
     }
 
     /**

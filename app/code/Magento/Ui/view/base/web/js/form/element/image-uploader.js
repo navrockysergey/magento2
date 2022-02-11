@@ -78,18 +78,10 @@ define([
                 '/type/image/?isAjax=true';
 
             if (this.mediaGallery.initialOpenSubpath) {
-                openDialogUrl += '&current_tree_path=' + Base64.idEncode(this.mediaGallery.initialOpenSubpath);
+                openDialogUrl += '&current_tree_path=' + Base64.mageEncode(this.mediaGallery.initialOpenSubpath);
             }
 
-            browser.openDialog(
-                openDialogUrl,
-                null,
-                null,
-                this.mediaGallery.openDialogTitle,
-                {
-                    targetElementId: $buttonEl.attr('id')
-                }
-            );
+            browser.openDialog(openDialogUrl, null, null, this.mediaGallery.openDialogTitle);
         },
 
         /**
@@ -133,7 +125,7 @@ define([
          * @param {Event} e
          */
         triggerImageUpload: function (imageUploader, e) {
-            $(e.target).closest('.file-uploader').find('input[type="file"]').trigger('click');
+            $(e.target).closest('.file-uploader').find('input[type="file"]').click();
         },
 
         /**

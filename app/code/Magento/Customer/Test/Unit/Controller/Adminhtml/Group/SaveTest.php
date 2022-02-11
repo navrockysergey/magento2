@@ -3,153 +3,124 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Customer\Test\Unit\Controller\Adminhtml\Group;
 
-use Magento\Backend\App\Action\Context;
-use Magento\Backend\Model\Session;
-use Magento\Backend\Model\View\Result\Forward;
-use Magento\Backend\Model\View\Result\ForwardFactory;
-use Magento\Customer\Api\Data\GroupExtension;
-use Magento\Customer\Api\Data\GroupExtensionInterfaceFactory;
-use Magento\Customer\Api\Data\GroupInterface;
 use Magento\Customer\Api\Data\GroupInterfaceFactory;
-use Magento\Customer\Api\GroupRepositoryInterface;
 use Magento\Customer\Controller\Adminhtml\Group\Save;
-use Magento\Framework\App\RequestInterface;
-use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Controller\Result\RedirectFactory;
-use Magento\Framework\Message\ManagerInterface;
+use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Reflection\DataObjectProcessor;
-use Magento\Framework\Registry;
-use Magento\Framework\View\Result\PageFactory;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.TooManyFields)
  */
-class SaveTest extends TestCase
+class SaveTest extends \PHPUnit\Framework\TestCase
 {
     /** @var Save */
-    private $controller;
+    protected $controller;
 
-    /** @var Context|MockObject */
-    private $contextMock;
+    /** @var \Magento\Backend\App\Action\Context|\PHPUnit\Framework\MockObject\MockObject */
+    protected $contextMock;
 
-    /** @var Registry|MockObject */
-    private $registryMock;
+    /** @var \Magento\Framework\Registry|\PHPUnit\Framework\MockObject\MockObject */
+    protected $registryMock;
 
-    /** @var GroupRepositoryInterface|MockObject */
-    private $groupRepositoryMock;
+    /** @var \Magento\Customer\Api\GroupRepositoryInterface|\PHPUnit\Framework\MockObject\MockObject */
+    protected $groupRepositoryMock;
 
-    /** @var GroupInterfaceFactory|MockObject */
-    private $groupInterfaceFactoryMock;
+    /** @var GroupInterfaceFactory|\PHPUnit\Framework\MockObject\MockObject */
+    protected $groupInterfaceFactoryMock;
 
-    /** @var ForwardFactory|MockObject */
-    private $forwardFactoryMock;
+    /** @var \Magento\Backend\Model\View\Result\ForwardFactory|\PHPUnit\Framework\MockObject\MockObject */
+    protected $forwardFactoryMock;
 
-    /** @var PageFactory|MockObject */
-    private $pageFactoryMock;
+    /** @var \Magento\Framework\View\Result\PageFactory|\PHPUnit\Framework\MockObject\MockObject */
+    protected $pageFactoryMock;
 
-    /** @var DataObjectProcessor|MockObject */
-    private $dataObjectProcessorMock;
+    /** @var DataObjectProcessor|\PHPUnit\Framework\MockObject\MockObject */
+    protected $dataObjectProcessorMock;
 
-    /** @var RequestInterface|MockObject */
-    private $requestMock;
+    /** @var \Magento\Framework\App\RequestInterface|\PHPUnit\Framework\MockObject\MockObject */
+    protected $request;
 
-    /** @var RedirectFactory|MockObject */
-    private $resultRedirectFactoryMock;
+    /** @var RedirectFactory|\PHPUnit\Framework\MockObject\MockObject */
+    protected $resultRedirectFactory;
 
-    /** @var Redirect|MockObject */
-    private $resultRedirectMock;
+    /** @var Redirect|\PHPUnit\Framework\MockObject\MockObject */
+    protected $resultRedirect;
 
-    /** @var ManagerInterface|MockObject */
-    private $messageManagerMock;
+    /** @var \Magento\Customer\Api\Data\GroupInterface|\PHPUnit\Framework\MockObject\MockObject */
+    protected $customerGroup;
 
-    /** @var Forward|MockObject */
-    private $resultForwardMock;
+    /** @var \Magento\Framework\Message\ManagerInterface|\PHPUnit\Framework\MockObject\MockObject */
+    protected $messageManager;
 
-    /** @var GroupInterface|MockObject */
-    private $groupMock;
+    /** @var \Magento\Backend\Model\View\Result\Forward|\PHPUnit\Framework\MockObject\MockObject */
+    protected $resultForward;
 
-    /** @var Session|MockObject */
-    private $sessionMock;
+    /** @var \Magento\Customer\Api\Data\GroupInterface|\PHPUnit\Framework\MockObject\MockObject */
+    protected $group;
 
-    /** @var GroupExtensionInterfaceFactory|MockObject $groupExtensionFactoryMock */
-    private $groupExtensionFactoryMock;
+    /** @var \Magento\Backend\Model\Session|\PHPUnit\Framework\MockObject\MockObject */
+    protected $session;
 
-    /** @var GroupExtension|MockObject */
-    private $groupExtensionMock;
-
-    /**
-     * @inheritdoc
-     */
     protected function setUp(): void
     {
-        $this->contextMock = $this->getMockBuilder(Context::class)
+        $this->contextMock = $this->getMockBuilder(\Magento\Backend\App\Action\Context::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->registryMock = $this->getMockBuilder(Registry::class)
+        $this->registryMock = $this->getMockBuilder(\Magento\Framework\Registry::class)
             ->getMockForAbstractClass();
-        $this->groupRepositoryMock = $this->getMockBuilder(GroupRepositoryInterface::class)
+        $this->groupRepositoryMock = $this->getMockBuilder(\Magento\Customer\Api\GroupRepositoryInterface::class)
             ->getMockForAbstractClass();
         $this->groupInterfaceFactoryMock = $this->getMockBuilder(GroupInterfaceFactory::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->forwardFactoryMock = $this->getMockBuilder(ForwardFactory::class)
+        $this->forwardFactoryMock = $this->getMockBuilder(\Magento\Backend\Model\View\Result\ForwardFactory::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['create'])
+            ->setMethods(['create'])
             ->getMock();
-        $this->pageFactoryMock = $this->getMockBuilder(PageFactory::class)
+        $this->pageFactoryMock = $this->getMockBuilder(\Magento\Framework\View\Result\PageFactory::class)
             ->disableOriginalConstructor()
             ->getMock();
         $this->dataObjectProcessorMock = $this->getMockBuilder(DataObjectProcessor::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->requestMock = $this->getMockBuilder(RequestInterface::class)
+        $this->request = $this->getMockBuilder(\Magento\Framework\App\RequestInterface::class)
             ->getMockForAbstractClass();
-        $this->resultRedirectFactoryMock = $this->getMockBuilder(RedirectFactory::class)
+        $this->resultRedirectFactory = $this->getMockBuilder(RedirectFactory::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->resultRedirectMock = $this->getMockBuilder(Redirect::class)
+        $this->resultRedirect = $this->getMockBuilder(Redirect::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->messageManagerMock = $this->getMockBuilder(ManagerInterface::class)
+        $this->customerGroup = $this->getMockBuilder(\Magento\Customer\Api\Data\GroupInterface::class)
             ->getMockForAbstractClass();
-        $this->resultForwardMock = $this->getMockBuilder(Forward::class)
+        $this->messageManager = $this->getMockBuilder(\Magento\Framework\Message\ManagerInterface::class)
+            ->getMockForAbstractClass();
+        $this->resultForward = $this->getMockBuilder(\Magento\Backend\Model\View\Result\Forward::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->groupMock = $this->getMockBuilder(GroupInterface::class)
-            ->onlyMethods(['setExtensionAttributes'])
+        $this->group = $this->getMockBuilder(\Magento\Customer\Api\Data\GroupInterface::class)
             ->getMockForAbstractClass();
-        $this->sessionMock = $this->getMockBuilder(Session::class)
+        $this->session = $this->getMockBuilder(\Magento\Backend\Model\Session::class)
             ->disableOriginalConstructor()
-            ->addMethods(['setCustomerGroupData'])
-            ->getMock();
-        $this->groupExtensionFactoryMock = $this->getMockBuilder(GroupExtensionInterfaceFactory::class)
-            ->onlyMethods(['create'])
-            ->disableOriginalConstructor()
-            ->getMockForAbstractClass();
-        $this->groupExtensionMock = $this->getMockBuilder(GroupExtension::class)
-            ->addMethods(['setExcludeWebsiteIds'])
-            ->disableOriginalConstructor()
+            ->setMethods(['setCustomerGroupData'])
             ->getMock();
 
-        $this->contextMock->expects(self::once())
+        $this->contextMock->expects($this->once())
             ->method('getMessageManager')
-            ->willReturn($this->messageManagerMock);
-        $this->contextMock->expects(self::once())
+            ->willReturn($this->messageManager);
+        $this->contextMock->expects($this->once())
             ->method('getRequest')
-            ->willReturn($this->requestMock);
-        $this->contextMock->expects(self::once())
+            ->willReturn($this->request);
+        $this->contextMock->expects($this->once())
             ->method('getResultRedirectFactory')
-            ->willReturn($this->resultRedirectFactoryMock);
-        $this->contextMock->expects(self::once())
+            ->willReturn($this->resultRedirectFactory);
+        $this->contextMock->expects($this->once())
             ->method('getSession')
-            ->willReturn($this->sessionMock);
+            ->willReturn($this->session);
 
         $this->controller = new Save(
             $this->contextMock,
@@ -158,103 +129,80 @@ class SaveTest extends TestCase
             $this->groupInterfaceFactoryMock,
             $this->forwardFactoryMock,
             $this->pageFactoryMock,
-            $this->dataObjectProcessorMock,
-            $this->groupExtensionFactoryMock
+            $this->dataObjectProcessorMock
         );
     }
 
-    /**
-     * @return void
-     */
-    public function testExecuteWithTaxClassAndException(): void
+    public function testExecuteWithTaxClassAndException()
     {
         $taxClass = '3';
         $groupId = 0;
         $code = 'NOT LOGGED IN';
 
-        $this->requestMock->method('getParam')
-            ->willReturnMap(
-                [
-                    ['tax_class', null, $taxClass],
-                    ['id', null, $groupId],
-                    ['code', null, null],
-                    ['customer_group_excluded_websites', null, '']
-                ]
-            );
-        $this->groupExtensionFactoryMock->expects(self::once())
+        $this->request->expects($this->exactly(3))
+            ->method('getParam')
+            ->withConsecutive(
+                ['tax_class'],
+                ['id'],
+                ['code']
+            )
+            ->willReturnOnConsecutiveCalls($taxClass, $groupId, null);
+        $this->resultRedirectFactory->expects($this->once())
             ->method('create')
-            ->willReturn($this->groupExtensionMock);
-        $this->groupExtensionMock->expects(self::once())
-            ->method('setExcludeWebsiteIds')
-            ->with([])
-            ->willReturnSelf();
-        $this->groupMock->expects(self::once())
-            ->method('setExtensionAttributes')
-            ->with($this->groupExtensionMock)
-            ->willReturnSelf();
-        $this->resultRedirectFactoryMock->expects($this->once())
-            ->method('create')
-            ->willReturn($this->resultRedirectMock);
+            ->willReturn($this->resultRedirect);
         $this->groupRepositoryMock->expects($this->once())
             ->method('getById')
             ->with($groupId)
-            ->willReturn($this->groupMock);
-        $this->groupMock->expects(self::once())
+            ->willReturn($this->group);
+        $this->group->expects($this->once())
             ->method('getCode')
             ->willReturn($code);
-        $this->groupMock->expects(self::once())
+        $this->group->expects($this->once())
             ->method('setCode')
             ->with($code);
-        $this->groupMock->expects(self::once())
+        $this->group->expects($this->once())
             ->method('setTaxClassId')
             ->with($taxClass);
-        $this->groupRepositoryMock->expects(self::once())
+        $this->groupRepositoryMock->expects($this->once())
             ->method('save')
-            ->with($this->groupMock);
-        $this->messageManagerMock->expects(self::once())
+            ->with($this->group);
+        $this->messageManager->expects($this->once())
             ->method('addSuccessMessage')
             ->with(__('You saved the customer group.'));
-        $this->messageManagerMock->expects(self::once())
+        $exception = new \Exception('Exception');
+        $this->resultRedirect->expects($this->at(0))
+            ->method('setPath')
+            ->with('customer/group')
+            ->willThrowException($exception);
+        $this->messageManager->expects($this->once())
             ->method('addErrorMessage')
             ->with('Exception');
-        $this->dataObjectProcessorMock->expects(self::once())
+        $this->dataObjectProcessorMock->expects($this->once())
             ->method('buildOutputDataArray')
-            ->with($this->groupMock, GroupInterface::class)
+            ->with($this->group, \Magento\Customer\Api\Data\GroupInterface::class)
             ->willReturn(['code' => $code]);
-        $this->sessionMock->expects(self::once())
+        $this->session->expects($this->once())
             ->method('setCustomerGroupData')
             ->with(['customer_group_code' => $code]);
-        $exception = new \Exception('Exception');
-        $this->resultRedirectMock
+        $this->resultRedirect->expects($this->at(1))
             ->method('setPath')
-            ->withConsecutive(
-                ['customer/group'],
-                ['customer/group/edit', ['id' => $groupId]]
-            )
-            ->willReturnOnConsecutiveCalls(
-                $this->throwException($exception),
-                null
-            );
-
-        self::assertSame($this->resultRedirectMock, $this->controller->execute());
+            ->with('customer/group/edit', ['id' => $groupId]);
+        $this->assertSame($this->resultRedirect, $this->controller->execute());
     }
 
-    /**
-     * @return void
-     */
-    public function testExecuteWithoutTaxClass(): void
+    public function testExecuteWithoutTaxClass()
     {
-        $this->requestMock->expects(self::once())
+        $this->request->expects($this->once())
             ->method('getParam')
             ->with('tax_class')
             ->willReturn(null);
-        $this->forwardFactoryMock->expects(self::once())
+        $this->forwardFactoryMock->expects($this->once())
             ->method('create')
-            ->willReturn($this->resultForwardMock);
-        $this->resultForwardMock->expects(self::once())
+            ->willReturn($this->resultForward);
+        $this->resultForward->expects($this->once())
             ->method('forward')
             ->with('new')
             ->willReturnSelf();
-        self::assertSame($this->resultForwardMock, $this->controller->execute());
+        $this->assertSame($this->resultForward, $this->controller->execute());
     }
 }

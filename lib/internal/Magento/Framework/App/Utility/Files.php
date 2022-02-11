@@ -24,26 +24,26 @@ use Magento\Framework\View\Design\Theme\ThemePackageList;
  */
 class Files
 {
-    public const INCLUDE_APP_CODE = 1;
+    const INCLUDE_APP_CODE = 1;
 
-    public const INCLUDE_TESTS = 2;
+    const INCLUDE_TESTS = 2;
 
-    public const INCLUDE_DEV_TOOLS = 4;
+    const INCLUDE_DEV_TOOLS = 4;
 
-    public const INCLUDE_TEMPLATES = 8;
+    const INCLUDE_TEMPLATES = 8;
 
-    public const INCLUDE_LIBS = 16;
+    const INCLUDE_LIBS = 16;
 
-    public const INCLUDE_PUB_CODE = 32;
+    const INCLUDE_PUB_CODE = 32;
 
-    public const INCLUDE_NON_CLASSES = 64;
+    const INCLUDE_NON_CLASSES = 64;
 
-    public const INCLUDE_SETUP = 128;
+    const INCLUDE_SETUP = 128;
 
     /**
      * Return as data set
      */
-    public const AS_DATA_SET = 1024;
+    const AS_DATA_SET = 1024;
 
     /**
      * @var ComponentRegistrar
@@ -371,11 +371,11 @@ class Files
             }
             $globPaths = [BP . '/app/etc/config.xml', BP . '/app/etc/*/config.xml'];
             $configXmlPaths = array_merge($globPaths, $configXmlPaths);
-            $files = [];
+            $files = [[]];
             foreach ($configXmlPaths as $xmlPath) {
                 $files[] = glob($xmlPath, GLOB_NOSORT);
             }
-            self::$_cache[$cacheKey] = array_merge([], ...$files);
+            self::$_cache[$cacheKey] = array_merge(...$files);
         }
         if ($asDataSet) {
             return self::composeDataSets(self::$_cache[$cacheKey]);
@@ -644,19 +644,23 @@ class Files
                         $regex = '#^' . $modulePath . '/view/(?P<area>[a-z]+)/layout/(?P<path>.+)$#i';
                         if (preg_match($regex, $moduleFile, $matches)) {
                             $files[] = [
-                                [$matches['area'], '', $moduleName, $matches['path'], $moduleFile]
+                                $matches['area'],
+                                '',
+                                $moduleName,
+                                $matches['path'],
+                                $moduleFile,
                             ];
                         } else {
                             throw new \UnexpectedValueException("Could not parse modular layout file '$moduleFile'");
                         }
                     }
                 } else {
-                    $files[] = $moduleFiles;
+                    // phpcs:ignore Magento2.Performance.ForeachArrayMerge
+                    $files = array_merge($files, $moduleFiles);
                 }
             }
         }
-
-        return array_merge([], ...$files);
+        return $files;
     }
 
     /**
@@ -687,14 +691,14 @@ class Files
 
                 if ($params['with_metainfo']) {
                     // phpcs:ignore Magento2.Performance.ForeachArrayMerge
-                    $files[] = [array_merge($this->parseThemeFiles($themeFiles, $currentThemePath, $theme))];
+                    $files = array_merge($this->parseThemeFiles($themeFiles, $currentThemePath, $theme));
                 } else {
-                    $files[] = $themeFiles;
+                    // phpcs:ignore Magento2.Performance.ForeachArrayMerge
+                    $files = array_merge($files, $themeFiles);
                 }
             }
         }
-
-        return array_merge([], ...$files);
+        return $files;
     }
 
     /**
@@ -936,7 +940,7 @@ class Files
                 ];
                 $this->_accumulateFilesByPatterns($paths, $filePattern, $files);
                 $regex = '#^' . $themePath .
-                    '/((?P<module>[a-z\d]+_[a-z_\d]+)/)?web/(i18n/(?P<locale>[a-z_]+)/)?(?P<path>.+)$#i';
+                    '/((?P<module>[a-z\d]+_[a-z\d]+)/)?web/(i18n/(?P<locale>[a-z_]+)/)?(?P<path>.+)$#i';
                 foreach ($files as $file) {
                     if (preg_match($regex, $file, $matches)) {
                         $result[] = [
@@ -1112,7 +1116,7 @@ class Files
         } else {
             $frontendPaths = [BP . "/lib/web/mage"];
             /* current structure of /lib/web/mage directory contains frontend javascript in the root,
-               backend javascript in subdirectories. That's why script shouldn't go recursive through subdirectories
+               backend javascript in subdirectories. That's why script shouldn't go recursive throught subdirectories
                to get js files for frontend */
             $files = array_merge($files, self::getFiles($frontendPaths, '*.js', false));
         }
@@ -1406,6 +1410,9 @@ class Files
             '/dev/tests/integration/testsuite/Magento/Test/Integrity',
             '/dev/tests/static/framework',
             '/dev/tests/static/testsuite',
+            '/dev/tests/functional/tests/app',
+            '/dev/tests/functional/lib',
+            '/dev/tests/functional/vendor/magento/mtf',
             '/setup/src'
         ];
         foreach ($directories as $key => $dir) {
@@ -1661,8 +1668,9 @@ class Files
     {
         $key = __METHOD__ . "/{$moduleName}";
         if (!isset(self::$_cache[$key])) {
-            $componentPath = $this->componentRegistrar->getPath(ComponentRegistrar::MODULE, $moduleName);
-            self::$_cache[$key] = $componentPath && file_exists($componentPath);
+            self::$_cache[$key] = file_exists(
+                $this->componentRegistrar->getPath(ComponentRegistrar::MODULE, $moduleName)
+            );
         }
 
         return self::$_cache[$key];

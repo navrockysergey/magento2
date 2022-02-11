@@ -203,10 +203,7 @@ define([
 
                     var topMargin = jQuery(this).closest('.ui-dialog').children('.ui-dialog-titlebar').outerHeight() + 30;
 
-                    jQuery(this).closest('.ui-dialog').css({
-                        'margin-top' : topMargin,
-                        'z-index': 1000
-                    });
+                    jQuery(this).closest('.ui-dialog').css('margin-top', topMargin);
                 },
                 close: function () {
                     jQuery(this).closest('.ui-dialog').removeClass('ui-dialog-active');
@@ -248,7 +245,7 @@ define([
                 return false;
             }
 
-            if (typeof (giftOptionsForm[0].reset) === 'function') {
+            if (jQuery.isFunction(giftOptionsForm[0].reset)) {
                 giftOptionsForm[0].reset();
             }
             this.closeWindow();

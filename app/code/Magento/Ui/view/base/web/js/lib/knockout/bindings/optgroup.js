@@ -19,6 +19,7 @@ define([
     ko.bindingHandlers.optgroup = {
         /**
          * @param {*} element
+         * @returns {Object}
          */
         init: function (element) {
             if (ko.utils.tagNameLower(element) !== 'select') {
@@ -29,6 +30,11 @@ define([
             while (element.length > 0) {
                 element.remove(0);
             }
+
+            // Ensures that the binding processor doesn't try to bind the options
+            return {
+                'controlsDescendantBindings': true
+            };
         },
 
         /**
@@ -244,7 +250,7 @@ define([
 
                 // IE6 doesn't like us to assign selection to OPTION nodes before they're added to the document.
                 // That's why we first added them without selection. Now it's time to set the selection.
-                if (previousSelectedValues.length && newOptions.value) {
+                if (previousSelectedValues.length) {
                     isSelected = ko.utils.arrayIndexOf(
                         previousSelectedValues,
                         ko.selectExtensions.readValue(newOptions.value)
@@ -265,7 +271,7 @@ define([
              * @returns {Array}
              */
             function strPad(string, times) {
-                return new Array(times + 1).join(string);
+                return (new Array(times + 1)).join(string);
             }
 
             /**
@@ -327,4 +333,5 @@ define([
             }
         }
     };
+    ko.bindingHandlers.selectedOptions.after.push('optgroup');
 });

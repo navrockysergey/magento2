@@ -15,7 +15,6 @@ use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Framework\UrlInterface;
 use Magento\Review\Observer\PredispatchReviewObserver;
 use Magento\Store\Model\ScopeInterface;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -24,27 +23,27 @@ use PHPUnit\Framework\TestCase;
 class PredispatchReviewObserverTest extends TestCase
 {
     /**
-     * @var Observer|MockObject
+     * @var Observer|\PHPUnit\Framework\MockObject\MockObject
      */
     private $mockObject;
 
     /**
-     * @var ScopeConfigInterface|MockObject
+     * @var ScopeConfigInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $configMock;
 
     /**
-     * @var UrlInterface|MockObject
+     * @var UrlInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $urlMock;
 
     /**
-     * @var RedirectInterface|MockObject
+     * @var \Magento\Framework\App\Response\RedirectInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $redirectMock;
 
     /**
-     * @var ResponseInterface|MockObject
+     * @var ResponseInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $responseMock;
 
@@ -59,17 +58,17 @@ class PredispatchReviewObserverTest extends TestCase
     protected function setUp(): void
     {
         $this->configMock = $this->getMockBuilder(ScopeConfigInterface::class)
-            ->disableOriginalConstructor()
-            ->getMockForAbstractClass();
+                                 ->disableOriginalConstructor()
+                                 ->getMockForAbstractClass();
         $this->urlMock = $this->getMockBuilder(UrlInterface::class)
-            ->disableOriginalConstructor()
-            ->getMockForAbstractClass();
+                              ->disableOriginalConstructor()
+                              ->getMockForAbstractClass();
         $this->responseMock = $this->getMockBuilder(ResponseInterface::class)
-            ->disableOriginalConstructor()
-            ->addMethods(['setRedirect'])
-            ->getMockForAbstractClass();
+                                   ->disableOriginalConstructor()
+                                   ->setMethods(['setRedirect'])
+                                   ->getMockForAbstractClass();
         $this->redirectMock = $this->getMockBuilder(RedirectInterface::class)
-            ->getMock();
+                                   ->getMock();
         $this->objectManager = new ObjectManager($this);
         $this->mockObject = $this->objectManager->getObject(
             PredispatchReviewObserver::class,
@@ -82,15 +81,12 @@ class PredispatchReviewObserverTest extends TestCase
 
     /**
      * Test with enabled review active config.
-     *
-     * @return void
      */
     public function testReviewEnabled() : void
     {
         $observerMock = $this->getMockBuilder(Observer::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['getData'])
-            ->addMethods(['getResponse', 'setRedirect'])
+            ->setMethods(['getResponse', 'getData', 'setRedirect'])
             ->getMockForAbstractClass();
 
         $this->configMock->method('getValue')
@@ -110,24 +106,25 @@ class PredispatchReviewObserverTest extends TestCase
 
     /**
      * Test with disabled review active config.
-     *
-     * @return void
      */
     public function testReviewDisabled() : void
     {
         $observerMock = $this->getMockBuilder(Observer::class)
             ->disableOriginalConstructor()
-            ->addMethods(['getControllerAction', 'getResponse'])
+            ->setMethods(['getControllerAction', 'getResponse'])
             ->getMockForAbstractClass();
+
+        $this->configMock->expects($this->at(0))
+            ->method('getValue')
+            ->with(PredispatchReviewObserver::XML_PATH_REVIEW_ACTIVE, ScopeInterface::SCOPE_STORE)
+            ->willReturn(false);
 
         $expectedRedirectUrl = 'https://test.com/index';
 
-        $this->configMock
+        $this->configMock->expects($this->at(1))
             ->method('getValue')
-            ->withConsecutive(
-                [PredispatchReviewObserver::XML_PATH_REVIEW_ACTIVE, ScopeInterface::SCOPE_STORE],
-                ['web/default/no_route', ScopeInterface::SCOPE_STORE]
-            )->willReturnOnConsecutiveCalls(false, $expectedRedirectUrl);
+            ->with('web/default/no_route', ScopeInterface::SCOPE_STORE)
+            ->willReturn($expectedRedirectUrl);
 
         $this->urlMock->expects($this->once())
             ->method('getUrl')

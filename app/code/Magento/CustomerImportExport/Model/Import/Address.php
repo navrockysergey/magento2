@@ -3,7 +3,6 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-
 namespace Magento\CustomerImportExport\Model\Import;
 
 use Magento\Customer\Model\ResourceModel\Address\Attribute\Source\CountryWithWebsites as CountryWithWebsitesSource;
@@ -24,53 +23,61 @@ use Magento\Customer\Model\Indexer\Processor;
  */
 class Address extends AbstractCustomer
 {
-    /**
-     * The customer address attribute collection class name
+    /**#@+
+     * Attribute collection name
      */
-    public const ATTRIBUTE_COLLECTION_NAME = \Magento\Customer\Model\ResourceModel\Address\Attribute\Collection::class;
+    const ATTRIBUTE_COLLECTION_NAME = \Magento\Customer\Model\ResourceModel\Address\Attribute\Collection::class;
 
-    /**
+    /**#@-*/
+
+    /**#@+
      * Permanent column names
      *
      * Names that begins with underscore is not an attribute.
      * This name convention is for to avoid interference with same attribute name.
      */
-    public const COLUMN_EMAIL = '_email';
+    const COLUMN_EMAIL = '_email';
 
-    public const COLUMN_ADDRESS_ID = '_entity_id';
+    const COLUMN_ADDRESS_ID = '_entity_id';
 
-    /**
+    /**#@-*/
+
+    /**#@+
      * Required column names
      */
-    public const COLUMN_REGION = 'region';
+    const COLUMN_REGION = 'region';
 
-    public const COLUMN_COUNTRY_ID = 'country_id';
+    const COLUMN_COUNTRY_ID = 'country_id';
 
-    public const COLUMN_POSTCODE = 'postcode';
+    const COLUMN_POSTCODE = 'postcode';
 
-    public const COLUMN_REGION_ID = 'region_id';
+    /**#@-*/
 
-    /**
+    const COLUMN_REGION_ID = 'region_id';
+
+    /**#@+
      * Particular columns that contains of customer default addresses
      */
-    public const COLUMN_DEFAULT_BILLING = '_address_default_billing_';
+    const COLUMN_DEFAULT_BILLING = '_address_default_billing_';
 
-    public const COLUMN_DEFAULT_SHIPPING = '_address_default_shipping_';
+    const COLUMN_DEFAULT_SHIPPING = '_address_default_shipping_';
 
-    /**
+    /**#@-*/
+
+    /**#@+
      * Error codes
      */
-    public const ERROR_ADDRESS_ID_IS_EMPTY = 'addressIdIsEmpty';
+    const ERROR_ADDRESS_ID_IS_EMPTY = 'addressIdIsEmpty';
 
-    public const ERROR_ADDRESS_NOT_FOUND = 'addressNotFound';
+    const ERROR_ADDRESS_NOT_FOUND = 'addressNotFound';
 
-    public const ERROR_INVALID_REGION = 'invalidRegion';
+    const ERROR_INVALID_REGION = 'invalidRegion';
 
-    public const ERROR_DUPLICATE_PK = 'duplicateAddressId';
+    const ERROR_DUPLICATE_PK = 'duplicateAddressId';
 
-    /**
-     * @var string[]
-     */
+    /**#@-*/
+
+    /**#@-*/
     protected static $_defaultAddressAttributeMapping = [
         self::COLUMN_DEFAULT_BILLING => 'default_billing',
         self::COLUMN_DEFAULT_SHIPPING => 'default_shipping',
@@ -144,6 +151,8 @@ class Address extends AbstractCustomer
     ];
 
     /**
+     * Customer entity
+     *
      * @var \Magento\Customer\Model\Customer
      */
     protected $_customerEntity;
@@ -206,19 +215,19 @@ class Address extends AbstractCustomer
     protected $dateTime;
 
     /**
+     * Customer attributes
+     *
      * @var string[]
      */
     protected $_customerAttributes = [];
 
     /**
-     * @var string[]
+     * Valid column names
+     *
+     * @array
      */
     protected $validColumnNames = [
-        "region_id",
-        "vat_is_valid",
-        "vat_request_date",
-        "vat_request_id",
-        "vat_request_success"
+        "region_id", "vat_is_valid", "vat_request_date", "vat_request_id", "vat_request_success"
     ];
 
     /**
@@ -513,10 +522,9 @@ class Address extends AbstractCustomer
         //Preparing data for mass validation/import.
         $rows = [];
         while ($bunch = $this->_dataSourceModel->getNextBunch()) {
-            $rows[] = $bunch;
+            $rows = array_merge($rows, $bunch);
         }
-
-        $this->prepareCustomerData(array_merge([], ...$rows));
+        $this->prepareCustomerData($rows);
         unset($bunch, $rows);
         $this->_dataSourceModel->getIterator()->rewind();
 
@@ -592,7 +600,7 @@ class Address extends AbstractCustomer
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
-    protected function _prepareDataForUpdate(array $rowData): array
+    protected function _prepareDataForUpdate(array $rowData):array
     {
         $email = strtolower($rowData[self::COLUMN_EMAIL]);
         $customerId = $this->_getCustomerId($email, $rowData[self::COLUMN_WEBSITE]);
@@ -630,8 +638,8 @@ class Address extends AbstractCustomer
 
                 $value = $rowData[$attributeAlias];
 
-                if ($rowData[$attributeAlias] === null || !strlen($rowData[$attributeAlias])) {
-                    if ($attributeParams['is_required']) {
+                if (!strlen($rowData[$attributeAlias])) {
+                    if (!$newAddress) {
                         continue;
                     }
 
@@ -643,7 +651,7 @@ class Address extends AbstractCustomer
                 if ($attributeParams['is_static']) {
                     $entityRow[$attributeAlias] = $value;
                 } else {
-                    $attributes[$attributeParams['table']][$addressId][$attributeParams['id']] = $value;
+                    $attributes[$attributeParams['table']][$addressId][$attributeParams['id']]= $value;
                 }
             }
         }
@@ -825,7 +833,7 @@ class Address extends AbstractCustomer
      * Check if address for import is empty (for customer composite mode)
      *
      * @param array $rowData
-     * @return bool
+     * @return array
      */
     protected function _isOptionalAddressEmpty(array $rowData)
     {
@@ -886,8 +894,8 @@ class Address extends AbstractCustomer
                         );
                     } elseif ($attributeParams['is_required']
                         && !$this->addressStorage->doesExist(
-                            (string)$addressId,
-                            (string)$customerId
+                            $addressId,
+                            $customerId
                         )
                     ) {
                         $this->addRowError(self::ERROR_VALUE_IS_REQUIRED, $rowNumber, $attributeCode);

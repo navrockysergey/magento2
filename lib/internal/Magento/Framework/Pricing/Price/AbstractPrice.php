@@ -15,7 +15,6 @@ use Magento\Framework\Pricing\PriceInfoInterface;
  * Class AbstractPrice
  * Should be the base for creating any Price type class
  *
- * phpcs:disable Magento2.Classes.AbstractApi
  * @api
  * @since 100.0.2
  */
@@ -24,7 +23,7 @@ abstract class AbstractPrice implements PriceInterface
     /**
      * Default price type
      */
-    public const PRICE_CODE = 'abstract_price';
+    const PRICE_CODE = 'abstract_price';
 
     /**
      * @var AmountInterface[]
@@ -99,20 +98,16 @@ abstract class AbstractPrice implements PriceInterface
      */
     public function getAmount()
     {
-        $valueKey = (string) $this->getValue();
-        if (!isset($this->amount[$valueKey])) {
-            $this->amount[$valueKey] = $this->calculator->getAmount($this->getValue(), $this->getProduct());
+        if (!isset($this->amount[$this->getValue()])) {
+            $this->amount[$this->getValue()] = $this->calculator->getAmount($this->getValue(), $this->getProduct());
         }
-        return $this->amount[$valueKey];
+        return $this->amount[$this->getValue()];
     }
 
     /**
-     * Calculates custom amount
-     *
      * @param float $amount
      * @param null|bool|string|array $exclude
      * @param null|array $context
-     *
      * @return AmountInterface|bool|float
      */
     public function getCustomAmount($amount = null, $exclude = null, $context = [])
@@ -136,8 +131,6 @@ abstract class AbstractPrice implements PriceInterface
     }
 
     /**
-     * Returns product
-     *
      * @return SaleableInterface
      */
     public function getProduct()
@@ -146,8 +139,6 @@ abstract class AbstractPrice implements PriceInterface
     }
 
     /**
-     * Returns qty
-     *
      * @return float
      */
     public function getQuantity()

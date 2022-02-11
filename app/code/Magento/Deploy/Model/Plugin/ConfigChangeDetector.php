@@ -7,7 +7,6 @@
 namespace Magento\Deploy\Model\Plugin;
 
 use Magento\Deploy\Model\DeploymentConfig\ChangeDetector;
-use Magento\Framework\App\DeploymentConfig;
 use Magento\Framework\App\FrontControllerInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Exception\LocalizedException;
@@ -21,8 +20,6 @@ use Magento\Framework\Exception\LocalizedException;
  */
 class ConfigChangeDetector
 {
-    private const DEPLOYMENT_BLUE_GREEN_ENABLED = 'deployment/blue_green/enabled';
-
     /**
      * Configuration data changes detector.
      *
@@ -30,17 +27,12 @@ class ConfigChangeDetector
      */
     private $changeDetector;
 
-    /** @var DeploymentConfig  */
-    private $deploymentConfig;
-
     /**
-     * @param ChangeDetector $changeDetector
-     * @param DeploymentConfig $deploymentConfig
+     * @param ChangeDetector $changeDetector configuration data changes detector
      */
-    public function __construct(ChangeDetector $changeDetector, DeploymentConfig $deploymentConfig)
+    public function __construct(ChangeDetector $changeDetector)
     {
         $this->changeDetector = $changeDetector;
-        $this->deploymentConfig = $deploymentConfig;
     }
 
     /**
@@ -54,9 +46,7 @@ class ConfigChangeDetector
      */
     public function beforeDispatch(FrontControllerInterface $subject, RequestInterface $request)
     {
-        if (!$this->deploymentConfig->get(self::DEPLOYMENT_BLUE_GREEN_ENABLED)
-            && $this->changeDetector->hasChanges()
-        ) {
+        if ($this->changeDetector->hasChanges()) {
             throw new LocalizedException(
                 __(
                     'The configuration file has changed.'

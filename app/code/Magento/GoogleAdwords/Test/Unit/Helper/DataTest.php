@@ -3,43 +3,32 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\GoogleAdwords\Test\Unit\Helper;
 
-use Magento\Framework\App\Helper\Context;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use Magento\GoogleAdwords\Helper\Data;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-
-class DataTest extends TestCase
+class DataTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $_scopeConfigMock;
 
     /**
-     * @var MockObject
+     * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $_registryMock;
 
     /**
-     * @var Data
+     * @var \Magento\GoogleAdwords\Helper\Data
      */
     protected $_helper;
 
-    /**
-     * @inheritdoc
-     */
     protected function setUp(): void
     {
-        $className = Data::class;
-        $objectManager = new ObjectManager($this);
+        $className = \Magento\GoogleAdwords\Helper\Data::class;
+        $objectManager = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
         $arguments = $objectManager->getConstructArguments($className);
         $this->_helper = $objectManager->getObject($className, $arguments);
-        /** @var Context $context */
+        /** @var \Magento\Framework\App\Helper\Context $context */
         $context = $arguments['context'];
         $this->_scopeConfigMock = $context->getScopeConfig();
         $this->_registryMock = $arguments['registry'];
@@ -48,7 +37,7 @@ class DataTest extends TestCase
     /**
      * @return array
      */
-    public function dataProviderForTestIsActive(): array
+    public function dataProviderForTestIsActive()
     {
         return [
             [true, 1234, true],
@@ -62,34 +51,31 @@ class DataTest extends TestCase
      * @param bool $isActive
      * @param string $returnConfigValue
      * @param bool $returnValue
-     *
-     * @return void
      * @dataProvider dataProviderForTestIsActive
      */
-    public function testIsGoogleAdwordsActive($isActive, $returnConfigValue, $returnValue): void
+    public function testIsGoogleAdwordsActive($isActive, $returnConfigValue, $returnValue)
     {
         $this->_scopeConfigMock->expects(
             $this->any()
         )->method(
             'isSetFlag'
         )->with(
-            Data::XML_PATH_ACTIVE
+            \Magento\GoogleAdwords\Helper\Data::XML_PATH_ACTIVE
         )->willReturn(
             $isActive
         );
-        $this->_scopeConfigMock->method('getValue')->with($this->isType('string'))->willReturnCallback(
-            function () use ($returnConfigValue) {
-                return $returnConfigValue;
-            }
+        $this->_scopeConfigMock->expects($this->any())->method('getValue')->with($this->isType('string'))->willReturnCallback(
+            
+                function () use ($returnConfigValue) {
+                    return $returnConfigValue;
+                }
+            
         );
 
         $this->assertEquals($returnValue, $this->_helper->isGoogleAdwordsActive());
     }
 
-    /**
-     * @return void
-     */
-    public function testGetLanguageCodes(): void
+    public function testGetLanguageCodes()
     {
         $languages = ['en', 'ru', 'uk'];
         $this->_scopeConfigMock->expects(
@@ -97,7 +83,7 @@ class DataTest extends TestCase
         )->method(
             'getValue'
         )->with(
-            Data::XML_PATH_LANGUAGES,
+            \Magento\GoogleAdwords\Helper\Data::XML_PATH_LANGUAGES,
             'default'
         )->willReturn(
             $languages
@@ -108,7 +94,7 @@ class DataTest extends TestCase
     /**
      * @return array
      */
-    public function dataProviderForTestConvertLanguage(): array
+    public function dataProviderForTestConvertLanguage()
     {
         return [
             ['some-language', 'some-language'],
@@ -121,11 +107,9 @@ class DataTest extends TestCase
     /**
      * @param string $language
      * @param string $returnLanguage
-     *
-     * @return void
      * @dataProvider dataProviderForTestConvertLanguage
      */
-    public function testConvertLanguageCodeToLocaleCode(string $language, string $returnLanguage): void
+    public function testConvertLanguageCodeToLocaleCode($language, $returnLanguage)
     {
         $convertArray = ['zh_TW' => 'zh_Hant', 'iw' => 'he', 'zh_CN' => 'zh_Hans'];
         $this->_scopeConfigMock->expects(
@@ -133,7 +117,7 @@ class DataTest extends TestCase
         )->method(
             'getValue'
         )->with(
-            Data::XML_PATH_LANGUAGE_CONVERT,
+            \Magento\GoogleAdwords\Helper\Data::XML_PATH_LANGUAGE_CONVERT,
             'default'
         )->willReturn(
             $convertArray
@@ -141,10 +125,7 @@ class DataTest extends TestCase
         $this->assertEquals($returnLanguage, $this->_helper->convertLanguageCodeToLocaleCode($language));
     }
 
-    /**
-     * @return void
-     */
-    public function testGetConversionImgSrc(): void
+    public function testGetConversionImgSrc()
     {
         $conversionId = 123;
         $label = 'LabEl';
@@ -153,17 +134,20 @@ class DataTest extends TestCase
             $conversionId,
             $label
         );
-        $this->_scopeConfigMock
-            ->method('getValue')
-            ->withConsecutive([Data::XML_PATH_CONVERSION_IMG_SRC, 'default'])
-            ->willReturnOnConsecutiveCalls($imgSrc);
+        $this->_scopeConfigMock->expects(
+            $this->at(0)
+        )->method(
+            'getValue'
+        )->with(
+            \Magento\GoogleAdwords\Helper\Data::XML_PATH_CONVERSION_IMG_SRC,
+            'default'
+        )->willReturn(
+            $imgSrc
+        );
         $this->assertEquals($imgSrc, $this->_helper->getConversionImgSrc());
     }
 
-    /**
-     * @return void
-     */
-    public function testGetConversionJsSrc(): void
+    public function testGetConversionJsSrc()
     {
         $jsSrc = 'some-js-src';
         $this->_scopeConfigMock->expects(
@@ -171,7 +155,7 @@ class DataTest extends TestCase
         )->method(
             'getValue'
         )->with(
-            Data::XML_PATH_CONVERSION_JS_SRC
+            \Magento\GoogleAdwords\Helper\Data::XML_PATH_CONVERSION_JS_SRC
         )->willReturn(
             $jsSrc
         );
@@ -181,16 +165,16 @@ class DataTest extends TestCase
     /**
      * @return array
      */
-    public function dataProviderForTestStoreConfig(): array
+    public function dataProviderForTestStoreConfig()
     {
         return [
-            ['getConversionId', Data::XML_PATH_CONVERSION_ID, 123],
-            ['getConversionLanguage', Data::XML_PATH_CONVERSION_LANGUAGE, 'en'],
-            ['getConversionFormat', Data::XML_PATH_CONVERSION_FORMAT, '2'],
-            ['getConversionColor', Data::XML_PATH_CONVERSION_COLOR, 'ffffff'],
-            ['getConversionLabel', Data::XML_PATH_CONVERSION_LABEL, 'Label'],
-            ['getConversionValueType', Data::XML_PATH_CONVERSION_VALUE_TYPE, '1'],
-            ['getConversionValueConstant', Data::XML_PATH_CONVERSION_VALUE, '0']
+            ['getConversionId', \Magento\GoogleAdwords\Helper\Data::XML_PATH_CONVERSION_ID, 123],
+            ['getConversionLanguage', \Magento\GoogleAdwords\Helper\Data::XML_PATH_CONVERSION_LANGUAGE, 'en'],
+            ['getConversionFormat', \Magento\GoogleAdwords\Helper\Data::XML_PATH_CONVERSION_FORMAT, '2'],
+            ['getConversionColor', \Magento\GoogleAdwords\Helper\Data::XML_PATH_CONVERSION_COLOR, 'ffffff'],
+            ['getConversionLabel', \Magento\GoogleAdwords\Helper\Data::XML_PATH_CONVERSION_LABEL, 'Label'],
+            ['getConversionValueType', \Magento\GoogleAdwords\Helper\Data::XML_PATH_CONVERSION_VALUE_TYPE, '1'],
+            ['getConversionValueConstant', \Magento\GoogleAdwords\Helper\Data::XML_PATH_CONVERSION_VALUE, '0'],
         ];
     }
 
@@ -198,11 +182,9 @@ class DataTest extends TestCase
      * @param string $method
      * @param string $xmlPath
      * @param string $returnValue
-     *
-     * @return void
      * @dataProvider dataProviderForTestStoreConfig
      */
-    public function testGetStoreConfigValue($method, $xmlPath, $returnValue): void
+    public function testGetStoreConfigValue($method, $xmlPath, $returnValue)
     {
         $this->_scopeConfigMock->expects(
             $this->once()
@@ -217,20 +199,14 @@ class DataTest extends TestCase
         $this->assertEquals($returnValue, $this->_helper->{$method}());
     }
 
-    /**
-     * @return void
-     */
-    public function testHasSendConversionValueCurrency(): void
+    public function testHasSendConversionValueCurrency()
     {
         $this->_scopeConfigMock->expects($this->once())->method('isSetFlag')->willReturn(true);
 
         $this->assertTrue($this->_helper->hasSendConversionValueCurrency());
     }
 
-    /**
-     * @return void
-     */
-    public function testGetConversionValueDynamic(): void
+    public function testGetConversionValueDynamic()
     {
         $returnValue = 4.1;
         $this->_scopeConfigMock->expects(
@@ -238,16 +214,16 @@ class DataTest extends TestCase
         )->method(
             'getValue'
         )->with(
-            Data::XML_PATH_CONVERSION_VALUE_TYPE
+            \Magento\GoogleAdwords\Helper\Data::XML_PATH_CONVERSION_VALUE_TYPE
         )->willReturn(
-            Data::CONVERSION_VALUE_TYPE_DYNAMIC
+            \Magento\GoogleAdwords\Helper\Data::CONVERSION_VALUE_TYPE_DYNAMIC
         );
         $this->_registryMock->expects(
             $this->once()
         )->method(
             'registry'
         )->with(
-            Data::CONVERSION_VALUE_REGISTRY_NAME
+            \Magento\GoogleAdwords\Helper\Data::CONVERSION_VALUE_REGISTRY_NAME
         )->willReturn(
             $returnValue
         );
@@ -255,10 +231,7 @@ class DataTest extends TestCase
         $this->assertEquals($returnValue, $this->_helper->getConversionValue());
     }
 
-    /**
-     * @return void
-     */
-    public function testGetConversionValueCurrency(): void
+    public function testGetConversionValueCurrency()
     {
         $returnValueCurrency = 'USD';
         $this->_scopeConfigMock->expects($this->once())->method('isSetFlag')->willReturn(true);
@@ -267,7 +240,7 @@ class DataTest extends TestCase
         )->method(
             'registry'
         )->with(
-            Data::CONVERSION_VALUE_CURRENCY_REGISTRY_NAME
+            \Magento\GoogleAdwords\Helper\Data::CONVERSION_VALUE_CURRENCY_REGISTRY_NAME
         )->willReturn(
             $returnValueCurrency
         );
@@ -278,25 +251,37 @@ class DataTest extends TestCase
     /**
      * @return array
      */
-    public function dataProviderForTestConversionValueConstant(): array
+    public function dataProviderForTestConversionValueConstant()
     {
-        return [[1.4, 1.4], ['', Data::CONVERSION_VALUE_DEFAULT]];
+        return [[1.4, 1.4], ['', \Magento\GoogleAdwords\Helper\Data::CONVERSION_VALUE_DEFAULT]];
     }
 
     /**
      * @param string $conversionValueConst
      * @param string $returnValue
-     *
-     * @return void
      * @dataProvider dataProviderForTestConversionValueConstant
      */
-    public function testGetConversionValueConstant($conversionValueConst, $returnValue): void
+    public function testGetConversionValueConstant($conversionValueConst, $returnValue)
     {
+        $this->_scopeConfigMock->expects(
+            $this->at(0)
+        )->method(
+            'getValue'
+        )->with(
+            \Magento\GoogleAdwords\Helper\Data::XML_PATH_CONVERSION_VALUE_TYPE
+        )->willReturn(
+            \Magento\GoogleAdwords\Helper\Data::CONVERSION_VALUE_TYPE_CONSTANT
+        );
         $this->_registryMock->expects($this->never())->method('registry');
-        $this->_scopeConfigMock
-            ->method('getValue')
-            ->withConsecutive([Data::XML_PATH_CONVERSION_VALUE_TYPE], [Data::XML_PATH_CONVERSION_VALUE])
-            ->willReturnOnConsecutiveCalls(Data::CONVERSION_VALUE_TYPE_CONSTANT, $conversionValueConst);
+        $this->_scopeConfigMock->expects(
+            $this->at(1)
+        )->method(
+            'getValue'
+        )->with(
+            \Magento\GoogleAdwords\Helper\Data::XML_PATH_CONVERSION_VALUE
+        )->willReturn(
+            $conversionValueConst
+        );
 
         $this->assertEquals($returnValue, $this->_helper->getConversionValue());
     }

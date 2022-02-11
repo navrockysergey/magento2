@@ -3,26 +3,22 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Framework\Filter\Test\Unit;
 
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\Filter\Translit;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use PHPUnit\Framework\TestCase;
-
-class TranslitTest extends TestCase
+/**
+ * Translit test.
+ */
+class TranslitTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var Translit
+     * @var \Magento\Framework\Filter\Translit
      */
     protected $model;
 
     protected function setUp(): void
     {
-        $objectManager = new ObjectManager($this);
-        $this->model = $objectManager->getObject(Translit::class);
+        $objectManager = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
+        $this->model = $objectManager->getObject(\Magento\Framework\Filter\Translit::class);
     }
 
     /**
@@ -49,7 +45,6 @@ class TranslitTest extends TestCase
         $isIconv = '"libiconv"' == ICONV_IMPL;
         return [
             ['test', 'test', 'test', $isIconv],
-            [null, '', '', $isIconv],
             ['привет мир', 'privet mir', 'privet mir', $isIconv],
             [
                 'Weiß, Goldmann, Göbel, Weiss, Göthe, Goethe und Götz',
@@ -63,19 +58,17 @@ class TranslitTest extends TestCase
                 '         EUR ->         ',
                 $isIconv
             ],
-            ['™', 'tm', 'tm', $isIconv],
-            ['লক্ষ্য এনালগ ওয়াচ টি ২০', 'laksoa enaalaga oyaoaca tai 20', 'laksoa enaalaga oyaoaca tai 20', $isIconv]
+            ['™', 'tm', 'tm', $isIconv]
         ];
     }
 
     public function testFilterConfigured()
     {
         $config = $this->getMockBuilder(
-            ScopeConfigInterface::class
-        )->disableOriginalConstructor()
-            ->setMethods(
-                ['getValue', 'setValue', 'isSetFlag']
-            )->getMock();
+            \Magento\Framework\App\Config\ScopeConfigInterface::class
+        )->disableOriginalConstructor()->setMethods(
+            ['getValue', 'setValue', 'isSetFlag']
+        )->getMock();
 
         $config->expects(
             $this->once()
@@ -88,8 +81,8 @@ class TranslitTest extends TestCase
             ['char8482' => ['from' => '™', 'to' => 'TM']]
         );
 
-        $objectManager = new ObjectManager($this);
-        $this->model = $objectManager->getObject(Translit::class, ['config' => $config]);
+        $objectManager = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
+        $this->model = $objectManager->getObject(\Magento\Framework\Filter\Translit::class, ['config' => $config]);
 
         $this->assertEquals('TM', $this->model->filter('™'));
     }

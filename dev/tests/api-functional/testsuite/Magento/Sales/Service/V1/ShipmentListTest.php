@@ -8,7 +8,7 @@ namespace Magento\Sales\Service\V1;
 use Magento\TestFramework\TestCase\WebapiAbstract;
 
 /**
- * Class ShipmentListTest
+ * Class ShipmentListTest for Magento sales webapi
  */
 class ShipmentListTest extends WebapiAbstract
 {

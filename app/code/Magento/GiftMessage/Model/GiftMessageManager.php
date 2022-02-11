@@ -25,13 +25,10 @@ class GiftMessageManager
     }
 
     /**
-     * Save gift message information.
-     *
      * @param array $giftMessages
      * @param \Magento\Quote\Model\Quote $quote
      * @return $this
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     public function add($giftMessages, $quote)
     {
@@ -64,12 +61,11 @@ class GiftMessageManager
                     $giftMessage->load($entity->getGiftMessageId());
                 }
 
-                if ($message['message'] === null || trim($message['message']) == '') {
+                if (trim($message['message']) == '') {
                     if ($giftMessage->getId()) {
                         try {
                             $giftMessage->delete();
                             $entity->setGiftMessageId(0)->save();
-                        // phpcs:ignore Magento2.CodeAnalysis.EmptyBlock.DetectedCatch
                         } catch (\Exception $e) {
                         }
                     }
@@ -88,7 +84,6 @@ class GiftMessageManager
                     )->save();
 
                     $entity->setGiftMessageId($giftMessage->getId())->save();
-                // phpcs:ignore Magento2.CodeAnalysis.EmptyBlock.DetectedCatch
                 } catch (\Exception $e) {
                 }
             }

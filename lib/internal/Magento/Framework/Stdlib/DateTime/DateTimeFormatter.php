@@ -6,9 +6,7 @@
 
 namespace Magento\Framework\Stdlib\DateTime;
 
-use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Locale\ResolverInterface;
 use Magento\Framework\Phrase;
 
 /**
@@ -22,29 +20,42 @@ class DateTimeFormatter implements DateTimeFormatterInterface
     protected $useIntlFormatObject;
 
     /**
-     * @var ResolverInterface
+     * @var \Magento\Framework\Locale\ResolverInterface
      */
     private $localeResolver;
 
     /**
      * @param bool|null $useIntlFormatObject
-     * @param ResolverInterface|null $localeResolver
      */
     public function __construct(
-        $useIntlFormatObject = null,
-        ResolverInterface $localeResolver = null
+        $useIntlFormatObject = null
     ) {
-        $this->useIntlFormatObject = $useIntlFormatObject ?? !\defined('HHVM_VERSION');
-        $this->localeResolver = $localeResolver
-            ?? ObjectManager::getInstance()->get(ResolverInterface::class);
+        $this->useIntlFormatObject = (null === $useIntlFormatObject)
+            ? !defined('HHVM_VERSION')
+            : $useIntlFormatObject;
     }
 
     /**
-     * @inheritdoc
+     * Get locale resolver
+     *
+     * @return \Magento\Framework\Locale\ResolverInterface|mixed
+     */
+    private function getLocaleResolver()
+    {
+        if ($this->localeResolver === null) {
+            $this->localeResolver = \Magento\Framework\App\ObjectManager::getInstance()->get(
+                \Magento\Framework\Locale\ResolverInterface::class
+            );
+        }
+        return $this->localeResolver;
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function formatObject($object, $format = null, $locale = null)
     {
-        $locale = $locale ?? $this->localeResolver->getLocale();
+        $locale = (null === $locale) ? $this->getLocaleResolver()->getLocale() : $locale;
         if ($this->useIntlFormatObject) {
             return \IntlDateFormatter::formatObject($object, $format, $locale);
         }

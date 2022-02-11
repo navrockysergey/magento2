@@ -3,51 +3,42 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Catalog\Test\Unit\Controller\Product\Frontend\Action;
 
-use Laminas\Http\AbstractMessage;
-use Laminas\Http\Response;
-use Magento\Catalog\Controller\Product\Frontend\Action\Synchronize;
-use Magento\Catalog\Model\Product\ProductFrontendAction\Synchronizer;
 use Magento\Framework\App\Action\Context;
-use Magento\Framework\App\RequestInterface;
-use Magento\Framework\Controller\Result\Json;
+use Magento\Catalog\Model\Product\ProductFrontendAction\Synchronizer;
 use Magento\Framework\Controller\Result\JsonFactory;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Magento\Framework\Controller\Result\Json;
+use Magento\Framework\App\RequestInterface;
+use Magento\Catalog\Controller\Product\Frontend\Action\Synchronize;
 
-class SynchronizeTest extends TestCase
+class SynchronizeTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var Synchronize
+     * @var \Magento\Catalog\Controller\Product\Frontend\Action\Synchronize
      */
     private $synchronize;
 
     /**
-     * @var Context|MockObject
+     * @var Context|\PHPUnit\Framework\MockObject\MockObject
      */
     private $contextMock;
 
     /**
-     * @var Synchronizer|MockObject
+     * @var Synchronizer|\PHPUnit\Framework\MockObject\MockObject
      */
     private $synchronizerMock;
 
     /**
-     * @var RequestInterface|MockObject
+     * @var RequestInterface|\PHPUnit\Framework\MockObject\MockObject
      */
     private $requestMock;
 
     /**
-     * @var JsonFactory|MockObject
+     * @var JsonFactory|\PHPUnit\Framework\MockObject\MockObject
      */
     private $jsonFactoryMock;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
         $this->contextMock = $this->getMockBuilder(Context::class)
@@ -75,10 +66,7 @@ class SynchronizeTest extends TestCase
         );
     }
 
-    /**
-     * @return void
-     */
-    public function testExecuteAction(): void
+    public function testExecuteAction()
     {
         $data = [
             'type_id' => null,
@@ -93,10 +81,15 @@ class SynchronizeTest extends TestCase
             ->method('create')
             ->willReturn($jsonObject);
 
-        $this->requestMock
+        $this->requestMock->expects($this->at(0))
             ->method('getParam')
-            ->withConsecutive(['ids', []], ['type_id', null])
-            ->willReturnOnConsecutiveCalls($data['ids'], $data['type_id']);
+            ->with('ids', [])
+            ->willReturn($data['ids']);
+
+        $this->requestMock->expects($this->at(1))
+            ->method('getParam')
+            ->with('type_id', null)
+            ->willReturn($data['type_id']);
 
         $this->synchronizerMock->expects($this->once())
             ->method('syncActions')
@@ -108,11 +101,8 @@ class SynchronizeTest extends TestCase
 
         $this->synchronize->execute();
     }
-
-    /**
-     * @return void
-     */
-    public function testExecuteActionException(): void
+    
+    public function testExecuteActionException()
     {
         $data = [
             'type_id' => null,
@@ -126,20 +116,25 @@ class SynchronizeTest extends TestCase
             ->method('create')
             ->willReturn($jsonObject);
 
-        $this->requestMock
+        $this->requestMock->expects($this->at(0))
             ->method('getParam')
-            ->withConsecutive(['ids', []], ['type_id', null])
-            ->willReturnOnConsecutiveCalls($data['ids'], $data['type_id']);
+            ->with('ids', [])
+            ->willReturn($data['ids']);
+
+        $this->requestMock->expects($this->at(1))
+            ->method('getParam')
+            ->with('type_id', null)
+            ->willReturn($data['type_id']);
 
         $this->synchronizerMock->expects($this->once())
             ->method('syncActions')
-            ->willThrowException(new \Exception());
+            ->willThrowException(new \Exception);
 
         $jsonObject->expects($this->once())
             ->method('setStatusHeader')
             ->with(
-                Response::STATUS_CODE_400,
-                AbstractMessage::VERSION_11,
+                \Zend\Http\Response::STATUS_CODE_400,
+                \Zend\Http\AbstractMessage::VERSION_11,
                 'Bad Request'
             );
         $jsonObject->expects($this->once())

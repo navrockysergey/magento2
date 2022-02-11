@@ -20,6 +20,8 @@ use \Magento\Sales\Model\Order;
 class Guest extends \Magento\Framework\App\Helper\AbstractHelper
 {
     /**
+     * Core registry
+     *
      * @var \Magento\Framework\Registry
      */
     protected $coreRegistry;
@@ -67,17 +69,17 @@ class Guest extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * Cookie key for guest view
      */
-    public const COOKIE_NAME = 'guest-view';
+    const COOKIE_NAME = 'guest-view';
 
     /**
      * Cookie path value
      */
-    public const COOKIE_PATH = '/';
+    const COOKIE_PATH = '/';
 
     /**
      * Cookie lifetime value
      */
-    public const COOKIE_LIFETIME = 600;
+    const COOKIE_LIFETIME = 600;
 
     /**
      * @var \Magento\Store\Model\StoreManagerInterface
@@ -150,7 +152,6 @@ class Guest extends \Magento\Framework\App\Helper\AbstractHelper
             return $this->resultRedirectFactory->create()->setPath('sales/order/history');
         }
         $post = $request->getPostValue();
-        $post = filter_var($post, FILTER_CALLBACK, ['options' => 'trim']);
         $fromCookie = $this->cookieManager->getCookie(self::COOKIE_NAME);
         if (empty($post) && !$fromCookie) {
             return $this->resultRedirectFactory->create()->setPath('sales/guest/form');
@@ -225,14 +226,11 @@ class Guest extends \Magento\Framework\App\Helper\AbstractHelper
      */
     private function loadFromCookie($fromCookie)
     {
-        if (!is_string($fromCookie)) {
-            throw new InputException(__($this->inputExceptionMessage));
-        }
         // phpcs:ignore Magento2.Functions.DiscouragedFunction
         $cookieData = explode(':', base64_decode($fromCookie));
-        $protectCode = $cookieData[0] ?? null;
-        $incrementId = $cookieData[1] ?? null;
-        if ($protectCode && $incrementId) {
+        $protectCode = isset($cookieData[0]) ? $cookieData[0] : null;
+        $incrementId = isset($cookieData[1]) ? $cookieData[1] : null;
+        if (!empty($protectCode) && !empty($incrementId)) {
             $order = $this->getOrderRecord($incrementId);
             if (hash_equals((string)$order->getProtectCode(), $protectCode)) {
                 $this->setGuestViewCookie($fromCookie);
@@ -277,20 +275,9 @@ class Guest extends \Magento\Framework\App\Helper\AbstractHelper
         $lastName = $postData['oar_billing_lastname'];
         $zip = $postData['oar_zip'];
         $billingAddress = $order->getBillingAddress();
-        return $this->normalizeStr($lastName) === $this->normalizeStr($billingAddress->getLastname()) &&
-            ($type === 'email' && $this->normalizeStr($email) === $this->normalizeStr($billingAddress->getEmail()) ||
-                $type === 'zip' && $this->normalizeStr($zip) === $this->normalizeStr($billingAddress->getPostcode()));
-    }
-
-    /**
-     * Trim and convert to lower case
-     *
-     * @param string $str
-     * @return string
-     */
-    private function normalizeStr(string $str): string
-    {
-        return trim(strtolower($str));
+        return strtolower($lastName) === strtolower($billingAddress->getLastname()) &&
+            ($type === 'email' && strtolower($email) === strtolower($billingAddress->getEmail()) ||
+                $type === 'zip' && strtolower($zip) === strtolower($billingAddress->getPostcode()));
     }
 
     /**

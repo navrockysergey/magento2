@@ -11,22 +11,19 @@ namespace Magento\Cms\Controller\Adminhtml;
 use Magento\Cms\Api\Data\PageInterface;
 use Magento\Cms\Api\GetPageByIdentifierInterface;
 use Magento\Cms\Model\Page;
+use Magento\Cms\Model\PageFactory;
 use Magento\Framework\Acl\Builder;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Request\Http as HttpRequest;
 use Magento\Framework\Message\MessageInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\TestFramework\TestCase\AbstractBackendController;
-use Magento\UrlRewrite\Model\ResourceModel\UrlRewriteCollection;
-use Magento\UrlRewrite\Model\ResourceModel\UrlRewriteCollectionFactory;
-use Magento\UrlRewrite\Model\UrlRewrite;
 use Magento\Cms\Controller\Adminhtml\Page\PostDataProcessor;
 
 /**
  * Test the saving CMS pages design via admin area interface.
  *
  * @magentoAppArea adminhtml
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class PageDesignTest extends AbstractBackendController
 {
@@ -75,18 +72,11 @@ class PageDesignTest extends AbstractBackendController
      */
     protected function setUp(): void
     {
-        Bootstrap::getObjectManager()->configure([
-            'preferences' => [
-                CustomLayoutManagerInterface::class =>
-                    CustomLayoutManager::class
-            ]
-        ]);
         parent::setUp();
 
         $this->aclBuilder = Bootstrap::getObjectManager()->get(Builder::class);
         $this->pageRetriever = Bootstrap::getObjectManager()->get(GetPageByIdentifierInterface::class);
         $this->scopeConfig = Bootstrap::getObjectManager()->get(ScopeConfigInterface::class);
-        $this->pagesToDelete = [];
         $this->postDataProcessor = Bootstrap::getObjectManager()->get(PostDataProcessor::class);
     }
 
@@ -97,40 +87,11 @@ class PageDesignTest extends AbstractBackendController
     {
         parent::tearDown();
 
-        $pageIds = [];
         foreach ($this->pagesToDelete as $identifier) {
-            $pageIds[] = $identifier;
-            $page = $this->pageRetriever->execute($identifier, 0);
+            $page = $this->pageRetriever->execute($identifier);
             $page->delete();
         }
-        $this->removeUrlRewrites();
-    }
-
-    /**
-     * Removes url rewrites created during test execution.
-     *
-     * @return void
-     */
-    private function removeUrlRewrites(): void
-    {
-        if (!empty($this->pagesToDelete)) {
-            /** @var UrlRewriteCollectionFactory $urlRewriteCollectionFactory */
-            $urlRewriteCollectionFactory = Bootstrap::getObjectManager()->get(
-                UrlRewriteCollectionFactory::class
-            );
-            /** @var UrlRewriteCollection $urlRewriteCollection */
-            $urlRewriteCollection = $urlRewriteCollectionFactory->create();
-            $urlRewriteCollection->addFieldToFilter('request_path', ['in' => $this->pagesToDelete]);
-            $urlRewrites = $urlRewriteCollection->getItems();
-            /** @var UrlRewrite $urlRewrite */
-            foreach ($urlRewrites as $urlRewrite) {
-                try {
-                    $urlRewrite->delete();
-                } catch (\Exception $exception) {
-                    // already removed
-                }
-            }
-        }
+        $this->pagesToDelete = [];
     }
 
     /**
@@ -190,7 +151,6 @@ class PageDesignTest extends AbstractBackendController
             self::equalTo($sessionMessages),
             MessageInterface::TYPE_ERROR
         );
-        $this->pagesToDelete = [$id];
     }
 
     /**
@@ -222,7 +182,6 @@ class PageDesignTest extends AbstractBackendController
         $this->assertNotEmpty($page->getId());
         $this->assertNotNull($page->getPageLayout());
         $this->assertEquals($defaultLayout, $page->getPageLayout());
-        $this->pagesToDelete = [$id];
     }
 
     /**
@@ -269,38 +228,6 @@ class PageDesignTest extends AbstractBackendController
         $updated = $this->pageRetriever->execute('test_custom_layout_page_1', 0);
         $this->assertEmpty($updated->getCustomLayoutUpdateXml());
         $this->assertEmpty($updated->getLayoutUpdateXml());
-        $this->pagesToDelete = ['test_custom_layout_page_1'];
-    }
-
-    /**
-     * Test create CMS page with invalid URL
-     *
-     * @return void
-     */
-    public function testSaveWithInlavidIdentifier(): void
-    {
-        $identifier = 'admin';
-        $reservedWords = 'admin, soap, rest, graphql, standard';
-        //Expected list of sessions messages collected throughout the controller calls.
-        $sessionMessages = [sprintf(
-            'URL key "%s" matches a reserved endpoint name (%s). Use another URL key.',
-            $identifier,
-            $reservedWords
-        )];
-        $requestData = [
-            PageInterface::IDENTIFIER => $identifier,
-            PageInterface::TITLE => 'page title',
-            PageInterface::CUSTOM_THEME => '1',
-            PageInterface::PAGE_LAYOUT => 'empty',
-        ];
-
-        $this->getRequest()->setMethod(HttpRequest::METHOD_POST);
-        $this->getRequest()->setPostValue($requestData);
-        $this->dispatch($this->uri);
-        $this->assertSessionMessages(
-            self::equalTo($sessionMessages),
-            MessageInterface::TYPE_ERROR
-        );
     }
 
     /**

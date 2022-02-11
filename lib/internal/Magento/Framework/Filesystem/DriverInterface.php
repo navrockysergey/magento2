@@ -276,7 +276,7 @@ interface DriverInterface
      * @return array|bool|null
      * @throws FileSystemException
      */
-    public function fileGetCsv($resource, $length = 0, $delimiter = ',', $enclosure = '"', $escape = "\0");
+    public function fileGetCsv($resource, $length = 0, $delimiter = ',', $enclosure = '"', $escape = '\\');
 
     /**
      * Returns position of read/write pointer

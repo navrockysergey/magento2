@@ -377,7 +377,7 @@ class Instance extends \Magento\Framework\Model\AbstractModel
      */
     public function getType()
     {
-        return (string) $this->_getData('instance_type');
+        return $this->_getData('instance_type');
     }
 
     /**

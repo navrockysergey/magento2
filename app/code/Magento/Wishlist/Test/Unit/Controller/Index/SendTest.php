@@ -3,142 +3,98 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Wishlist\Test\Unit\Controller\Index;
 
-use Magento\Captcha\Helper\Data as CaptchaHelper;
-use Magento\Captcha\Model\DefaultModel as CaptchaModel;
-use Magento\Customer\Model\Customer;
 use Magento\Customer\Model\Data\Customer as CustomerData;
-use Magento\Customer\Model\Session;
 use Magento\Framework\App\Action\Context as ActionContext;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\Redirect as ResultRedirect;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Data\Form\FormKey\Validator as FormKeyValidator;
 use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
-use Magento\Framework\Exception\NotFoundException;
 use Magento\Framework\Mail\TransportInterface;
 use Magento\Framework\Message\ManagerInterface;
-use Magento\Framework\Phrase;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Framework\UrlInterface;
 use Magento\Framework\View\Result\Layout as ResultLayout;
 use Magento\Store\Model\Store;
 use Magento\Wishlist\Controller\Index\Send;
 use Magento\Wishlist\Controller\WishlistProviderInterface;
-use Magento\Wishlist\Model\Wishlist;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Magento\Captcha\Helper\Data as CaptchaHelper;
+use Magento\Captcha\Model\DefaultModel as CaptchaModel;
+use Magento\Customer\Model\Session;
 
 /**
  * @SuppressWarnings(PHPMD.TooManyFields)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class SendTest extends TestCase
+class SendTest extends \PHPUnit\Framework\TestCase
 {
-    /**
-     * @var  Send|MockObject
-     */
+    /** @var  Send |\PHPUnit\Framework\MockObject\MockObject */
     protected $model;
 
-    /**
-     * @var  ActionContext|MockObject
-     */
+    /** @var  ActionContext |\PHPUnit\Framework\MockObject\MockObject */
     protected $context;
 
-    /**
-     * @var  FormKeyValidator|MockObject
-     */
+    /** @var  FormKeyValidator |\PHPUnit\Framework\MockObject\MockObject */
     protected $formKeyValidator;
 
-    /**
-     * @var  WishlistProviderInterface|MockObject
-     */
+    /** @var  WishlistProviderInterface |\PHPUnit\Framework\MockObject\MockObject */
     protected $wishlistProvider;
 
-    /**
-     * @var  Store|MockObject
-     */
+    /** @var  Store |\PHPUnit\Framework\MockObject\MockObject */
     protected $store;
 
-    /**
-     * @var  ResultFactory|MockObject
-     */
+    /** @var  ResultFactory |\PHPUnit\Framework\MockObject\MockObject */
     protected $resultFactory;
 
-    /**
-     * @var  ResultRedirect|MockObject
-     */
+    /** @var  ResultRedirect |\PHPUnit\Framework\MockObject\MockObject */
     protected $resultRedirect;
 
-    /**
-     * @var  ResultLayout|MockObject
-     */
+    /** @var  ResultLayout |\PHPUnit\Framework\MockObject\MockObject */
     protected $resultLayout;
 
-    /**
-     * @var  RequestInterface|MockObject
-     */
+    /** @var  RequestInterface |\PHPUnit\Framework\MockObject\MockObject */
     protected $request;
 
-    /**
-     * @var  ManagerInterface|MockObject
-     */
+    /** @var  ManagerInterface |\PHPUnit\Framework\MockObject\MockObject */
     protected $messageManager;
 
-    /**
-     * @var  CustomerData|MockObject
-     */
+    /** @var  CustomerData |\PHPUnit\Framework\MockObject\MockObject */
     protected $customerData;
 
-    /**
-     * @var  UrlInterface|MockObject
-     */
+    /** @var  UrlInterface |\PHPUnit\Framework\MockObject\MockObject */
     protected $url;
 
-    /**
-     * @var  TransportInterface|MockObject
-     */
+    /** @var  TransportInterface |\PHPUnit\Framework\MockObject\MockObject */
     protected $transport;
 
-    /**
-     * @var  EventManagerInterface|MockObject
-     */
+    /** @var  EventManagerInterface |\PHPUnit\Framework\MockObject\MockObject */
     protected $eventManager;
 
-    /**
-     * @var  CaptchaHelper|MockObject
-     */
+    /** @var  CaptchaHelper |\PHPUnit\Framework\MockObject\MockObject */
     protected $captchaHelper;
 
-    /**
-     * @var CaptchaModel|MockObject
-     */
+    /** @var CaptchaModel |\PHPUnit\Framework\MockObject\MockObject */
     protected $captchaModel;
 
-    /**
-     * @var Session|MockObject
-     */
+    /** @var Session |\PHPUnit\Framework\MockObject\MockObject */
     protected $customerSession;
 
     /**
-     * @inheritdoc
-     *
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
     protected function setUp(): void
     {
-        $this->resultRedirect = $this->getMockBuilder(ResultRedirect::class)
+        $this->resultRedirect = $this->getMockBuilder(\Magento\Framework\Controller\Result\Redirect::class)
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->resultLayout = $this->getMockBuilder(ResultLayout::class)
+        $this->resultLayout = $this->getMockBuilder(\Magento\Framework\View\Result\Layout::class)
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->resultFactory = $this->getMockBuilder(ResultFactory::class)
+        $this->resultFactory = $this->getMockBuilder(\Magento\Framework\Controller\ResultFactory::class)
             ->disableOriginalConstructor()
             ->getMock();
         $this->resultFactory->expects($this->any())
@@ -148,20 +104,23 @@ class SendTest extends TestCase
                 [ResultFactory::TYPE_LAYOUT, [], $this->resultLayout],
             ]);
 
-        $this->request = $this->getMockBuilder(RequestInterface::class)
-            ->addMethods(['getPost', 'getPostValue'])
+        $this->request = $this->getMockBuilder(\Magento\Framework\App\RequestInterface::class)
+            ->setMethods([
+                'getPost',
+                'getPostValue'
+            ])
             ->getMockForAbstractClass();
 
-        $this->messageManager = $this->getMockBuilder(ManagerInterface::class)
+        $this->messageManager = $this->getMockBuilder(\Magento\Framework\Message\ManagerInterface::class)
             ->getMockForAbstractClass();
 
-        $this->url = $this->getMockBuilder(UrlInterface::class)
+        $this->url = $this->getMockBuilder(\Magento\Framework\UrlInterface::class)
             ->getMockForAbstractClass();
 
-        $this->eventManager = $this->getMockBuilder(EventManagerInterface::class)
+        $this->eventManager = $this->getMockBuilder(\Magento\Framework\Event\ManagerInterface::class)
             ->getMockForAbstractClass();
 
-        $this->context = $this->getMockBuilder(ActionContext::class)
+        $this->context = $this->getMockBuilder(\Magento\Framework\App\Action\Context::class)
             ->disableOriginalConstructor()
             ->getMock();
         $this->context->expects($this->any())
@@ -180,14 +139,16 @@ class SendTest extends TestCase
             ->method('getEventManager')
             ->willReturn($this->eventManager);
 
-        $this->formKeyValidator = $this->getMockBuilder(FormKeyValidator::class)
+        $this->formKeyValidator = $this->getMockBuilder(\Magento\Framework\Data\Form\FormKey\Validator::class)
             ->disableOriginalConstructor()
             ->getMock();
 
-        $customerMock = $this->getMockBuilder(Customer::class)
+        $customerMock = $this->getMockBuilder(\Magento\Customer\Model\Customer::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['getId'])
-            ->addMethods(['getEmail'])
+            ->setMethods([
+                'getEmail',
+                'getId'
+            ])
             ->getMock();
 
         $customerMock->expects($this->any())
@@ -198,9 +159,12 @@ class SendTest extends TestCase
             ->method('getId')
             ->willReturn(false);
 
-        $this->customerSession = $this->getMockBuilder(Session::class)
+        $this->customerSession = $this->getMockBuilder(\Magento\Customer\Model\Session::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['getCustomer', 'getData'])
+            ->setMethods([
+                'getCustomer',
+                'getData'
+            ])
             ->getMock();
 
         $this->customerSession->expects($this->any())
@@ -211,17 +175,22 @@ class SendTest extends TestCase
             ->method('getData')
             ->willReturn(false);
 
-        $this->wishlistProvider = $this->getMockBuilder(WishlistProviderInterface::class)
+        $this->wishlistProvider = $this->getMockBuilder(\Magento\Wishlist\Controller\WishlistProviderInterface::class)
             ->getMockForAbstractClass();
 
         $this->captchaHelper = $this->getMockBuilder(CaptchaHelper::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['getCaptcha'])
+            ->setMethods([
+                'getCaptcha'
+            ])
             ->getMock();
 
         $this->captchaModel = $this->getMockBuilder(CaptchaModel::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['isRequired', 'logAttempt'])
+            ->setMethods([
+                'isRequired',
+                'logAttempt'
+            ])
             ->getMock();
 
         $objectHelper = new ObjectManager($this);
@@ -243,12 +212,7 @@ class SendTest extends TestCase
         );
     }
 
-    /**
-     * Verify execute method without Form Key validated
-     *
-     * @return void
-     */
-    public function testExecuteNoFormKeyValidated(): void
+    public function testExecuteNoFormKeyValidated()
     {
         $this->formKeyValidator->expects($this->once())
             ->method('validate')
@@ -264,46 +228,12 @@ class SendTest extends TestCase
     }
 
     /**
-     * Verify execute with no emails left
-     *
-     * @return void
      */
-    public function testExecuteWithNoEmailLeft(): void
+    public function testExecuteNoWishlistAvailable()
     {
-        $expectedMessage = new Phrase('Maximum of %1 emails can be sent.', [0]);
+        $this->expectException(\Magento\Framework\Exception\NotFoundException::class);
+        $this->expectExceptionMessage('Page not found.');
 
-        $this->formKeyValidator->expects($this->once())
-            ->method('validate')
-            ->with($this->request)
-            ->willReturn(true);
-
-        $this->request
-            ->method('getPost')
-            ->withConsecutive(['emails'], ['message'])
-            ->willReturnOnConsecutiveCalls('some.email2@gmail.com');
-
-        $wishlist = $this->createMock(Wishlist::class);
-        $this->wishlistProvider->expects($this->once())
-            ->method('getWishlist')
-            ->willReturn($wishlist);
-        $this->resultRedirect->expects($this->once())
-            ->method('setPath')
-            ->with('*/*/share')
-            ->willReturnSelf();
-        $this->messageManager->expects($this->once())
-            ->method('addErrorMessage')
-            ->with($expectedMessage);
-
-        $this->assertEquals($this->resultRedirect, $this->model->execute());
-    }
-
-    /**
-     * Execute method with no wishlist available.
-     *
-     * @return void
-     */
-    public function testExecuteNoWishlistAvailable(): void
-    {
         $this->formKeyValidator->expects($this->once())
             ->method('validate')
             ->with($this->request)
@@ -312,8 +242,6 @@ class SendTest extends TestCase
         $this->wishlistProvider->expects($this->once())
             ->method('getWishlist')
             ->willReturn(null);
-        $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage('Page not found');
 
         $this->model->execute();
     }

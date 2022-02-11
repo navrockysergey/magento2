@@ -5,7 +5,6 @@
  */
 
 /* @var $block \Magento\ConfigurableProduct\Block\Adminhtml\Product\Steps\Summary */
-
 ?>
 <div data-bind="scope: '<?= /* @noEscape */  $block->getComponentName() ?>'">
     <h2 class="steps-wizard-title"><?= $block->escapeHtml(
@@ -53,12 +52,8 @@
                     "<?= /* @noEscape */  $block->getComponentName() ?>": {
                         "component": "Magento_ConfigurableProduct/js/variations/steps/summary",
                         "appendTo": "<?= /* @noEscape */  $block->getParentComponentName() ?>",
-                        "variationsComponent": "<?= /* @noEscape */ $block->getData('config/form')
-                        ?>.configurableVariations",
-                        "modalComponent": "<?= /* @noEscape */ $block->getData('config/form')
-                        ?>.configurableModal",
-                        "matrixGridComponent": "<?= /* @noEscape */ $block->getData('config/form')
-                        ?>.configurable.configurable-matrix"
+                        "variationsComponent": "<?= /* @noEscape */ $block->getData('config/form') ?>.configurableVariations",
+                        "modalComponent": "<?= /* @noEscape */ $block->getData('config/form') ?>.configurableModal"
                     }
                 }
             }

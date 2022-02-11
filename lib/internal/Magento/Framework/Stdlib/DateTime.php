@@ -17,25 +17,25 @@ class DateTime
     /**#@+
      * Date format, used as default. Compatible with \DateTime
      */
-    public const DATETIME_INTERNAL_FORMAT = 'yyyy-MM-dd HH:mm:ss';
+    const DATETIME_INTERNAL_FORMAT = 'yyyy-MM-dd HH:mm:ss';
 
-    public const DATE_INTERNAL_FORMAT = 'yyyy-MM-dd';
+    const DATE_INTERNAL_FORMAT = 'yyyy-MM-dd';
 
-    public const DATETIME_PHP_FORMAT = 'Y-m-d H:i:s';
+    const DATETIME_PHP_FORMAT = 'Y-m-d H:i:s';
 
-    public const DATE_PHP_FORMAT = 'Y-m-d';
+    const DATE_PHP_FORMAT = 'Y-m-d';
 
     /**#@-*/
 
     /**
      * Minimum allowed year value
      */
-    public const YEAR_MIN_VALUE = -10000;
+    const YEAR_MIN_VALUE = -10000;
 
     /**
      * Maximum allowed year value
      */
-    public const YEAR_MAX_VALUE = 10000;
+    const YEAR_MAX_VALUE = 10000;
 
     /**
      * Format date to internal format
@@ -43,6 +43,7 @@ class DateTime
      * @param string|\DateTimeInterface|bool|null $date
      * @param boolean $includeTime
      * @return string|null
+     * @api
      */
     public function formatDate($date, $includeTime = true)
     {
@@ -69,7 +70,7 @@ class DateTime
      */
     public function isEmptyDate($date)
     {
-        return !$date || preg_replace('#[ 0:-]#', '', $date) === '';
+        return preg_replace('#[ 0:-]#', '', $date) === '';
     }
 
     /**

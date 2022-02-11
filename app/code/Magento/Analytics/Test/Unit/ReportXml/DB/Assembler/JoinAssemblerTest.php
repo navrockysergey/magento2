@@ -3,57 +3,47 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Analytics\Test\Unit\ReportXml\DB\Assembler;
 
-use Magento\Analytics\ReportXml\DB\Assembler\JoinAssembler;
-use Magento\Analytics\ReportXml\DB\ColumnsResolver;
-use Magento\Analytics\ReportXml\DB\ConditionResolver;
-use Magento\Analytics\ReportXml\DB\NameResolver;
-use Magento\Analytics\ReportXml\DB\SelectBuilder;
 use Magento\Framework\App\ResourceConnection;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 
 /**
  * A unit test for testing of the 'join' assembler.
  */
-class JoinAssemblerTest extends TestCase
+class JoinAssemblerTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @var JoinAssembler
+     * @var \Magento\Analytics\ReportXml\DB\Assembler\JoinAssembler
      */
     private $subject;
 
     /**
-     * @var NameResolver|MockObject
+     * @var \Magento\Analytics\ReportXml\DB\NameResolver|\PHPUnit\Framework\MockObject\MockObject
      */
     private $nameResolverMock;
 
     /**
-     * @var SelectBuilder|MockObject
+     * @var \Magento\Analytics\ReportXml\DB\SelectBuilder|\PHPUnit\Framework\MockObject\MockObject
      */
     private $selectBuilderMock;
 
     /**
-     * @var ObjectManager
+     * @var \Magento\Framework\TestFramework\Unit\Helper\ObjectManager
      */
     private $objectManagerHelper;
 
     /**
-     * @var ColumnsResolver|MockObject
+     * @var \Magento\Analytics\ReportXml\DB\ColumnsResolver|\PHPUnit\Framework\MockObject\MockObject
      */
     private $columnsResolverMock;
 
     /**
-     * @var ConditionResolver|MockObject
+     * @var \Magento\Analytics\ReportXml\DB\ConditionResolver|\PHPUnit\Framework\MockObject\MockObject
      */
     private $conditionResolverMock;
 
     /**
-     * @var ResourceConnection|MockObject
+     * @var ResourceConnection|\PHPUnit\Framework\MockObject\MockObject
      */
     private $resourceConnection;
 
@@ -62,35 +52,53 @@ class JoinAssemblerTest extends TestCase
      */
     protected function setUp(): void
     {
-        $this->nameResolverMock = $this->createMock(NameResolver::class);
+        $this->nameResolverMock = $this->getMockBuilder(
+            \Magento\Analytics\ReportXml\DB\NameResolver::class
+        )
+        ->disableOriginalConstructor()
+        ->getMock();
 
-        $this->selectBuilderMock = $this->createMock(SelectBuilder::class);
-        $this->selectBuilderMock
+        $this->selectBuilderMock = $this->getMockBuilder(
+            \Magento\Analytics\ReportXml\DB\SelectBuilder::class
+        )
+        ->disableOriginalConstructor()
+        ->getMock();
+        $this->selectBuilderMock->expects($this->any())
             ->method('getFilters')
             ->willReturn([]);
-        $this->selectBuilderMock
+        $this->selectBuilderMock->expects($this->any())
             ->method('getColumns')
             ->willReturn([]);
-        $this->selectBuilderMock
+        $this->selectBuilderMock->expects($this->any())
             ->method('getJoins')
             ->willReturn([]);
 
-        $this->columnsResolverMock = $this->createMock(ColumnsResolver::class);
+        $this->columnsResolverMock = $this->getMockBuilder(
+            \Magento\Analytics\ReportXml\DB\ColumnsResolver::class
+        )
+        ->disableOriginalConstructor()
+        ->getMock();
 
-        $this->conditionResolverMock = $this->createMock(ConditionResolver::class);
+        $this->conditionResolverMock = $this->getMockBuilder(
+            \Magento\Analytics\ReportXml\DB\ConditionResolver::class
+        )
+        ->disableOriginalConstructor()
+        ->getMock();
 
-        $this->resourceConnection = $this->createMock(ResourceConnection::class);
+        $this->resourceConnection = $this->getMockBuilder(ResourceConnection::class)
+            ->disableOriginalConstructor()
+            ->getMock();
 
         $this->objectManagerHelper =
-            new ObjectManager($this);
+            new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
 
         $this->subject = $this->objectManagerHelper->getObject(
-            JoinAssembler::class,
+            \Magento\Analytics\ReportXml\DB\Assembler\JoinAssembler::class,
             [
                 'conditionResolver' => $this->conditionResolverMock,
                 'nameResolver' => $this->nameResolverMock,
                 'columnsResolver' => $this->columnsResolverMock,
-                'resourceConnection' => $this->resourceConnection
+                'resourceConnection' => $this->resourceConnection,
             ]
         );
     }
@@ -98,7 +106,7 @@ class JoinAssemblerTest extends TestCase
     /**
      * @return void
      */
-    public function testAssembleEmpty(): void
+    public function testAssembleEmpty()
     {
         $queryConfigMock = [
             'source' => [
@@ -124,52 +132,53 @@ class JoinAssemblerTest extends TestCase
      * @param array $queryConfigMock
      * @param array $joinsMock
      * @param array $tablesMapping
-     *
      * @return void
      * @dataProvider assembleNotEmptyDataProvider
      */
-    public function testAssembleNotEmpty(array $queryConfigMock, array $joinsMock, array $tablesMapping): void
+    public function testAssembleNotEmpty(array $queryConfigMock, array $joinsMock, array $tablesMapping)
     {
         $filtersMock = [];
 
-        $this->nameResolverMock
+        $this->nameResolverMock->expects($this->at(0))
             ->method('getAlias')
-            ->withConsecutive(
-                [$queryConfigMock['source']],
-                [$queryConfigMock['source']['link-source'][0]]
-            )
-            ->willReturnOnConsecutiveCalls(
-                $queryConfigMock['source']['alias'],
-                $queryConfigMock['source']['link-source'][0]['alias']
-            );
+            ->with($queryConfigMock['source'])
+            ->willReturn($queryConfigMock['source']['alias']);
+        $this->nameResolverMock->expects($this->at(1))
+            ->method('getAlias')
+            ->with($queryConfigMock['source']['link-source'][0])
+            ->willReturn($queryConfigMock['source']['link-source'][0]['alias']);
         $this->nameResolverMock->expects($this->once())
             ->method('getName')
             ->with($queryConfigMock['source']['link-source'][0])
             ->willReturn($queryConfigMock['source']['link-source'][0]['name']);
 
         $this->resourceConnection
+            ->expects($this->any())
             ->method('getTableName')
             ->willReturnOnConsecutiveCalls(...array_values($tablesMapping));
 
-        $withArgs = $willReturnArgs = [];
-        $withArgs[] = [
-            $this->selectBuilderMock,
-            $queryConfigMock['source']['link-source'][0]['using'],
-            $queryConfigMock['source']['link-source'][0]['alias'],
-            $queryConfigMock['source']['alias']
-        ];
-        $willReturnArgs[] = '(billing.parent_id = `sales`.`entity_id`)';
+        $this->conditionResolverMock->expects($this->at(0))
+            ->method('getFilter')
+            ->with(
+                $this->selectBuilderMock,
+                $queryConfigMock['source']['link-source'][0]['using'],
+                $queryConfigMock['source']['link-source'][0]['alias'],
+                $queryConfigMock['source']['alias']
+            )
+            ->willReturn('(billing.parent_id = `sales`.`entity_id`)');
 
         if (isset($queryConfigMock['source']['link-source'][0]['filter'])) {
             $filtersMock = ['(sales.entity_id IS NULL)'];
 
-            $withArgs[] = [
-                $this->selectBuilderMock,
-                $queryConfigMock['source']['link-source'][0]['filter'],
-                $queryConfigMock['source']['link-source'][0]['alias'],
-                $queryConfigMock['source']['alias']
-            ];
-            $willReturnArgs[] = $filtersMock[0];
+            $this->conditionResolverMock->expects($this->at(1))
+                ->method('getFilter')
+                ->with(
+                    $this->selectBuilderMock,
+                    $queryConfigMock['source']['link-source'][0]['filter'],
+                    $queryConfigMock['source']['link-source'][0]['alias'],
+                    $queryConfigMock['source']['alias']
+                )
+                ->willReturn($filtersMock[0]);
 
             $this->columnsResolverMock->expects($this->once())
                 ->method('getColumns')
@@ -190,10 +199,6 @@ class JoinAssemblerTest extends TestCase
                     ]
                 );
         }
-        $this->conditionResolverMock
-            ->method('getFilter')
-            ->withConsecutive(...$withArgs)
-            ->willReturnOnConsecutiveCalls(...$willReturnArgs);
 
         $this->selectBuilderMock->expects($this->once())
             ->method('setFilters')
@@ -211,7 +216,7 @@ class JoinAssemblerTest extends TestCase
     /**
      * @return array
      */
-    public function assembleNotEmptyDataProvider(): array
+    public function assembleNotEmptyDataProvider()
     {
         return [
             [
