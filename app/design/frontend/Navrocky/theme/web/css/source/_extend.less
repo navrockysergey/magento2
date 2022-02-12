@@ -1,18 +1,43 @@
-@import "../fontawesome/css/all.css";
-
 #banner-slider-carousel {
     position: relative;
     .owl-nav {
         display: block!important;
-    }
-}
-
-body {
-    background: #fff;
-    #banner-slider-carousel {
-        position: relative;
-        .owl-nav {
-            display: block!important;
+        .owl-prev,
+        .owl-next {
+            position: absolute;
+            top: 50%;
+            height: 30px;
+            width: 30px!important;
+            margin-top: -15px;
+            line-height: 30px;
+            width: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            &:before {
+                content: '';
+                display: inline-block;
+                font-family: 'FontAwesome';
+                font-size: 20px;
+            }
+            &:hover {
+                &:before {
+                    color: red;
+                }
+            }
+            span {
+                display: none;
+            }
+        }
+        .owl-prev {
+            left: 15px;
+            &:before {
+                content:"\f104"
+            }
+        }
+        .owl-next {
+            right: 15px;
+            &:before {
+                content:"\f105"
+            }
         }
     }
 }
