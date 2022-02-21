@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+      <referenceContainer name="page.top">
+        <container after="-" name="home-sliders-container" label="Home Sliders" htmlTag="div" htmlClass="home-sliders-container">
+            <container name="home-first-slider-container" label="Home First Slider" htmlTag="div" htmlClass="home-first-slider-container">
+                <block class="Magento\Cms\Block\Block" name="home.first.slider.block">
+                    <arguments>
+                        <argument name="block_id" xsi:type="string">home-first-slider</argument>
+                    </arguments>
+                </block>
+            </container>
+            <container name="home-second-slider-container" label="Home Second Slider" htmlTag="div" htmlClass="home-second-slider-container">
+              <block class="Magento\Cms\Block\Block" name="home.second.slider.block">
+                  <arguments>
+                      <argument name="block_id" xsi:type="string">home-second-slider</argument>
+                  </arguments>
+              </block>
+            </container>
+        </container>
+        <block after="-" name="test.block" template="Magento_Cms::block_index_index.phtml"/>
+      </referenceContainer>
+    </body>
+</page>
